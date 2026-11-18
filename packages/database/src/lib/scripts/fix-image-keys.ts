@@ -1,4 +1,4 @@
-import { FactoryStorageService } from '@repo/backend-lib/services/storage-service/factory';
+import { FactoryStorageService } from '@repo/backend-lib/services/storage-service';
 import Logger from '@repo/backend-lib/utils/console';
 import { killClient } from '../client';
 import { Query } from '../facades';

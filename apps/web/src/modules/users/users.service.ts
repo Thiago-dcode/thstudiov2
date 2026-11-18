@@ -10,6 +10,7 @@ import type { FullPlanSubscription } from "@repo/common-lib/types/plan-subscript
 import type { ProfileStatus } from "@repo/common-lib/types/profile-status";
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import type {
+  AccountDeletionCodeResult,
   AccountDeletionRequestResult,
   ArtistCard,
   ArtistIndexRequest,
@@ -115,6 +116,13 @@ export class UserService extends BaseService {
     return await this.fetchApi.post({
       resource: `${id}/password`,
       body: data,
+    });
+  }
+  async sendDeletionCode(
+    id: number,
+  ): Promise<ApiResponse<AccountDeletionCodeResult>> {
+    return await this.fetchApi.post({
+      resource: `${id}/deletion/code`,
     });
   }
   async requestDeletion(

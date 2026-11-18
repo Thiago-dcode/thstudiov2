@@ -2,8 +2,8 @@ jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({ stripe: 
 jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({ paypal: {} }));
 
 import { LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service/console';
-import { JOB_DELETE_USER_ACCOUNT } from '@repo/common-lib/constants/queues';
+import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
+import { JOB_DELETE_USER_ACCOUNT, JOB_SEND_ACCOUNT_DELETION_WARNING } from '@repo/common-lib/constants/queues';
 import { AccountDeletionProcessor } from './account-deletion.processor';
 
 const build = (throwing: boolean) => {
@@ -23,15 +23,10 @@ const build = (throwing: boolean) => {
   };
   const processor = new AccountDeletionProcessor(
     userRepository as never,
-    {} as never,
-    {} as never,
-    {} as never,
+    { deleteAccount: jest.fn().mockResolvedValue({ deleted: false, reason: 'not-found' }) } as never,
     {} as never,
     {} as never,
     logger as never,
-    {} as never,
-    { findReservedByUser: jest.fn() } as never,
-    { emit: jest.fn() } as never,
   );
   return { processor, lines };
 };
@@ -76,10 +71,15 @@ describe('AccountDeletionProcessor job failure alerting', () => {
 
   it('AC-28: an early return logs "Account deletion step skipped" with its reason', async () => {
     const { processor, lines } = build(false);
-    await expect(processor.process(jobOf(JOB_DELETE_USER_ACCOUNT, 1))).resolves.toEqual({ deleted: false, reason: 'not-found' });
+    await expect(processor.process(jobOf(JOB_SEND_ACCOUNT_DELETION_WARNING, 1))).resolves.toEqual({ sent: false, reason: 'not-flagged' });
     const skipped = lines.filter((l) => l.message === 'Account deletion step skipped');
     expect(skipped).toHaveLength(1);
     expect(skipped[0].level).toBe('INFO');
-    expect(skipped[0].extraInfo).toMatchObject({ step: 'hard-delete', reason: 'not-found' });
+    expect(skipped[0].extraInfo).toMatchObject({ step: 'warning', reason: 'not-flagged' });
+  });
+
+  it('a hard-delete job is handed to UserService', async () => {
+    const { processor } = build(false);
+    await expect(processor.process(jobOf(JOB_DELETE_USER_ACCOUNT, 1))).resolves.toEqual({ deleted: false, reason: 'not-found' });
   });
 });

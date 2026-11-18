@@ -75,7 +75,9 @@ export class WebhooksController {
         stripeWebhookSecret,
       );
     } catch (err: unknown) {
-      this.logger.warn('Stripe webhook rejected', {
+      // Critical: either a forged request (suspicious) or STRIPE_WEBHOOK_SECRET drifted from the
+      // signer, in which case every real webhook is lost. Both need a human; the alert is throttled.
+      this.logger.critical('Stripe webhook rejected', {
         reason: 'invalid_signature',
         error_message: err instanceof Error ? err.message : 'Unknown error',
       });

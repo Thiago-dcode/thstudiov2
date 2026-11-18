@@ -13,6 +13,7 @@ This repo ships project skills in `.agents/skills/<name>/SKILL.md`. They hold th
 | --- | --- |
 | `apps/web`, `packages/ui`, `packages/frontend-lib` (pages, components, styling, server actions) | `frontend` (also `accessibility`, `marketing-seo-ux` for public pages) |
 | `apps/api`, `packages/database`, `packages/backend-lib`, `packages/common-lib` | `backend`, plus the matching recipe: `full-api-module` (spans several recipes), `api-migration`, `api-schema-types`, `api-repository`, `api-join-queries` (+ `collision-prevention`), `api-nest-module`, `api-http-endpoint`, `api-service`, `api-queue-processor`, `api-mail` |
+| Adding or changing log lines, log levels, `critical` alerts, flow tracing (api, worker, backend-lib) | `logging` |
 | Verifying API changes | `api-verification`, `api-testing` |
 | Commit / push / watch CI (only when explicitly asked) | `deployment` |
 

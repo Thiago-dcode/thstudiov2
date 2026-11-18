@@ -8,6 +8,7 @@ export const ENUMS = {
   MEDIA_TYPE: ['IMAGE', 'VIDEO', 'GIF'] as const,
   MEDIA_STATUS: ['UPLOADING', 'UPDATING', 'GENERATING_METADATA', 'COMPLETED', 'FAILED'] as const,
   MEDIA_SHAPE: ['SQUARE', 'LANDSCAPE', 'PORTRAIT'] as const,
+  OAUTH_PROVIDERS: ['google'] as const,
   ASPECT_RATIO: [
     '1:1',
     '5:4',
@@ -88,6 +89,7 @@ export const TABLES_ENUM = {
   ADMIN_USERS_ROLES: 'admin_users_roles',
   ROLES: 'roles',
   USERS: 'users',
+  USER_OAUTH_PROVIDERS: 'user_oauth_providers',
   USERNAME_HISTORY: 'username_history',
   USER_TRANSLATIONS: 'user_translations',
   CATEGORIES: 'categories',

@@ -15,11 +15,13 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service/console';
+import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { hash } from '@repo/common-lib/utils/hash';
 import { AuthService } from './auth.service';
-import { UserRepository } from '../users/users.repository';
+import { UserService } from '../users/users.service';
+import { GoogleOauth2Service } from '@repo/backend-lib/services/googleapi-service';
+import { UserOauthProvidersService } from '../user-oauth-providers/user-oauth-providers.service';
 import { UserAuthDevicesService } from '../user-auth-devices/user-auth-devices.service';
 import { RequestService } from 'src/common/services/request.service';
 import { UserSessionsService } from '../user-sessions/user-sessions.service';
@@ -30,7 +32,6 @@ import { RoleService } from '../roles/roles.service';
 import { InvitationLinkService } from '../invitation-links/invitation-link.service';
 import { UserBenefitService } from '../user-benefit/user-benefit.service';
 import { WaitListService } from '../wait-list/wait-list.service';
-import { UsernameHistoryRepository } from '../username-history/username-history.repository';
 
 const EMAIL = 'victim@example.com';
 const PASSWORD = 'PLAINPASSWORD123';
@@ -60,7 +61,9 @@ const buildService = async () => {
   const module = await Test.createTestingModule({
     providers: [
       AuthService,
-      { provide: UserRepository, useValue: userRepository },
+      { provide: UserService, useValue: userRepository },
+      { provide: GoogleOauth2Service, useValue: {} },
+      { provide: UserOauthProvidersService, useValue: {} },
       { provide: JwtService, useValue: { signAsync: jest.fn().mockResolvedValue(JWT) } },
       { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue(undefined) } },
       { provide: UserAuthDevicesService, useValue: devices },
@@ -76,7 +79,6 @@ const buildService = async () => {
       { provide: UserBenefitService, useValue: {} },
       { provide: WaitListService, useValue: {} },
       { provide: LogService, useValue: logger },
-      { provide: UsernameHistoryRepository, useValue: {} },
     ],
   }).compile();
   return module.get(AuthService);

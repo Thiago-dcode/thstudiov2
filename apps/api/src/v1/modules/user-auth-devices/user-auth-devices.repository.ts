@@ -33,6 +33,11 @@ export class UserAuthDevicesRepository extends BaseRepository {
       this.COLUMNS,
     );
   }
+
+  async userHasOne(userId: number) {
+
+    return await this.query().where('user_id', userId).exists();
+  }
   async findOneByAuthDevice(authDevice: {
     user_id?: number;
     user_agent?: string;

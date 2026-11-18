@@ -6,7 +6,9 @@ export type UserSchema = {
   name?: string | null;
   surname?: string | null;
   username: string;
-  password: string;
+  /** True while the username is the random one generated at sign-up; the first name save replaces it once. */
+  username_auto_generated: boolean;
+  password?: string | null;
   stripe_customer_id?: string | null;
   profession?: string | null;
   biography?: string | null;
@@ -49,7 +51,7 @@ export type UserSchema = {
   updated_at: Date;
 };
 export type UserSchemaWithoutTimestamps = Omit<UserSchema, 'created_at' | 'updated_at'>;
-export type UserCoreSchema = Omit<UserSchema, 'created_at' | 'updated_at' | 'name' | 'surname' | 'biography' | 'avatar' | 'banner' | 'seo_title' | 'seo_description' | 'seo_generated_at' | 'phone_number' | 'facebook_link' | 'website_link' | 'instagram_link' | 'youtube_link'>;
+export type UserCoreSchema = Omit<UserSchema, 'created_at' | 'updated_at' | 'name' | 'surname' | 'username_auto_generated' | 'biography' | 'avatar' | 'banner' | 'seo_title' | 'seo_description' | 'seo_generated_at' | 'phone_number' | 'facebook_link' | 'website_link' | 'instagram_link' | 'youtube_link'>;
 const tablesUser = [TABLES_ENUM.USERS] as const;
 export type UserSchemaColumns = TableColumn<typeof tablesUser, UserSchemaWithoutTimestamps>;
 export type UserCoreSchemaColumns = TableColumn<typeof tablesUser, UserCoreSchema>;

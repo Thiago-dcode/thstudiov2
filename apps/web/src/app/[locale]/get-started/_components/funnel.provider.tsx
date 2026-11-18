@@ -51,6 +51,8 @@ type FunnelStateContextType = {
   isPending: boolean;
   canContinue: boolean;
   errors?: string[];
+  /** Field errors from the last save, e.g. `username` when that name is taken. */
+  inputErrors?: Record<string, string>;
   inputs?: UpdateUserInputWithAssets;
   refInputs?: (HTMLInputElement | HTMLTextAreaElement)[];
   /** Set only while the avatar step's image is uploading / being processed. */
@@ -115,52 +117,59 @@ export const FunnelProvider = ({
     },
     [],
   );
-  const { result, handleSubmit, errors, cleanErrors, setErrors, isPending } =
-    useHandleAction({
-      action: async (formData) => {
-        const validActions: FunnelActions[] = [
-          "continue",
-          "skip",
-          "finish",
-          "back",
-        ];
-        const action = formData.get("action") as FunnelActions;
-        if (!validActions.some((va) => va === action))
-          return {
-            data: null,
-            errors: [t("somethingWentWrong")],
-            inputs: undefined,
-          };
-        const currentStep = user.funnel_step;
-        const newFormData = action === "continue" ? formData : new FormData();
+  const {
+    result,
+    handleSubmit,
+    errors,
+    inputErrors,
+    cleanErrors,
+    setErrors,
+    isPending,
+  } = useHandleAction({
+    action: async (formData) => {
+      const validActions: FunnelActions[] = [
+        "continue",
+        "skip",
+        "finish",
+        "back",
+      ];
+      const action = formData.get("action") as FunnelActions;
+      if (!validActions.some((va) => va === action))
+        return {
+          data: null,
+          errors: [t("somethingWentWrong")],
+          inputs: undefined,
+        };
+      const currentStep = user.funnel_step;
+      const newFormData = action === "continue" ? formData : new FormData();
 
-        const nextStep =
-          action === "finish"
-            ? lastStep + 1
-            : action === "back"
-              ? currentStep - 1
-              : currentStep + 1;
-        newFormData.set("funnel_step", String(nextStep));
-        try {
-          return await updateUserWithImages(user.id, newFormData, {
-            fallbackError: t("somethingWentWrong"),
-            onStatus: setUploadStatus,
-          });
-        } finally {
-          setUploadStatus(null);
-        }
-      },
-      afterAction: async (result) => {
-        if (result?.data) {
-          await setUserSession({
-            ...result.data,
-            token: user.token,
-          });
-          if (result.data.funnel_step <= lastStep) router.refresh();
-          else router.push("/atelier");
-        }
-      },
-    });
+      const nextStep =
+        action === "finish"
+          ? lastStep + 1
+          : action === "back"
+            ? currentStep - 1
+            : currentStep + 1;
+      newFormData.set("funnel_step", String(nextStep));
+      try {
+        return await updateUserWithImages(user.id, newFormData, {
+          fallbackError: t("somethingWentWrong"),
+          onStatus: setUploadStatus,
+        });
+      } finally {
+        setUploadStatus(null);
+      }
+    },
+    afterAction: async (result) => {
+      if (result?.data) {
+        await setUserSession({
+          ...result.data,
+          token: user.token,
+        });
+        if (result.data.funnel_step <= lastStep) router.refresh();
+        else router.push("/atelier");
+      }
+    },
+  });
   const setInputs = useCallback((...nextInputs: InputsType[]) => {
     const filtered = nextInputs.filter(
       (input): input is HTMLInputElement | HTMLTextAreaElement => !!input,
@@ -187,7 +196,8 @@ export const FunnelProvider = ({
     if (!currentInputs?.length) return;
     const nextCanContinue = currentInputs.every((input) => {
       input?.parentElement?.classList.remove("input-required");
-      return !input?.required || (input?.required && !!input?.value);
+      // Whitespace alone does not fill a required field (a required step needs a real value).
+      return !input?.required || input.value.trim() !== "";
     });
     setCanContinue((prev) =>
       prev === nextCanContinue ? prev : nextCanContinue,
@@ -228,11 +238,20 @@ export const FunnelProvider = ({
       isPending,
       canContinue,
       errors: errors || undefined,
+      inputErrors,
       inputs: result?.inputs,
       refInputs: inputs,
       uploadStatus,
     }),
-    [isPending, canContinue, errors, result?.inputs, inputs, uploadStatus],
+    [
+      isPending,
+      canContinue,
+      errors,
+      inputErrors,
+      result?.inputs,
+      inputs,
+      uploadStatus,
+    ],
   );
 
   //TODO:handle funnel logic

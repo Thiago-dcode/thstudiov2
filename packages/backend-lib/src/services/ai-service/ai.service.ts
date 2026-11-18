@@ -1,4 +1,4 @@
-import { LLMCompletionResponse, LLMService } from '@repo/backend-lib/services/llm-service/base';
+import { LLMCompletionResponse, LLMService } from '@repo/backend-lib/services/llm-service';
 import { MAX_TAGS_MEDIA, MAX_TECHNIQUES_MEDIA } from '@repo/common-lib/constants/limits';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { openAiLLMConfig } from '@repo/backend-lib/config/llm';

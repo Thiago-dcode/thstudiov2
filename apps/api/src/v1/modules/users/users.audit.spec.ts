@@ -11,12 +11,13 @@ jest.mock('src/common/utils/user-lock', () => ({
 }));
 
 import { LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service/console';
+import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
 import { hash } from '@repo/common-lib/utils/hash';
 import { UserService } from './users.service';
 
 const EMAIL = 'victim@example.com';
 const OLD_PASSWORD = 'OLDPASSWORD123';
+const DELETION_CODE = '482913';
 const NEW_PASSWORD = 'NEWPASSWORD456';
 const TOKEN = 'SESSIONTOKENSECRET';
 
@@ -41,6 +42,7 @@ const build = async () => {
   const userRepository = {
     findById: jest.fn().mockResolvedValue(user),
     findOneByWithSecrets: jest.fn().mockResolvedValue(user),
+    findOneBy: jest.fn().mockResolvedValue(user),
     usernameExists: jest.fn().mockResolvedValue(false),
     updateById: jest.fn(async (_id: number, data: object) => ({ ...user, ...data })),
     flagForDeletion: jest.fn().mockResolvedValue(new Date('2026-11-01T10:00:00Z')),
@@ -58,7 +60,18 @@ const build = async () => {
     eventEmitter as never,
     logService as unknown as LogService,
     {} as never,
-    { deleteManyCached: jest.fn().mockResolvedValue(undefined), cacheRemember: jest.fn() } as never,
+    {
+      deleteManyCached: jest.fn().mockResolvedValue(undefined),
+      cacheRemember: jest.fn(),
+      // A pending account-deletion code, as `sendDeletionCode` leaves it.
+      getCached: jest.fn().mockResolvedValue({
+        hash: await hash(DELETION_CODE),
+        attempts: 0,
+        issued_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 60_000).toISOString(),
+      }),
+      deleteCached: jest.fn().mockResolvedValue(undefined),
+    } as never,
     { user: { id: user.id, token: TOKEN } } as never,
     {} as never,
     {} as never,
@@ -125,7 +138,7 @@ describe('UserService audit lines', () => {
 
   it('AC-27: deletion request and cancel use a per-call operation and leave the shared logger unrenamed', async () => {
     const { service, nameSpy } = await build();
-    await service.requestDeletion(5, { password: OLD_PASSWORD, cancel_subscription: true } as never);
+    await service.requestDeletion(5, { code: DELETION_CODE, cancel_subscription: true } as never);
     await service.cancelDeletion(5);
     const [requested] = audit('Account deletion requested');
     const [cancelled] = audit('Account deletion cancelled');
@@ -136,7 +149,7 @@ describe('UserService audit lines', () => {
     // The next line from the same logger has no leaked operation.
     const logger = new ConsoleLogService({ channel: 'users' });
     void logger;
-    expect(JSON.stringify(lines)).not.toMatch(new RegExp(`${OLD_PASSWORD}|${EMAIL}`));
+    expect(JSON.stringify(lines)).not.toMatch(new RegExp(`${DELETION_CODE}|${EMAIL}`));
   });
 
   it('AC-27: the audit messages are constants (no interpolated ids or names)', async () => {

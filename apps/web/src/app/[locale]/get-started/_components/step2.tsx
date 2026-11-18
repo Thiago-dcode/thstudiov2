@@ -1,14 +1,8 @@
 "use client";
-import { FileInput } from "@repo/ui/components/custom/file-input";
-import {
-  FileInputProvider,
-  useInputFile,
-} from "@repo/ui/contexts/file.provider";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
-import { ImageUploadProgress } from "@/modules/users/components/image-upload-progress";
+import { useEffect, useRef } from "react";
+import FormComponent from "@/lib/components/form-component";
 import {
-  ButtonSkipStepFunnel,
   ButtonStepBackFunnel,
   ButtonSubmitFunnel,
   ContainerFormFunnel,
@@ -16,95 +10,91 @@ import {
   useFunnelState,
 } from "./funnel.provider";
 
-export default function Container() {
-  return (
-    <FileInputProvider
-      allowedMimeTypes={["image/jpeg", "image/jpg", "image/png", "image/webp"]}
-    >
-      <Step2 />
-    </FileInputProvider>
-  );
-}
+// Name and surname are required (no Skip); profession and bio are optional.
+export default function Step2() {
+  const t = useTranslations("editUser.profile");
+  const { user, setInputs, handleOnChange } = useFunnelActions();
+  const { inputs } = useFunnelState();
+  const nameRef = useRef<HTMLInputElement>(null);
+  const surnameRef = useRef<HTMLInputElement>(null);
+  const professionRef = useRef<HTMLInputElement>(null);
+  const shortBioRef = useRef<HTMLTextAreaElement>(null);
 
-const Step2 = () => {
-  const t = useTranslations("editUser.avatar");
-  const tRoot = useTranslations();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const { user, setInputs, handleOnChange, setErrors } = useFunnelActions();
-  const { uploadStatus } = useFunnelState();
-  const { files, errors, maxFileSizeBytes } = useInputFile();
-  const [previewUrl, setPreviewUrl] = useState<string | undefined>(
-    (user as any)?.avatar,
-  );
-  const avatarUrl = (user as { avatar?: string })?.avatar;
   useEffect(() => {
-    if (files && files.length > 0) {
-      const file = files[0];
-      // Create object URL for preview
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-      // Cleanup function to revoke the object URL
-      return () => {
-        URL.revokeObjectURL(url);
-      };
-    } else {
-      setPreviewUrl(undefined);
-    }
-  }, [files]);
-  useEffect(() => {
-    if (!errors?.length) return;
-    setErrors(
-      errors.map(({ code, fileName }) =>
-        code === "too_large"
-          ? tRoot("validation.file.tooLarge", {
-              field: fileName,
-              mb: Math.floor((maxFileSizeBytes ?? 0) / (1024 * 1024)),
-            })
-          : tRoot("validation.file.invalidType", { field: fileName }),
-      ),
+    setInputs(
+      nameRef?.current,
+      surnameRef?.current,
+      professionRef?.current,
+      shortBioRef?.current,
     );
-  }, [errors, setErrors, tRoot, maxFileSizeBytes]);
-
-  useEffect(() => {
-    setInputs(inputRef?.current);
   }, [setInputs]);
-
-  useEffect(() => {
-    if (!avatarUrl) return;
-    setPreviewUrl((current) => (current === avatarUrl ? current : avatarUrl));
-  }, [avatarUrl]);
-
   return (
     <ContainerFormFunnel>
-      <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto p-4">
-        {previewUrl && (
-          <div className="mt-4 flex flex-col items-center gap-2">
-            <h3 className="text-sm font-medium">{t("preview")}</h3>
-            <div className="relative w-32 h-32 overflow-hidden border-4 border-fg-2">
-              <img
-                src={previewUrl}
-                alt={t("previewAlt")}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        )}
-      </div>
-      <FileInput
-        onChange={() => {
-          handleOnChange();
-        }}
-        ref={inputRef}
-        name="avatar"
-        id="avatar-input"
+      <FormComponent.LabelInput
+        ref={nameRef}
+        label={t("firstName.label")}
+        type="text"
+        id="name"
+        name="name"
+        defaultValue={
+          inputs?.name || (user as { name?: string })?.name || undefined
+        }
+        placeholder={t("firstName.placeholder")}
+        autoComplete="given-name"
+        required
+        autoFocus
+        onChange={handleOnChange}
       />
 
-      <ImageUploadProgress status={uploadStatus} />
-      <ButtonSubmitFunnel />
-      {/* A photo is optional; it can be added later from the setup guide. */}
-      <ButtonSkipStepFunnel />
+      {/* Surname Field */}
+      <FormComponent.LabelInput
+        ref={surnameRef}
+        label={t("lastName.label")}
+        type="text"
+        id="surname"
+        name="surname"
+        defaultValue={
+          inputs?.surname ||
+          (user as { surname?: string })?.surname ||
+          undefined
+        }
+        placeholder={t("lastName.placeholder")}
+        autoComplete="family-name"
+        required
+        onChange={handleOnChange}
+      />
 
+      {/* Profession Field */}
+      <FormComponent.LabelInput
+        ref={professionRef}
+        label={t("profession.label")}
+        type="text"
+        id="profession"
+        name="profession"
+        max={100}
+        defaultValue={
+          inputs?.profession || (user as any)?.profession || undefined
+        }
+        placeholder={t("profession.placeholder")}
+        autoComplete="organization-title"
+        onChange={handleOnChange}
+      />
+
+      {/* Description Field */}
+      <FormComponent.LabelTextarea
+        ref={shortBioRef}
+        label={t("shortBio.label")}
+        id="short_biography"
+        name="short_biography"
+        defaultValue={
+          inputs?.short_biography || (user as any)?.short_biography || undefined
+        }
+        placeholder={t("shortBio.placeholder")}
+        rows={4}
+        onChange={handleOnChange}
+      />
+      <ButtonSubmitFunnel />
       <ButtonStepBackFunnel />
     </ContainerFormFunnel>
   );
-};
+}

@@ -3,7 +3,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MediaRepository } from './media.repository';
 import { CreateMediaAsyncRequest } from './requests/create-media-async.request';
 import { CreateMediaUploadUrlRequest } from './requests/create-media-upload-url.request';
-import { StorageService } from '@repo/backend-lib/services/storage-service/base';
+import { StorageService } from '@repo/backend-lib/services/storage-service';
 import { UserService } from '../users/users.service';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';

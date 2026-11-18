@@ -1,15 +1,21 @@
 const mockUploadLog = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
 const privateStorage = { getUploadUrl: jest.fn() };
 
-jest.mock('@repo/backend-lib/services/log-service/factory', () => ({
-  FactoryLogService: { createLogService: () => mockUploadLog },
-}));
+jest.mock('@repo/backend-lib/services/log-service', () => {
+  // Patch the real class so backend-lib's internal imports see the mock too.
+  const actual = jest.requireActual('@repo/backend-lib/services/log-service');
+  Object.assign(actual.FactoryLogService, { createLogService: () => mockUploadLog });
+  return actual;
+});
 jest.mock('@repo/backend-lib/config/storage', () => ({
   s3PrivateStorageConfig: () => ({ driver: 's3', bucket: 'private-bucket' }),
 }));
-jest.mock('@repo/backend-lib/services/storage-service/factory', () => ({
-  FactoryStorageService: { create: () => privateStorage },
-}));
+jest.mock('@repo/backend-lib/services/storage-service', () => {
+  // Patch the real class so backend-lib's internal imports see the mock too.
+  const actual = jest.requireActual('@repo/backend-lib/services/storage-service');
+  Object.assign(actual.FactoryStorageService, { create: () => privateStorage });
+  return actual;
+});
 jest.mock('@repo/common-lib/utils/generate-uuid', () => ({
   generateUUID: async () => '11111111-1111-4111-8111-111111111111',
 }));

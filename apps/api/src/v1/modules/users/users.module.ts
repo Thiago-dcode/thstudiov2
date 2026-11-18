@@ -17,6 +17,7 @@ import { AiModule } from '../ai/ai.module';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 import { ProfileStatusModule } from '../profile-status/profile-status.module';
 import { AuthCoreModule } from '../auth/auth-core.module';
+import { AccountDeletionCodeMail } from './mails/account-deletion-code.mail';
 import { UserSessionsModule } from '../user-sessions/user-sessions.module';
 import { UsernameHistoryModule } from '../username-history/username-history.module';
 
@@ -26,6 +27,7 @@ import { UsernameHistoryModule } from '../username-history/username-history.modu
     UserService,
     UserRepository,
     NotifyNewUserMail,
+    AccountDeletionCodeMail,
     {
       provide: LogService,
       useFactory: () => {

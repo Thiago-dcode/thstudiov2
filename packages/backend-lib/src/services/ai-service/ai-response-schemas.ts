@@ -1,4 +1,4 @@
-import type { LLMJsonSchemaFormat } from '@repo/backend-lib/services/llm-service/base';
+import type { LLMJsonSchemaFormat } from '@repo/backend-lib/services/llm-service';
 import type { ContentModerationFields } from '@repo/common-lib/types/ai';
 import type { EnumType } from '@repo/common-lib/constants/enums';
 import { MODERATION_SEVERITY } from '@repo/common-lib/constants/enums';

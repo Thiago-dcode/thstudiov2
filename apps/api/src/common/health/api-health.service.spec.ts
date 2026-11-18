@@ -3,14 +3,17 @@ const mockPing = jest.fn();
 const mockQuery = jest.fn();
 let lockClient: { ping: jest.Mock } | null;
 
-jest.mock('@repo/backend-lib/services/log-service/factory', () => ({
-  FactoryLogService: { createLogService: () => mockLog },
-}));
+jest.mock('@repo/backend-lib/services/log-service', () => {
+  // Patch the real class so backend-lib's internal imports see the mock too.
+  const actual = jest.requireActual('@repo/backend-lib/services/log-service');
+  Object.assign(actual.FactoryLogService, { createLogService: () => mockLog });
+  return actual;
+});
 jest.mock('@repo/database', () => ({ getClient: () => ({ query: mockQuery }) }));
 jest.mock('../utils/cron-lock', () => ({ getLockClient: async () => lockClient }));
 
 import { WorkerHost } from '@nestjs/bullmq';
-import { LogService } from '@repo/backend-lib/services/log-service/base';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { ApiHealthService, HEALTH_CHECK_TIMEOUT_MS } from './api-health.service';
 
 class FakeHost extends WorkerHost {

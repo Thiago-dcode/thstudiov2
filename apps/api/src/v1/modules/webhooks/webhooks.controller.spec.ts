@@ -7,7 +7,7 @@ jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({
 
 import { BadRequestException } from '@nestjs/common';
 import { FactoryLogService, LogService, configureLogProcess, runWithLogContext } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service/console';
+import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
 import { WebhooksController } from './webhooks.controller';
 
 const CREATED = 1_800_000_000;
@@ -86,12 +86,12 @@ describe('WebhooksController logging', () => {
     expect(queue.add).not.toHaveBeenCalled();
   });
 
-  it('AC-23: a bad signature gives warn {invalid_signature} and 400, with no signature or secret in any line', async () => {
+  it('AC-23: a bad signature gives critical {invalid_signature} and 400, with no signature or secret in any line', async () => {
     const { call, lines } = setup();
     constructEvent.mockImplementation(() => { throw new Error('No signatures found matching the expected signature'); });
     await expect(call(SIGNATURE, RAW)).rejects.toBeInstanceOf(BadRequestException);
     const [line] = wh(lines, 'Stripe webhook rejected');
-    expect(line.level).toBe('WARN');
+    expect(line.level).toBe('CRITICAL');
     expect(line.extraInfo.reason).toBe('invalid_signature');
     const dumped = JSON.stringify(lines);
     expect(dumped).not.toMatch(/SECRETSIGNATURE|SECRETWEBHOOK|SECRETRAWBODY|whsec_/);

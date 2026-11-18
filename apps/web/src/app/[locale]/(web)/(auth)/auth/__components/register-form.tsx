@@ -1,18 +1,14 @@
 "use client";
 
-import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { Errors } from "@repo/ui/components/custom/errors";
-import { Input } from "@repo/ui/components/shadcn/input";
-import { Label } from "@repo/ui/components/shadcn/label";
-import { Eye, EyeClosed } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useRef, useState } from "react";
-import { Link, useRouter } from "@/i18n/navigation";
+import { type ReactNode, useRef } from "react";
+import { useRouter } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics/track";
 import FormComponent from "@/lib/components/form-component";
-import { FormPrivacyNotice } from "@/lib/components/form-privacy-notice";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { registerServerAction } from "@/modules/auth/server-actions/register.action";
+import { PasswordField } from "./password-field";
 
 export const RegisterForm = ({
   children,
@@ -22,9 +18,7 @@ export const RegisterForm = ({
   initialEmail?: string;
 }) => {
   const t = useTranslations("auth.register");
-  const tNotice = useTranslations("formPrivacyNotice");
   const router = useRouter();
-  const [hidden, setHidden] = useState(true);
   const { result, handleSubmit, errors, inputErrors, cleanErrors, isPending } =
     useHandleAction({
       action: registerServerAction,
@@ -65,106 +59,22 @@ export const RegisterForm = ({
           onChange={handleFieldChange}
         />
 
-        {/* Username Field */}
-        <FormComponent.LabelInput
-          label={t("usernameLabel")}
-          type="text"
-          id="username"
-          name="username"
-          error={inputErrors?.username}
-          defaultValue={result?.inputs?.username}
-          placeholder={t("usernamePlaceholder")}
-          autoComplete="username"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          required
-          onChange={(e) => {
-            e.target.value = normalizeUsername(e.target.value);
-            handleFieldChange();
-          }}
+        <PasswordField
+          label={t("passwordLabel")}
+          placeholder={t("passwordPlaceholder")}
+          autoComplete="new-password"
+          error={inputErrors?.password}
+          onChange={handleFieldChange}
         />
-        {/* Password Field */}
-        <FormComponent.Field>
-          <Label htmlFor="password" className="block">
-            {t("passwordLabel")}
-          </Label>
-          <div className="relative">
-            <Input
-              onChange={() => {
-                handleFieldChange();
-                setHidden(true);
-              }}
-              type={hidden ? "password" : "text"}
-              id="password"
-              name="password"
-              placeholder={t("passwordPlaceholder")}
-              autoComplete="new-password"
-              required
-            />
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                setHidden(!hidden);
-              }}
-              className="absolute top-2 right-2 cursor-pointer flex items-center justify-center text-text-muted"
-            >
-              {hidden ? (
-                <Eye className="size-5" />
-              ) : (
-                <EyeClosed className="size-5" />
-              )}
-            </button>
-          </div>
-          {inputErrors?.password && (
-            <p id="error-password" className="text-xs text-red-500 mt-1">
-              {inputErrors.password}
-            </p>
-          )}
-        </FormComponent.Field>
-        {/* Contract acceptance + age (Terms §2): native `required` blocks the submit in the
-            browser, and the server action re-checks it. */}
-        <FormComponent.Field>
-          <label
-            htmlFor="accept_terms"
-            className="flex cursor-pointer items-start gap-2.5"
-          >
-            <input
-              type="checkbox"
-              id="accept_terms"
-              name="accept_terms"
-              required
-              aria-describedby={
-                inputErrors?.accept_terms ? "error-accept_terms" : undefined
-              }
-              onChange={() => cleanErrors()}
-              className="mt-0.5 size-4 shrink-0 cursor-pointer accent-text"
-            />
-            <span className="text-xs leading-relaxed text-text-muted">
-              {tNotice.rich("acceptTerms", {
-                terms: (chunks) => (
-                  <Link
-                    href="/legal/terms"
-                    target="_blank"
-                    className="text-text underline underline-offset-4"
-                  >
-                    {chunks}
-                  </Link>
-                ),
-              })}
-            </span>
-          </label>
-          {inputErrors?.accept_terms && (
-            <p id="error-accept_terms" className="text-xs! text-red-500 mt-1">
-              {inputErrors.accept_terms}
-            </p>
-          )}
-        </FormComponent.Field>
-        <FormPrivacyNotice context="register" />
+        {/* Contract acceptance + age (Terms §2) is given by submitting: the agreement line under
+            the button says so, and the server action still requires this field. */}
+        <input type="hidden" name="accept_terms" value="on" />
+        {inputErrors?.accept_terms && (
+          <p className="text-xs! text-red-500">{inputErrors.accept_terms}</p>
+        )}
         {children}
         {/* Submit Button */}
-        <FormComponent.SubmitButton isPending={isPending} variant="accent">
+        <FormComponent.SubmitButton isPending={isPending} className="mt-3">
           {t("submit")}
         </FormComponent.SubmitButton>
       </FormComponent.Form>

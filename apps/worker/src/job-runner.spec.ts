@@ -3,7 +3,7 @@ jest.mock('./processors/media.processor', () => ({ MediaProcessor: { handle: (jo
 jest.mock('./processors/backup.processor', () => ({ BackupProcessor: { handle: jest.fn().mockResolvedValue({ status: 'done' }) } }));
 
 import { getLogContext } from '@repo/backend-lib/services/log-service';
-import { LogService } from '@repo/backend-lib/services/log-service/base';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { JOB_PROCESS_MEDIA, MEDIA_QUEUE } from '@repo/common-lib/constants/queues';
 import { runWorkerJob } from './job-runner';
 

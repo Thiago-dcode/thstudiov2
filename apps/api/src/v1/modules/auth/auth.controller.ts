@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Query } from '@nestjs/common';
 import { AppTokenGuard } from 'src/common/guards/app-token.guard';
 import { Resend2faRequest } from './requests/resend-2fa.request';
 import { AuthService } from './auth.service';
@@ -10,11 +10,13 @@ import { UpdatePasswordRequest } from './requests/update-password.request';
 import { Throttle } from '@nestjs/throttler';
 import { CheckPasswordRecoveryAttemptRequest } from './requests/check-password-recovery.request';
 import { RegisterRequest } from './requests/register.request';
+import { Oauth2InitiateRequest } from './requests/oauth2-initiate.request';
+import { Oauth2CallbackRequest } from './requests/oauth2-callback.request';
 
 @Throttle({ medium: { limit: 5, ttl: 10000 } })
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Public()
   @Post('register')
@@ -78,4 +80,32 @@ export class AuthController {
   async updatePassword(@Body() updatePasswordDto: UpdatePasswordRequest) {
     return await this.authService.updatePassword(updatePasswordDto);
   }
+
+
+
+  //oauth strategy
+
+
+  @Public()
+  @Throttle({ medium: { limit: 5, ttl: 60000 } })
+  @Get('oauth2/initiate')
+
+  async Oauth2Initiate(@Query() oauth2InitiateRequest: Oauth2InitiateRequest) {
+
+    return await this.authService.oauth2Initiate(oauth2InitiateRequest)
+
+
+  }
+
+  @Public()
+  @Throttle({ medium: { limit: 5, ttl: 60000 } })
+  @Post('oauth2/callback')
+
+  async Oauth2Callback(@Body() oauthCallbackRequest: Oauth2CallbackRequest) {
+
+    return await this.authService.handleOauth2Callback(oauthCallbackRequest)
+
+
+  }
+
 }

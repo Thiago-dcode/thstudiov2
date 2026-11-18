@@ -2,9 +2,15 @@ import { MimeTypes } from "../types/general";
 import { EnumType } from "./enums";
 
 // ==================== APP CONFIGURATION ====================
-export const FUNNEL_LAST_STEP = 5;
+export const FUNNEL_LAST_STEP = 4;
 /** How long an emailed 2FA code stays valid. */
 export const TWOFA_CODE_TTL_MINUTES = 10;
+/** How long an emailed account-deletion confirmation code stays valid. */
+export const ACCOUNT_DELETION_CODE_TTL_MINUTES = 10;
+/** Wrong guesses allowed on one account-deletion code before it is burned. */
+export const MAX_ACCOUNT_DELETION_CODE_ATTEMPTS = 5;
+/** Deletion codes one account may be sent per day: caps guesses at 25/day even with a stolen session. */
+export const MAX_ACCOUNT_DELETION_CODES_PER_DAY = 5;
 /** Minimum wait between two 2FA codes asked for on purpose ("resend"), so the inbox can't be flooded. */
 export const TWOFA_RESEND_COOLDOWN_SECONDS = 60;
 /**
@@ -13,6 +19,11 @@ export const TWOFA_RESEND_COOLDOWN_SECONDS = 60;
  * user never lands on the 2FA page with a code about to die.
  */
 export const TWOFA_MIN_REUSE_SECONDS = 120;
+/**
+ * How long a sign-in lasts: the API's JWT and `user_sessions.expires_at`, and the web session
+ * cookie that mirrors them. One value so the cookie never outlives (or dies before) the token.
+ */
+export const USER_SESSION_TTL_DAYS = 30;
 export const ALLOWED_IMAGE_FILE_TYPES: MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 export const ALLOWED_VIDEO_FILE_TYPES: MimeTypes[] = ['video/mp4', 'video/quicktime', 'video/mpeg'];
 export const ALLOWED_FILE_TYPES = [...ALLOWED_IMAGE_FILE_TYPES, ...ALLOWED_VIDEO_FILE_TYPES];

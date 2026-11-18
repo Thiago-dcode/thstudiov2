@@ -1,6 +1,6 @@
 import { BadRequestException, HttpException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service/console';
+import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
 import { logConfig } from '@repo/backend-lib/config/logging';
 import { ResponseExceptionFilter } from './response-exception.filter';
 import { RequestService } from '../services/request.service';

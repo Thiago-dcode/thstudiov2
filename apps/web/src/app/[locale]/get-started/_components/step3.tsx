@@ -1,26 +1,110 @@
-import { MAX_CATEGORIES_USER } from "@repo/common-lib/constants/limits";
-import type { CategoryBase } from "@repo/common-lib/types/category";
-import { redirect } from "next/navigation";
-import { userSession } from "@/modules/auth/server-actions/user-session.action";
-import { GetCategoriesProvider } from "@/modules/categories/providers/getCategories.provider";
-import usersService from "@/modules/users/users.service";
-import { Step3Client } from "./step3-client";
+"use client";
+import { FileInput } from "@repo/ui/components/custom/file-input";
+import {
+  FileInputProvider,
+  useInputFile,
+} from "@repo/ui/contexts/file.provider";
+import { useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
+import { ImageUploadProgress } from "@/modules/users/components/image-upload-progress";
+import {
+  ButtonSkipStepFunnel,
+  ButtonStepBackFunnel,
+  ButtonSubmitFunnel,
+  ContainerFormFunnel,
+  useFunnelActions,
+  useFunnelState,
+} from "./funnel.provider";
 
-export default async function Step3() {
-  const user = await userSession();
-  if (!user) {
-    redirect("/");
-  }
-  const userCategories = await usersService.getAllCategories(user.id);
-  const all: CategoryBase[] = userCategories.data || [];
-
+export default function Container() {
   return (
-    <GetCategoriesProvider
-      initialCategories={all}
-      maxSelections={MAX_CATEGORIES_USER}
-      leavesOnly
+    <FileInputProvider
+      allowedMimeTypes={["image/jpeg", "image/jpg", "image/png", "image/webp"]}
     >
-      <Step3Client />
-    </GetCategoriesProvider>
+      <Step3 />
+    </FileInputProvider>
   );
 }
+
+const Step3 = () => {
+  const t = useTranslations("editUser.avatar");
+  const tRoot = useTranslations();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { user, setInputs, handleOnChange, setErrors } = useFunnelActions();
+  const { uploadStatus } = useFunnelState();
+  const { files, errors, maxFileSizeBytes } = useInputFile();
+  const [previewUrl, setPreviewUrl] = useState<string | undefined>(
+    (user as any)?.avatar,
+  );
+  const avatarUrl = (user as { avatar?: string })?.avatar;
+  useEffect(() => {
+    if (files && files.length > 0) {
+      const file = files[0];
+      // Create object URL for preview
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      // Cleanup function to revoke the object URL
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    } else {
+      setPreviewUrl(undefined);
+    }
+  }, [files]);
+  useEffect(() => {
+    if (!errors?.length) return;
+    setErrors(
+      errors.map(({ code, fileName }) =>
+        code === "too_large"
+          ? tRoot("validation.file.tooLarge", {
+              field: fileName,
+              mb: Math.floor((maxFileSizeBytes ?? 0) / (1024 * 1024)),
+            })
+          : tRoot("validation.file.invalidType", { field: fileName }),
+      ),
+    );
+  }, [errors, setErrors, tRoot, maxFileSizeBytes]);
+
+  useEffect(() => {
+    setInputs(inputRef?.current);
+  }, [setInputs]);
+
+  useEffect(() => {
+    if (!avatarUrl) return;
+    setPreviewUrl((current) => (current === avatarUrl ? current : avatarUrl));
+  }, [avatarUrl]);
+
+  return (
+    <ContainerFormFunnel>
+      <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto p-4">
+        {previewUrl && (
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <h3 className="text-sm font-medium">{t("preview")}</h3>
+            <div className="relative w-32 h-32 overflow-hidden border-4 border-fg-2">
+              <img
+                src={previewUrl}
+                alt={t("previewAlt")}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+      <FileInput
+        onChange={() => {
+          handleOnChange();
+        }}
+        ref={inputRef}
+        name="avatar"
+        id="avatar-input"
+      />
+
+      <ImageUploadProgress status={uploadStatus} />
+      <ButtonSubmitFunnel />
+      {/* A photo is optional; it can be added later from the setup guide. */}
+      <ButtonSkipStepFunnel />
+
+      <ButtonStepBackFunnel />
+    </ContainerFormFunnel>
+  );
+};

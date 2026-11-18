@@ -13,7 +13,7 @@
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --passWithNoTests --watch",
     "test:debug": "node --inspect-brk --experimental-vm-modules -r tsconfig-paths/register -r ts-node/register node_modules/jest/bin/jest.js --runInBand",
     "test:e2e": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./test/jest-e2e.json",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\""
+    "lint": "node --max-old-space-size=6144 ./node_modules/eslint/bin/eslint.js \"{src,apps,libs,test}/**/*.ts\""
   },
   "dependencies": {
     "@keyv/redis": "^5.1.6",

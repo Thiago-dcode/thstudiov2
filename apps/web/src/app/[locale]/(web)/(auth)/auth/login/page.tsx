@@ -1,10 +1,17 @@
 import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
-import authComponent from "@/lib/components/page-component";
+import { serverEnv } from "@/env/server";
+import { FormPrivacyNotice } from "@/lib/components/form-privacy-notice";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import { getRedirectTo } from "@/modules/auth/server-actions/redirect-to.action";
 import { getRememberMe } from "@/modules/auth/server-actions/user-session.action";
+import {
+  AuthCard,
+  AuthDivider,
+  AuthFooter,
+  AuthSwitchLink,
+} from "../__components/auth-card";
 import { LoginForm } from "../__components/login-form";
+import { Oauth2Strategy } from "../__components/oauth2-strategy";
 
 /**
  * Indexable, unlike the rest of the auth surface: "Sign in" is the page Google most often shows as
@@ -28,48 +35,28 @@ export async function generateMetadata({
 
 export default async function Login() {
   const t = await getTranslations("auth.login");
+  const registrationIsClosed = serverEnv.REGISTRATION_IS_CLOSED === 1;
   const [rememberMe, redirectTo] = await Promise.all([
     getRememberMe(),
     getRedirectTo(),
   ]);
   return (
-    <authComponent.Container>
-      <authComponent.Content>
-        <authComponent.Header>
-          <authComponent.Title title={t("title")} />
-          <authComponent.SubTitle subTitle={t("subtitle")} />
-        </authComponent.Header>
-        <LoginForm rememberMe={rememberMe} redirectTo={redirectTo} />
-
-        <Link
-          href="/auth/password-recovery"
-          className="text-sm transition-colors text-text-muted hover:text-text "
-        >
-          {t("problemWithLogin")}
-        </Link>
-      </authComponent.Content>
-
-      <authComponent.Footer>
-        <div>
-          {" "}
-          {t("agreePrefix")}{" "}
-          <div>
-            <Link
-              href="/legal/terms"
-              className="text-blue-600 hover:text-blue-500 underline"
-            >
-              {t("termsOfService")}
-            </Link>{" "}
-            {t("and")}{" "}
-            <Link
-              href="/legal/privacy"
-              className="text-blue-600 hover:text-blue-500 underline"
-            >
-              {t("privacyPolicy")}
-            </Link>
-          </div>
-        </div>
-      </authComponent.Footer>
-    </authComponent.Container>
+    <AuthCard title={t("title")}>
+      <Oauth2Strategy />
+      <AuthDivider />
+      <LoginForm rememberMe={rememberMe} redirectTo={redirectTo} />
+      <AuthFooter>
+        {/* While registration is closed the sign-up page only lets invitations through. */}
+        {registrationIsClosed ? null : (
+          <AuthSwitchLink
+            prompt={t("noAccount")}
+            label={t("signUp")}
+            href="/auth/register"
+          />
+        )}
+        {/* "Continue with Google" can create the account, so the sign-up agreement applies. */}
+        <FormPrivacyNotice context="signInAgreement" className="max-w-xs" />
+      </AuthFooter>
+    </AuthCard>
   );
 }

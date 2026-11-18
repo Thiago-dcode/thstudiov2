@@ -11,7 +11,7 @@ import { EdgePurgeLedger } from './edge-purge-ledger';
 
 /**
  * Purges an artist's edge-cached public pages from Cloudflare when they change (no HTTP surface).
- * Takes the user repository directly rather than importing `UserModule`, like `AccountDeletionModule`.
+ * Takes the user repository directly rather than importing `UserModule`.
  */
 @Module({
   imports: [

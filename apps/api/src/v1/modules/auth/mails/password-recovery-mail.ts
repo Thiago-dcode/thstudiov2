@@ -1,14 +1,15 @@
-import { BaseUser } from '@repo/common-lib/types/user';
+import { UserSchema } from '@repo/common-lib/schemas/user';
 import { mailingNoreplyEmail } from '@repo/backend-lib/config/mailling';
-import { ViewService } from '@repo/backend-lib/services/view-service/base';
+import { ViewService } from '@repo/backend-lib/services/view-service';
 import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 import { PasswordRecoveryAttempt } from '@repo/common-lib/types/auth';
 import { ApiMailService } from 'src/common/mails/api-mail-service';
 import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-preferences.service';
+import { mailGreetingName } from 'src/common/mails/greeting-name';
 
-/** Mail only needs identity fields; `User` is not assignable to `BaseUser` (flat benefit/invitation FKs). */
-export type PasswordRecoveryMailUser = Pick<BaseUser, 'email' | 'username'>;
+/** The recipient and the greeting name; `name` is a profile field a core `BaseUser` lacks. */
+export type PasswordRecoveryMailUser = Pick<UserSchema, 'email' | 'name'>;
 
 @Injectable()
 export class PasswordRecoveryMail extends ApiMailService {
@@ -34,7 +35,7 @@ export class PasswordRecoveryMail extends ApiMailService {
     mail.viewParams = {
       viewPath: 'emails/auth/password-recovery-mail',
       data: {
-        user: mail.user,
+        greetingName: mailGreetingName(mail.user),
         translatePath: 'password-recovery-mail',
         passwordRecoveryAttempt: mail.passwordRecoveryAttempt,
       },

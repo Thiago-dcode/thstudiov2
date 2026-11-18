@@ -21,7 +21,8 @@ export type BaseUser = Omit<
 
 // BaseUserWithSecrets includes the password field
 export type BaseUserWithSecrets = BaseUser & {
-  password: string;
+  /** Null for accounts created through an OAuth provider, which never set one. */
+  password: string | null;
   twofa_code?: string;
   twofa_attempts?: number;
 };
@@ -42,6 +43,8 @@ export type User = Omit<
     redeemed:boolean,
   } | null;
   // invitation_link: InvitationLink | null;
+  /** Only on the owner's own read: `false` for accounts created through an OAuth provider. */
+  has_password?: boolean;
 };
 
 export type ProfileAddress = {
@@ -147,9 +150,17 @@ export type AccountDeletionJobInput = { user_id: number };
 
 /** Body of `POST users/:id/deletion`. */
 export type RequestAccountDeletionInput = {
-  password: string;
+  /** The 6-digit code emailed by `POST /users/:id/deletion/code`. Works with or without a password. */
+  code: string;
   /** Stop the paid subscription's renewal now instead of on the day of the hard delete. */
   cancel_subscription?: boolean;
+};
+
+/** Answer of `POST /users/:id/deletion/code`. */
+export type AccountDeletionCodeResult = {
+  expires_at: Date;
+  /** When a new code may be asked for. */
+  resend_available_at: Date;
 };
 
 export type AccountDeletionRequestResult = {

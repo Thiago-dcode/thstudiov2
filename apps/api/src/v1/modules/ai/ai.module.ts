@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { LLMService } from '@repo/backend-lib/services/llm-service/base';
-import { FactoryLLMService } from '@repo/backend-lib/services/llm-service/factory';
+import { LLMService } from '@repo/backend-lib/services/llm-service';
+import { FactoryLLMService } from '@repo/backend-lib/services/llm-service';
 import { openAiLLMConfig } from '@repo/backend-lib/config/llm';
 import { AiService } from '@repo/backend-lib/services/ai-service';
 

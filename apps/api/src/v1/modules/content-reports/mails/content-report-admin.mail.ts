@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { mailingAdmins, mailingNoreplyEmail } from '@repo/backend-lib/config/mailling';
-import { ViewService } from '@repo/backend-lib/services/view-service/base';
+import { ViewService } from '@repo/backend-lib/services/view-service';
 import type { ContentReport } from '@repo/common-lib/types/content-report';
 import { ApiMailService } from 'src/common/mails/api-mail-service';
 

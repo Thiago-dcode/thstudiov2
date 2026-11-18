@@ -20,10 +20,10 @@ import {
   compressionLevelToQuality,
   THUMBNAIL_MAX_EDGE_PX,
   THUMBNAIL_TARGET_BYTES,
-} from '@repo/backend-lib/services/compress-service/base';
-import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
-import { FactoryStorageService } from '@repo/backend-lib/services/storage-service/factory';
-import type { S3StorageConfig } from '@repo/backend-lib/services/storage-service/types';
+} from '@repo/backend-lib/services/compress-service';
+import { FactoryCompressService } from '@repo/backend-lib/services/compress-service';
+import { FactoryStorageService } from '@repo/backend-lib/services/storage-service';
+import type { S3StorageConfig } from '@repo/backend-lib/services/storage-service';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import Logger from '@repo/backend-lib/utils/console';
 import {
@@ -237,6 +237,10 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
       seo_title: defaultSeoText,
       seo_alt: defaultSeoText,
       compression_level: compressionLevel,
+      // The asset is fully written above, so the row is finished. `status` defaults to
+      // COMPLETED and `media_completed_has_completed_at` requires a timestamp to go with it.
+      status: 'COMPLETED',
+      completed_at: new Date(),
     };
     cleanObj(mediaData);
 

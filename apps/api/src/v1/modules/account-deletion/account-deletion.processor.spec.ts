@@ -1,17 +1,7 @@
-const paypalCancel = jest.fn();
-jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({
-  stripe: {
-    subscriptions: { cancel: jest.fn() },
-    customers: { del: jest.fn() },
-  },
-  stripeWebhookSecret: '',
-}));
-jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({
-  paypal: Promise.resolve({ subscription: { cancel: (...args: unknown[]) => paypalCancel(...args) } }),
-}));
+// The processor imports UserService, which loads the payment clients.
+jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({ stripe: {}, stripeWebhookSecret: '' }));
+jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({ paypal: {} }));
 
-import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
-import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import {
   JOB_DELETE_USER_ACCOUNT,
   JOB_SEND_ACCOUNT_DELETION_WARNING,
@@ -22,18 +12,12 @@ describe('AccountDeletionProcessor', () => {
   const userRepository = {
     findById: jest.fn(),
     getDeletionState: jest.fn(),
-    hardDeleteById: jest.fn(),
     markDeletionWarningSent: jest.fn(),
   };
-  const planSubscriptionsRepository = { findActiveSubscription: jest.fn() };
-  const storageService = { deleteDirectory: jest.fn() };
-  const tempUploads = { deleteUser: jest.fn() };
-  const helpers = { deleteManyCached: jest.fn() };
+  const userService = { deleteAccount: jest.fn() };
   const mailService = { sendAsync: jest.fn() };
   const warningMail = { setData: jest.fn((data) => ({ data })) };
-  const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn(), name: jest.fn(), flushAsync: jest.fn() };
-  const usernameHistoryRepository = { findReservedByUser: jest.fn() };
-  const eventEmitter = { emit: jest.fn() };
+  const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn(), flushAsync: jest.fn() };
 
   const user = {
     id: 7,
@@ -57,174 +41,29 @@ describe('AccountDeletionProcessor', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    logger.name.mockReturnValue(logger);
-    storageService.deleteDirectory.mockResolvedValue(true);
-    tempUploads.deleteUser.mockResolvedValue(true);
-    userRepository.hardDeleteById.mockResolvedValue(true);
     userRepository.findById.mockResolvedValue(user);
-    planSubscriptionsRepository.findActiveSubscription.mockResolvedValue(null);
-    usernameHistoryRepository.findReservedByUser.mockResolvedValue(['ana-old']);
     processor = new AccountDeletionProcessor(
       userRepository as never,
-      planSubscriptionsRepository as never,
-      storageService as never,
-      helpers as never,
+      userService as never,
       mailService as never,
       warningMail as never,
       logger as never,
-      tempUploads as never,
-      usernameHistoryRepository as never,
-      eventEmitter as never,
     );
   });
 
   describe('hard delete', () => {
-    it('aborts when the account was reopened', async () => {
-      userRepository.getDeletionState.mockResolvedValue(state({ flagged: false }));
-
-      await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({ deleted: false, reason: 'reopened' });
-      expect(storageService.deleteDirectory).not.toHaveBeenCalled();
-      expect(userRepository.hardDeleteById).not.toHaveBeenCalled();
-    });
-
-    it('aborts when the grace period has not passed', async () => {
-      userRepository.getDeletionState.mockResolvedValue(state({ warned: true }));
-
-      await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({ deleted: false, reason: 'not-due' });
-      expect(userRepository.hardDeleteById).not.toHaveBeenCalled();
-    });
-
-    it('cancels billing, wipes the storage folder, then deletes the rows', async () => {
-      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
-      planSubscriptionsRepository.findActiveSubscription.mockResolvedValue({ stripe_id: 'sub_1', paypal_id: null });
+    it('delegates to UserService.deleteAccount without forcing and returns its result', async () => {
+      userService.deleteAccount.mockResolvedValue({ deleted: true });
 
       await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({ deleted: true });
-
-      expect(stripe.subscriptions.cancel).toHaveBeenCalledWith('sub_1');
-      expect(stripe.customers.del).toHaveBeenCalledWith('cus_1');
-      expect(storageService.deleteDirectory).toHaveBeenCalledWith(`users/${user.public_id}/`);
-      expect(tempUploads.deleteUser).toHaveBeenCalledWith(user.public_id);
-      expect(userRepository.hardDeleteById).toHaveBeenCalledWith(7, 15);
-      expect(helpers.deleteManyCached).toHaveBeenCalled();
+      expect(userService.deleteAccount).toHaveBeenCalledWith(7);
     });
 
-    it('purges the cached pages of every name the account had, read before the rows are gone', async () => {
-      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
+    it('rethrows a failed delete so the job retries', async () => {
+      userService.deleteAccount.mockRejectedValue(new Error('stripe down'));
 
-      await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({ deleted: true });
-
-      expect(usernameHistoryRepository.findReservedByUser).toHaveBeenCalledWith(7);
-      // `username_history` cascades with the user row, so it must be read first.
-      expect(usernameHistoryRepository.findReservedByUser.mock.invocationCallOrder[0]).toBeLessThan(
-        userRepository.hardDeleteById.mock.invocationCallOrder[0],
-      );
-      expect(eventEmitter.emit).toHaveBeenCalledWith(
-        ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
-        expect.objectContaining({ userId: 7, usernames: ['ana', 'ana-old'] }),
-      );
-      expect(eventEmitter.emit.mock.invocationCallOrder[0]).toBeGreaterThan(
-        userRepository.hardDeleteById.mock.invocationCallOrder[0],
-      );
-    });
-
-    it('still hard-deletes when the reserved names cannot be read, purging the current name only', async () => {
-      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
-      usernameHistoryRepository.findReservedByUser.mockRejectedValue(new Error('pool exhausted'));
-
-      await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({ deleted: true });
-
-      expect(userRepository.hardDeleteById).toHaveBeenCalledWith(7, 15);
-      expect(logger.warn).toHaveBeenCalledWith(
-        'Could not read the reserved usernames for the edge purge',
-        expect.objectContaining({ error_message: expect.stringContaining('pool exhausted') }),
-        expect.objectContaining({ operation: 'hard-delete' }),
-      );
-      expect(eventEmitter.emit).toHaveBeenCalledWith(
-        ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
-        expect.objectContaining({ userId: 7, usernames: ['ana'] }),
-      );
-    });
-
-    it('sends no purge when the rows were not deleted', async () => {
-      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
-      userRepository.hardDeleteById.mockResolvedValue(false);
-
-      await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({
-        deleted: false,
-        reason: 'changed-during-delete',
-      });
-      expect(eventEmitter.emit).not.toHaveBeenCalled();
-    });
-
-    it('still deletes the account when clearing pending uploads throws', async () => {
-      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
-      planSubscriptionsRepository.findActiveSubscription.mockResolvedValue(null);
-      tempUploads.deleteUser.mockRejectedValue(new Error('PRIVATE_BUCKET is not set'));
-
-      await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({ deleted: true });
-      expect(userRepository.hardDeleteById).toHaveBeenCalledWith(7, 15);
-    });
-
-    it('AC-28: logs one "Account payments cancelled" with the outcome flags and no ids or emails in the fields', async () => {
-      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
-      planSubscriptionsRepository.findActiveSubscription.mockResolvedValue({ stripe_id: 'sub_1', paypal_id: null });
-
-      await run(JOB_DELETE_USER_ACCOUNT);
-
-      const calls = logger.info.mock.calls.filter((c) => c[0] === 'Account payments cancelled');
-      expect(calls).toHaveLength(1);
-      expect(calls[0][1]).toEqual({ stripe_subscription_cancelled: true, stripe_customer_deleted: true, paypal_cancelled: false });
-      expect(calls[0][2]).toEqual({ operation: 'hard-delete' });
-      expect(JSON.stringify(calls)).not.toMatch(/ana@example\.com|sub_1|cus_1/);
-    });
-
-    it('AC-28: a missing Stripe subscription is reported as not cancelled', async () => {
-      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
-      planSubscriptionsRepository.findActiveSubscription.mockResolvedValue({ stripe_id: 'sub_1', paypal_id: null });
-      (stripe.subscriptions.cancel as jest.Mock).mockRejectedValueOnce({ code: 'resource_missing' });
-
-      await run(JOB_DELETE_USER_ACCOUNT);
-
-      const call = logger.info.mock.calls.find((c) => c[0] === 'Account payments cancelled')!;
-      expect(call[1]).toMatchObject({ stripe_subscription_cancelled: false, stripe_customer_deleted: true });
-    });
-
-    it('treats an already-cancelled Stripe subscription as done', async () => {
-      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
-      planSubscriptionsRepository.findActiveSubscription.mockResolvedValue({ stripe_id: 'sub_1', paypal_id: null });
-      (stripe.subscriptions.cancel as jest.Mock).mockRejectedValueOnce({ code: 'resource_missing' });
-
-      await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({ deleted: true });
-    });
-
-    it('still deletes, and alerts, when PayPal refuses the cancellation', async () => {
-      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
-      planSubscriptionsRepository.findActiveSubscription.mockResolvedValue({ stripe_id: null, paypal_id: 'I-123' });
-      paypalCancel.mockResolvedValue(null);
-
-      await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({ deleted: true });
-      expect(logger.critical).toHaveBeenCalledWith(
-        'PayPal subscription of deleted user could not be cancelled; check it manually',
-        expect.objectContaining({ paypal_subscription_id: 'I-123' }),
-        expect.objectContaining({ operation: 'hard-delete' }),
-      );
-    });
-
-    it('refuses a malformed public_id instead of widening the storage delete', async () => {
-      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
-      userRepository.findById.mockResolvedValue({ ...user, public_id: '' });
-
-      await expect(run(JOB_DELETE_USER_ACCOUNT)).rejects.toThrow('unexpected public_id');
-      expect(storageService.deleteDirectory).not.toHaveBeenCalled();
-      expect(userRepository.hardDeleteById).not.toHaveBeenCalled();
-    });
-
-    it('keeps the rows when the storage folder could not be deleted (retried later)', async () => {
-      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
-      storageService.deleteDirectory.mockResolvedValue(false);
-
-      await expect(run(JOB_DELETE_USER_ACCOUNT)).rejects.toThrow();
-      expect(userRepository.hardDeleteById).not.toHaveBeenCalled();
+      // Retry/critical logging per attempt is covered in account-deletion.processor.attempts.spec.ts.
+      await expect(run(JOB_DELETE_USER_ACCOUNT)).rejects.toThrow('stripe down');
     });
   });
 

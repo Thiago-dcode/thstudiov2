@@ -25,7 +25,7 @@ const normalizeEmail = (email: string) => email.trim().toLowerCase();
 export class UserAuthDevicesService {
   constructor(
     private readonly userAuthDevicesRepository: UserAuthDevicesRepository,
-  ) {}
+  ) { }
   async getOneByAuthDevice(authDevice: {
     user_id: number;
     user_agent: string;
@@ -56,6 +56,14 @@ export class UserAuthDevicesService {
     );
   }
 
+
+  //If has one means that user validated the email once.
+  async userHasOne(userId: number) {
+
+    return await this.userAuthDevicesRepository.userHasOne(userId);
+
+  }
+
   /** Claims the pre-validated device for a just-registered user; null means 2FA is still needed. */
   async claimPreValidated(device: {
     email: string;
@@ -79,6 +87,8 @@ export class UserAuthDevicesService {
       clipUserAgent(updateUserAuthDeviceInput),
     );
   }
+
+
 
   // remove(id: number) {
   //   return `This action removes a #${id} plan`;

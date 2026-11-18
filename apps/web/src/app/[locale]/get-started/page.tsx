@@ -49,22 +49,18 @@ export default async function GetStartedLayout() {
   });
   const stepsContent = {
     1: {
+      title: t("steps.username.title"),
+      subTitle: t("steps.username.subtitle"),
+    },
+    2: {
       title: t("steps.profile.title"),
       subTitle: t("steps.profile.subtitle"),
     },
-    2: {
+    3: {
       title: t("steps.photo.title"),
       subTitle: t("steps.photo.subtitle"),
     },
-    3: {
-      title: t("steps.categories.title"),
-      subTitle: t("steps.categories.subtitle"),
-    },
     4: {
-      title: t("steps.location.title"),
-      subTitle: t("steps.location.subtitle"),
-    },
-    5: {
       title: t("steps.plan.title"),
       subTitle: t("steps.plan.subtitle"),
     },
@@ -79,7 +75,7 @@ export default async function GetStartedLayout() {
       <PageComponent.Container
         className={cn(
           "max-w-2xl ",
-          { "max-w-lg": user.funnel_step === 1 || user.funnel_step === 2 },
+          { "max-w-lg": user.funnel_step < FUNNEL_LAST_STEP },
           {
             " max-w-full justify-start": user.funnel_step === FUNNEL_LAST_STEP,
           },

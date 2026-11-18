@@ -1,7 +1,10 @@
 const mockEmailLog = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
-jest.mock('@repo/backend-lib/services/log-service/factory', () => ({
-  FactoryLogService: { createLogService: () => mockEmailLog },
-}));
+jest.mock('@repo/backend-lib/services/log-service', () => {
+  // Patch the real class so backend-lib's internal imports see the mock too.
+  const actual = jest.requireActual('@repo/backend-lib/services/log-service');
+  Object.assign(actual.FactoryLogService, { createLogService: () => mockEmailLog });
+  return actual;
+});
 jest.mock('@repo/common-lib/config/utils', () => ({
   getConfigValue: () => ({ address: 'Street 1', social: { instagram: 'a11' }, url: 'https://app.test' }),
 }));

@@ -164,7 +164,9 @@ async function bootstrap() {
       const forwardToUrl = `${configService.get('api.v1Url')}/webhooks/stripe`;
       bootstrapLogger.info('Stripe CLI listener: starting', { forwardToUrl });
 
-      const stripeArgs = ['listen', '--forward-to', forwardToUrl];
+      // Stripe CLI >= 1.5x refuses to listen without an explicit event set;
+      // `--all-snapshot` restores the old "forward every v1 event" default.
+      const stripeArgs = ['listen', '--all-snapshot', '--forward-to', forwardToUrl];
       bootstrapLogger.info('Stripe CLI listener: spawn args', { stripeArgs });
 
       const stripeProcess = spawn('stripe', stripeArgs, {

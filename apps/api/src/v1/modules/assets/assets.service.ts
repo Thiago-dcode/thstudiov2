@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AssetsRepository } from './assets.repository';
-import { StorageService } from '@repo/backend-lib/services/storage-service/base';
+import { StorageService } from '@repo/backend-lib/services/storage-service';
 import { Helpers } from 'src/common/services/helpers.service';
 import { generateValidSlug } from '@repo/common-lib/utils/generate-valid-slug';
 import { CreateAssetInput, Asset } from '@repo/common-lib/types/assets';

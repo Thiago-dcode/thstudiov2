@@ -64,6 +64,11 @@ export class ApiException extends HttpException {
     return new ApiException(API_ERRORS.ACCOUNT_STRIKES_EXCEEDED, message, HttpStatus.FORBIDDEN);
   }
 
+  /** The username is live or reserved for someone else. A fixed code, so a client can remember it. */
+  static usernameTaken(message = 'Username is already taken') {
+    return new ApiException(API_ERRORS.USERNAME_TAKEN, message, HttpStatus.CONFLICT);
+  }
+
   /** The user already owns another item of the same kind with this title. Scoped per user, never global. */
   static titleAlreadyExists(message: string) {
     return new ApiException(API_ERRORS.TITLE_ALREADY_EXISTS, message, HttpStatus.CONFLICT);

@@ -1,0 +1,10 @@
+{
+  "SUBJECT": "Confirme a exclusão da sua conta",
+  "HI": "Olá",
+  "HI_NO_NAME": "Olá",
+  "TITLE": "Exclusão de conta",
+  "DESCRIPTION": "Alguém pediu para excluir sua conta. Digite este código em Configurações para confirmar.",
+  "CODE_LABEL": "Seu código de confirmação:",
+  "SECURITY_WARNING": "Se você não pediu para excluir sua conta, ignore este e-mail: nada muda sem este código.",
+  "EXPIRATION_INFO": "Este código expirará em 10 minutos."
+}

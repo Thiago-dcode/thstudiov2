@@ -1,19 +1,24 @@
-import { BaseUser, User } from '@repo/common-lib/types/user';
+import { UserSchema } from '@repo/common-lib/schemas/user';
 import { buildRedirectToUrl } from '@repo/common-lib/constants/redirect-to';
 import { mailingNoreplyEmail } from '@repo/backend-lib/config/mailling';
-import { ViewService } from '@repo/backend-lib/services/view-service/base';
+import { ViewService } from '@repo/backend-lib/services/view-service';
 import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 import { ConfigService } from '@nestjs/config';
 import { ApiMailService } from 'src/common/mails/api-mail-service';
 import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-preferences.service';
+import { mailGreetingName } from 'src/common/mails/greeting-name';
 
 /** Curated feature count — aligned with notify-new-user-email.FEATURES in i18n. */
 export const WELCOME_FEATURE_COUNT = 4;
 
+/** What the welcome mail needs. `name` is a profile field, so a core `BaseUser` does not carry it. */
+export type WelcomeMailUser = Pick<UserSchema, 'email' | 'name'>;
+
+
 @Injectable()
 export class NotifyNewUserMail extends ApiMailService {
-  private user: BaseUser | User;
+  private user: WelcomeMailUser;
 
   constructor(
     viewService: ViewService,
@@ -28,7 +33,7 @@ export class NotifyNewUserMail extends ApiMailService {
     }, i18nService);
   }
 
-  setUser(user: BaseUser | User, lang?: string) {
+  setUser(user: WelcomeMailUser, lang?: string) {
     const mail = new NotifyNewUserMail(
       this.viewService,
       this.emailPreferencesService!,
@@ -45,7 +50,7 @@ export class NotifyNewUserMail extends ApiMailService {
     mail.viewParams = {
       viewPath: 'emails/users/notify-new-user',
       data: {
-        user: mail.user,
+        greetingName: mailGreetingName(mail.user),
         features,
         translatePath: 'notify-new-user-email',
         redirectHref: buildRedirectToUrl(
@@ -59,12 +64,15 @@ export class NotifyNewUserMail extends ApiMailService {
   }
 
   protected async buildEnvelope() {
+    // No name yet (email sign-ups name themselves in onboarding): the nameless subject, never the
+    // random username.
+    const name = mailGreetingName(this.user);
     return {
       from: `${mailingNoreplyEmail}`,
       to: this.user.email,
-      subject: this.t('notify-new-user-email.WELCOME_SUBJECT', {
-        args: { username: this.user.username },
-      }),
+      subject: name
+        ? this.t('notify-new-user-email.WELCOME_SUBJECT', { args: { name } })
+        : this.t('notify-new-user-email.WELCOME_SUBJECT_NO_NAME'),
     };
   }
 }

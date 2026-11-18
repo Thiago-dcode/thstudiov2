@@ -1,5 +1,4 @@
 import { ModelNotExist } from 'src/common/validators/model-not-exist.validtor';
-import { NotIn } from 'src/common/validators/not-in.validtor';
 import {
   IsEmail,
   IsNotEmpty,
@@ -10,24 +9,6 @@ import {
   IsOptional,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { normalizeUsername } from '@repo/common-lib/utils/username';
-
-const FORBIDDEN_USERNAMES = [
-  'admin',
-  'a11studio',
-  'a11studio_support',
-  'www',
-  'legal',
-  'support',
-  'billing',
-  'moderator',
-  'moderators',
-  'staff',
-  'security',
-  'system',
-  'root',
-  'verification',
-] as const;
 
 export class RegisterRequest {
   @IsEmail()
@@ -36,21 +17,8 @@ export class RegisterRequest {
   @ModelNotExist('users', 'email')
   email: string;
 
-  @Transform(({ value }) =>
-    typeof value === 'string' ? normalizeUsername(value) : value,
-  )
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(3)
-  @MaxLength(20)
-  @Matches(/^[a-z0-9]+$/, {
-    message: 'username must be alphanumeric with no spaces',
-  })
-  @NotIn([...FORBIDDEN_USERNAMES], {
-    message: 'username is not allowed',
-  })
-  @ModelNotExist('users', 'username')
-  username: string;
+  // No `username`: the API generates one at sign-up and onboarding replaces it from the
+  // name (`whitelist: true` strips it if an older client still sends one).
 
   @IsString()
   @IsNotEmpty()

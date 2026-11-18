@@ -1,6 +1,6 @@
 import { getConfigValue } from '@repo/common-lib/config/utils';
-import { FactoryStorageService } from '@repo/backend-lib/services/storage-service/factory';
-import type { S3StorageConfig } from '@repo/backend-lib/services/storage-service/types';
+import { FactoryStorageService } from '@repo/backend-lib/services/storage-service';
+import type { S3StorageConfig } from '@repo/backend-lib/services/storage-service';
 import Logger from '@repo/backend-lib/utils/console';
 import {
   DESTRUCTIVE_PASSWORD_ENV,

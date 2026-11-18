@@ -6,7 +6,7 @@ jest.mock('@repo/backend-lib/utils', () => ({
 }));
 
 import { FactoryLogService, LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service/console';
+import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
 import { JOB_RECORD_MEDIA_MODERATION } from '@repo/common-lib/constants/queues';
 import { PERMANENT_BAN_THRESHOLD, STRIKES_TO_BAN } from '@repo/common-lib/constants/limits';
 import { AiProcessor } from './ai.processor';

@@ -1,0 +1,10 @@
+{
+  "SUBJECT": "Confirm your account deletion",
+  "HI": "Hi",
+  "HI_NO_NAME": "Hello",
+  "TITLE": "Account deletion",
+  "DESCRIPTION": "Someone asked to delete your account. Enter this code in Settings to confirm.",
+  "CODE_LABEL": "Your confirmation code:",
+  "SECURITY_WARNING": "If you didn't ask to delete your account, ignore this email: nothing changes without this code.",
+  "EXPIRATION_INFO": "This code will expire in 10 minutes."
+}

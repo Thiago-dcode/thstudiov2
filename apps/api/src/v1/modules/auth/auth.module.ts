@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { GoogleOauth2Service } from '@repo/backend-lib/services/googleapi-service';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { UserRepository } from '../users/users.repository';
+import { UserModule } from '../users/users.module';
 import { UserAuthDevicesModule } from '../user-auth-devices/user-auth-devices.module';
 import { UserSessionsModule } from '../user-sessions/user-sessions.module';
 import { TwoFAMail } from './mails/twofa-mail';
@@ -13,7 +15,7 @@ import { UserBenefitModule } from '../user-benefit/user-benefit.module';
 import { WaitListModule } from '../wait-list/wait-list.module';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 import { AuthCoreModule } from './auth-core.module';
-import { UsernameHistoryModule } from '../username-history/username-history.module';
+import { UserOauthProvidersModule } from '../user-oauth-providers/user-oauth-providers.module';
 
 @Module({
   imports: [
@@ -26,15 +28,24 @@ import { UsernameHistoryModule } from '../username-history/username-history.modu
     UserBenefitModule,
     WaitListModule,
     EmailPreferencesModule,
-    UsernameHistoryModule,
+    UserOauthProvidersModule,
+    UserModule,
   ],
   controllers: [AuthController],
   providers: [
     AuthService,
-    UserRepository,
     TwoFAMail,
     PasswordRecoveryMail,
+    {
+      provide: GoogleOauth2Service,
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) =>
+        new GoogleOauth2Service({
+          clientId: configService.get('google.oauth.clientId'),
+          clientSecret: configService.get('google.oauth.clientSecret'),
+        }),
+    },
   ],
   exports: [AuthCoreModule],
 })
-export class AuthModule {}
+export class AuthModule { }

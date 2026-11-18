@@ -2,8 +2,8 @@ import { LOG_CHANNELS, LOG_CHANNEL_PATTERN, LogChannel } from './channels';
 import { FileLogService } from './file-log.service';
 
 describe('LOG_CHANNELS', () => {
-  it('AC-12: has exactly 49 entries, sorted and unique', () => {
-    expect(LOG_CHANNELS).toHaveLength(49);
+  it('AC-12: has exactly 50 entries, sorted and unique', () => {
+    expect(LOG_CHANNELS).toHaveLength(50);
     expect(new Set(LOG_CHANNELS).size).toBe(LOG_CHANNELS.length);
     expect([...LOG_CHANNELS]).toEqual([...LOG_CHANNELS].sort());
   });

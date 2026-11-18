@@ -5,6 +5,7 @@ import {
   USER_AUTH_COOKIE_EXPIRATION_DATE,
   USER_AUTH_COOKIE_NAME,
 } from "@repo/common-lib/constants/cookies";
+import { USER_SESSION_TTL_DAYS } from "@repo/common-lib/constants/limits";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
 import { addDays, addMonths } from "date-fns";
 import type {
@@ -53,7 +54,7 @@ export const setUserSession = async (userAuth: UserAuth) => {
 };
 /**
  * Rewrites the username in the signed-in user's session cookie (after a rename) without touching
- * its lifetime: `setUserSession` would push the expiry a day out, past the token it mirrors.
+ * its lifetime: `setUserSession` would push the expiry a full `USER_SESSION_TTL_DAYS` out, past the token it mirrors.
  */
 export const patchUserSession = async (
   patch: Partial<Pick<UserAuth, "username">>,
@@ -114,7 +115,8 @@ export const setUserSessionByCookie = async (
   userAuth: UserAuth,
   cookies: RequestCookies | ResponseCookies,
 ) => {
-  const expireAt = addDays(new Date(), 1);
+  // Same lifetime as the API's token and session row (`AuthService.handleLogin`).
+  const expireAt = addDays(new Date(), USER_SESSION_TTL_DAYS);
   const cookieOptions = {
     ...SECURE_COOKIE_FLAGS,
     expires: expireAt,

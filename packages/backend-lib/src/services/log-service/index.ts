@@ -1,3 +1,4 @@
+export * from './types';
 
 export * from './log.service';
 export * from './factory-log.service';

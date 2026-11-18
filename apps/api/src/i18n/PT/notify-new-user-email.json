@@ -1,5 +1,6 @@
 {
-  "WELCOME_SUBJECT": "Bem-vindo, {username} — sua arte vem primeiro",
+  "WELCOME_SUBJECT": "Bem-vindo, {name} — sua arte vem primeiro",
+  "WELCOME_SUBJECT_NO_NAME": "Bem-vindo ao A11STUDIO — sua arte vem primeiro",
   "HI": "Bem-vindo",
   "WELCOME": "Sua jornada começa aqui.",
   "WELCOME_MESSAGE": "O A11STUDIO foi criado por um artista, para artistas. Foque apenas na sua arte, nós cuidamos do resto.",
