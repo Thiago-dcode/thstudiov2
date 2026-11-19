@@ -1,3 +1,4 @@
+jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({ stripe: {} }));
 const store = new Map<string, string>();
 jest.mock('redis', () => ({
   createClient: () => ({
