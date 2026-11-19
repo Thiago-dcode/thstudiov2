@@ -1,7 +1,8 @@
 import { BadRequestException, HttpException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
-import { logConfig } from '@repo/backend-lib/config/logging';
+import { logService } from '@repo/backend-lib/config/logging';
+import type { LogService } from '@repo/backend-lib/services/log-service';
+import { consoleLogger } from 'src/common/testing/console-logger';
+import { currentRequestId, currentRequestLogContext } from '../services/request-storage';
 import { ResponseExceptionFilter } from './response-exception.filter';
 import { RequestService } from '../services/request.service';
 
@@ -9,10 +10,9 @@ const setup = () => {
   // The channel is set in the config now (`api.error`), so the level methods are on the logger itself.
   const logger: any = { channel: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn() };
   const channelLogger = logger;
-  const create = jest.spyOn(FactoryLogService, 'createLogService').mockReturnValue(logger as LogService);
-  jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
-  const binding = { id: () => 'rid', request: () => null };
-  const requestService = { logBinding: jest.fn().mockReturnValue(binding) } as unknown as RequestService;
+  const create = jest.spyOn(logService, 'api').mockReturnValue(logger as LogService);
+  const binding = { id: currentRequestId, request: currentRequestLogContext };
+  const requestService = {} as unknown as RequestService;
   const filter = new ResponseExceptionFilter(requestService);
   const json = jest.fn();
   const response: any = { status: jest.fn().mockReturnValue({ json }) };
@@ -24,16 +24,15 @@ const setup = () => {
 describe('ResponseExceptionFilter request binding', () => {
   afterEach(() => jest.restoreAllMocks());
 
-  it('AC-13: the logger config merges logConfig.api with logBinding()', () => {
+  it('AC-13: the logger is an api logger: service api, the request id and context read per line', () => {
     const { filter, create, binding, host } = setup();
     filter.catch(new NotFoundException('nope'), host);
     expect(create).toHaveBeenCalledTimes(1);
-    const [type, cfg] = create.mock.calls[0];
-    expect(type).toBe('file');
+    // `logService.api` is the spy: the service is the factory's.
+    const [cfg = {}] = create.mock.calls[0];
     expect(cfg.id).toBe(binding.id);
     expect(cfg.request).toBe(binding.request);
     expect(cfg.channel).toBe('api.error');
-    expect(cfg.logFolder).toBe(logConfig.api.logFolder);
   });
 
   it('AC-13: logs 4xx at warn with status_code and keeps the response shape', () => {
@@ -79,7 +78,7 @@ describe('ResponseExceptionFilter request binding', () => {
   ] as const)('AC-19: a %s on a secret path param route never logs the secret', (_n, make, level) => {
     const { filter, create, host } = setup();
     // Real logger (console driver): key redaction of params/query happens inside LogService.
-    create.mockImplementation((_type, cfg) => new ConsoleLogService(cfg));
+    create.mockImplementation((cfg = {}) => consoleLogger(cfg));
     const out = [jest.spyOn(console, 'warn'), jest.spyOn(console, 'error'), jest.spyOn(console, 'log')];
     out.forEach((s) => s.mockImplementation(() => undefined));
     const request = host.switchToHttp().getRequest();
@@ -109,7 +108,7 @@ describe('ResponseExceptionFilter request binding', () => {
     expect(json.mock.calls[0][0].error.path).toBe('/api/v1/email-preferences/SECRETP/token');
   });
 
-  it('AC-13: the outer fallback logger also uses logBinding()', () => {
+  it('AC-13: the outer fallback logger is an api logger too', () => {
     const { filter, create, binding, response, host } = setup();
     // Make the main path throw after logging so the outer catch runs.
     response.status.mockImplementationOnce(() => {
@@ -117,7 +116,7 @@ describe('ResponseExceptionFilter request binding', () => {
     });
     filter.catch(new NotFoundException('x'), host);
     expect(create).toHaveBeenCalledTimes(2);
-    const cfg = create.mock.calls[1][1];
+    const cfg = create.mock.calls[1][0] ?? {};
     expect(cfg.id).toBe(binding.id);
     expect(cfg.request).toBe(binding.request);
   });

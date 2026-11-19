@@ -17,6 +17,7 @@ import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
 import { MediaRepository } from './media.repository';
 import { MediaService } from './media.service';
+import { apiLogConfig } from 'src/common/utils/api-logger';
 
 @Processor(MEDIA_UPDATE_QUEUE)
 export class MediaProcessor extends GlobalProcessor {
@@ -30,20 +31,16 @@ export class MediaProcessor extends GlobalProcessor {
   }
 
   async process(job: Job): Promise<unknown> {
-    try {
-      switch (job.name) {
-        case JOB_UPDATE_MEDIA:
-          return await this.handleUpdateMedia(job.data);
-        case JOB_INVALIDATE_MEDIA_SEO_CACHE:
-          // Sent by the worker after it changed a media's cover: `og:image` is cached by path.
-          return await this.mediaService.invalidateSeoCache(
-            (job.data as InvalidateMediaSeoCacheJobInput).public_id,
-          );
-        default:
-          throw new Error(`Job name "${job.name}" not recognized`);
-      }
-    } finally {
-      await this.logger.flushAsync();
+    switch (job.name) {
+      case JOB_UPDATE_MEDIA:
+        return await this.handleUpdateMedia(job.data);
+      case JOB_INVALIDATE_MEDIA_SEO_CACHE:
+        // Sent by the worker after it changed a media's cover: `og:image` is cached by path.
+        return await this.mediaService.invalidateSeoCache(
+          (job.data as InvalidateMediaSeoCacheJobInput).public_id,
+        );
+      default:
+        throw new Error(`Job name "${job.name}" not recognized`);
     }
   }
 
@@ -70,7 +67,7 @@ export class MediaProcessor extends GlobalProcessor {
         user_id: input.user_id,
         entity_id: input.media_id,
         read_at: null,
-      });
+      }, apiLogConfig());
       this.eventEmitter.emit(
         ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
         new ArtistPublicPagesChangedEvent(input.user_id),
@@ -88,7 +85,7 @@ export class MediaProcessor extends GlobalProcessor {
         user_id: input.user_id,
         entity_id: input.media_id,
         read_at: null,
-      });
+      }, apiLogConfig());
 
       log.error(
         `Failed to update media [${input.media_id}] (user ${input.user_id}) - ${error instanceof Error ? error.message : 'Unknown error'}`,

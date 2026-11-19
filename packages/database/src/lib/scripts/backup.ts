@@ -1,6 +1,7 @@
 import type { BackupResult } from '@repo/backend-lib/services/backup-service';
 import Logger from '@repo/backend-lib/utils/console';
 import { QueueHelper } from '@repo/backend-lib/utils';
+import { dbcliLogConfig } from '../../bin/dbcli-audit';
 
 /** A dump takes seconds today; this is only the point at which a stuck or missing worker gets reported. */
 const BACKUP_TIMEOUT_MS = 30 * 60 * 1000;
@@ -16,7 +17,7 @@ const backupDatabase = async () => {
   const start = Date.now();
   try {
     Logger.info('🔄 Queued a database backup, waiting for the worker...');
-    const result = (await QueueHelper.runDatabaseBackupJob(BACKUP_TIMEOUT_MS)) as BackupResult;
+    const result = (await QueueHelper.runDatabaseBackupJob(BACKUP_TIMEOUT_MS, dbcliLogConfig())) as BackupResult;
 
     if (result.status === 'skipped') {
       Logger.warn(`⚠️  Backup skipped: ${result.reason}.`);

@@ -80,7 +80,7 @@ describe('UserService.deleteAccount', () => {
     await expect(service.deleteAccount(7)).resolves.toEqual({ deleted: false, reason: 'not-found' });
     expect(logService.info).toHaveBeenCalledWith(
       'Account deletion step skipped',
-      { step: 'hard-delete', reason: 'not-found' },
+      { user_id: 7, step: 'hard-delete', reason: 'not-found' },
       expect.objectContaining({ operation: 'hard-delete' }),
     );
   });

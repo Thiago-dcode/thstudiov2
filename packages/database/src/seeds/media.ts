@@ -24,7 +24,6 @@ import {
 import { FactoryCompressService } from '@repo/backend-lib/services/compress-service';
 import { FactoryStorageService } from '@repo/backend-lib/services/storage-service';
 import type { S3StorageConfig } from '@repo/backend-lib/services/storage-service';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import Logger from '@repo/backend-lib/utils/console';
 import {
   DEFAULT_COMPRESSION_LVL,
@@ -141,7 +140,6 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
 
   if (fileNames.length === 0) {
     Logger.warn(`No images found in ${mediaDir}; nothing to seed.`);
-    await LogService.flush();
     return;
   }
 
@@ -258,7 +256,6 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
   Logger.success(
     `Media seed: ${created} file(s) uploaded to S3 and inserted for user id=${user.id} (${user.username}).`,
   );
-  await LogService.flush();
 }
 
 export const main = async (username =MEDIA_SEED_USERNAME) => {

@@ -1,7 +1,8 @@
 import { Processor } from '@nestjs/bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Job } from 'bullmq';
-import { LogService, addLogCorrelation, currentJobAttempt } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { isFinalAttempt } from '@repo/backend-lib/utils';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import {
   JOB_ON_SUBSCRIPTION_CHANGES,
@@ -25,6 +26,7 @@ import { serviceCacheKeys } from '../user-services/user-service.service';
 import { SubscriptionChangedMail } from './mails/subscription-changed.mail';
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
+import { apiLogConfig } from 'src/common/utils/api-logger';
 
 /** Job payload enriched by the webhook processor with the previous plan's identity, used to detect upgrade vs downgrade. */
 export type SubscriptionChangesJobData = BaseUser & {
@@ -68,27 +70,23 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
 
   async process(job: Job): Promise<any> {
     // Start/finish lines and the trace come from GlobalProcessor; the module config names the op.
-    try {
-      switch (job.name) {
-        case JOB_ON_SUBSCRIPTION_CHANGES:
-          return await this.onSubscriptionChanges(job.data);
+    switch (job.name) {
+      case JOB_ON_SUBSCRIPTION_CHANGES:
+        return await this.onSubscriptionChanges(job);
 
-        default:
-          throw new Error(`Job name "${job.name}" not recognized`);
-      }
-    } finally {
-      await this.logger.flushAsync();
+      default:
+        throw new Error(`Job name "${job.name}" not recognized`);
     }
   }
 
   // ==================== JOB HANDLERS ====================
 
-  private async onSubscriptionChanges(data: SubscriptionChangesJobData) {
+  private async onSubscriptionChanges(job: Job<SubscriptionChangesJobData>) {
+    const data = job.data;
     const { id: userId } = data;
     try {
-      // Never `data` itself: it is the user row (name, email, ...).
-      addLogCorrelation({ user_id: userId });
-      this.logger.info('Processing subscription changes', { prev_plan_id: data.prevPlanId ?? null });
+      // Never `data` itself: it is the user row (name, email, ...). The user id goes on every line.
+      this.logger.info('Processing subscription changes', { user_id: userId, prev_plan_id: data.prevPlanId ?? null });
       await this.helpers.deleteManyCached([
         CACHE_KEY_USER_EXTRA_DATA(userId),
         CACHE_KEY_ACTIVE_PLAN(userId),
@@ -106,6 +104,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
 
       const overLimitMb = userExtraData.storage_used_mb - currentPlan.storage_limit_mb;
       this.logger.info('Storage diff computed', {
+        user_id: userId,
         over_limit_mb: overLimitMb,
         limit_mb: currentPlan.storage_limit_mb,
         used_mb: userExtraData.storage_used_mb,
@@ -125,13 +124,14 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
       let blockingChanged = false;
 
       this.logger.info('Media block target computed', {
+        user_id: userId,
         blocked_mb: Number(currentBlockedMb.toFixed(2)),
         target_blocked_mb: Number(Math.max(0, haveToBeBlockedMb).toFixed(2)),
       });
 
       if (haveToBeBlockedMb <= 0) {
         if (currentBlockedMb > 0) {
-          this.logger.info('Unblocking all blocked media (user is within storage limit)');
+          this.logger.info('Unblocking all blocked media (user is within storage limit)', { user_id: userId });
           const result = await Query.table('media')
             .where('blocked_at', '!=', null)
             .where('user_id', '=', userId)
@@ -156,7 +156,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
           mediaIdsToBlock.push(item.id);
         }
 
-        this.logger.info('Blocking media', { count: mediaIdsToBlock.length, to_free_mb: Number(diffBlockedMb.toFixed(2)) });
+        this.logger.info('Blocking media', { user_id: userId, count: mediaIdsToBlock.length, to_free_mb: Number(diffBlockedMb.toFixed(2)) });
         if (mediaIdsToBlock.length > 0) {
           const result = await Query.table('media')
             .whereIn('id', mediaIdsToBlock)
@@ -182,7 +182,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
           }
         }
 
-        this.logger.info('Unblocking media', { count: mediaIdsToUnblock.length, over_blocked_mb: Number(Math.abs(diffBlockedMb).toFixed(2)) });
+        this.logger.info('Unblocking media', { user_id: userId, count: mediaIdsToUnblock.length, over_blocked_mb: Number(Math.abs(diffBlockedMb).toFixed(2)) });
         if (mediaIdsToUnblock.length > 0) {
           const result = await Query.table('media')
             .whereIn('id', mediaIdsToUnblock)
@@ -245,6 +245,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
         const haveToBeBlocked = config.currentCount - config.maxLimit;
 
         this.logger.info('Entity limit diff computed', {
+          user_id: userId,
           table: config.table,
           to_block: haveToBeBlocked,
           limit: config.maxLimit,
@@ -294,7 +295,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
       // Stripe also sends subscription updates that keep the same plan (cancel at
       // period end, renewals, payment method changes): no plan change, no email.
       if (data.prevPlanId === currentPlan.id) {
-        this.logger.info('Plan unchanged; skipping subscription-changed email', { plan_id: currentPlan.id });
+        this.logger.info('Plan unchanged; skipping subscription-changed email', { user_id: userId, plan_id: currentPlan.id });
         return { success: true };
       }
 
@@ -314,6 +315,8 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
           },
           data.language,
         ),
+        undefined,
+        apiLogConfig(),
       );
 
       return { success: true };
@@ -324,10 +327,10 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
         stack: error instanceof Error ? error.stack : undefined,
       };
       // Retries of a transient failure are not a human-now event; the last one is.
-      if (currentJobAttempt()?.is_final) {
-        this.logger.critical('Subscription change processing failed permanently', { ...failure, will_retry: false });
+      if (isFinalAttempt(job)) {
+        this.logger.critical('Subscription change processing failed permanently', { user_id: userId, ...failure, will_retry: false });
       } else {
-        this.logger.error('Subscription change processing failed', { ...failure, will_retry: true });
+        this.logger.error('Subscription change processing failed', { user_id: userId, ...failure, will_retry: true });
       }
       throw error;
     }

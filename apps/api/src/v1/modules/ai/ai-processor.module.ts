@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
-import { BullModule, getQueueToken } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+import { BullModule } from '@nestjs/bullmq';
 import { AiProcessor } from './ai.processor';
 import { AiTask } from './ai.task';
 import { AiModule } from './ai.module';
@@ -17,15 +16,13 @@ import { PortfolioModule } from '../portfolios/portfolio.module';
 import { CollectionModule } from '../collections/collection.module';
 import { ServiceModule } from '../services/service.module';
 import { AddressModule } from '../addresses/address.module';
-import {
-  AI_QUEUE,
-  LOG_QUEUE,
-} from '@repo/common-lib/constants/queues';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { AI_QUEUE } from '@repo/common-lib/constants/queues';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [
-    BullModule.registerQueue({ name: AI_QUEUE }, { name: LOG_QUEUE }),
+    BullModule.registerQueue({ name: AI_QUEUE }),
     UserExtraDataModule,
     PlansModule,
     UserModule,
@@ -46,12 +43,11 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
     UserAccountBannedMail,
     {
       provide: LogService,
-      useFactory: (logQueue: Queue) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'ai',
-        }, logQueue);
+        });
       },
-      inject: [getQueueToken(LOG_QUEUE)],
     },
   ],
 })

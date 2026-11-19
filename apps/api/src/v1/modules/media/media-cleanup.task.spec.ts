@@ -42,7 +42,7 @@ const createTask = (candidates: StaleMedia[], stillStale = true) => {
     },
   };
   const scoped = { info: () => undefined, error: () => undefined };
-  const logger = { name: () => scoped, flushAsync: async () => undefined };
+  const logger = { name: () => scoped };
 
   const task = new MediaCleanupTask(
     repository as unknown as MediaRepository,

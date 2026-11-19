@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { RequestService } from 'src/common/services/request.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { LayoutController } from './layout.controller';
 import { LayoutService } from './layout.service';
 import { LayoutRepository } from './layout.repository';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   controllers: [LayoutController],
@@ -12,13 +12,11 @@ import { LayoutRepository } from './layout.repository';
     LayoutRepository,
     {
       provide: LogService,
-      useFactory: (requestService: RequestService) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'layouts',
-          ...requestService.logBinding(),
         });
       },
-      inject: [RequestService],
     },
   ],
   exports: [LayoutService],

@@ -9,30 +9,23 @@ import { FactoryViewService } from '@repo/backend-lib/services/view-service';
 import { displayHost, viewPath } from 'src/common/utils';
 import { VIEW_ENGINE } from 'src/common/utils/constants';
 import { CacheModule } from '@nestjs/cache-manager';
-import {
-  FactoryLogService,
-  LogService,
-} from '@repo/backend-lib/services/log-service';
-import { logConfig } from '@repo/backend-lib/config/logging';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { createApiLogger } from 'src/common/utils/api-logger';
 import { StorageService } from '@repo/backend-lib/services/storage-service';
 import { FactoryStorageService } from '@repo/backend-lib/services/storage-service';
 import { compressConfig, s3StorageConfig } from '@repo/backend-lib/config/storage';
 import { CompressService } from '@repo/backend-lib/services/compress-service';
 import { FactoryCompressService } from '@repo/backend-lib/services/compress-service';
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
-import {
-  MAIL_QUEUE,
-  LOG_QUEUE,
-} from '@repo/common-lib/constants/queues';
+import { MAIL_QUEUE } from '@repo/common-lib/constants/queues';
 import { Queue } from 'bullmq';
 import { MailProcessor } from 'src/common/processors/mail.processor';
-import { LogProcessor } from './log.processor';
 import { LogRetentionTask } from './log-retention.task';
 import KeyvRedis from '@keyv/redis';
 import { Helpers } from './helpers.service';
 import { TempUploadService } from './temp-upload.service';
 import { AsyncLocalStorage } from 'async_hooks';
-import { RequestStore } from '@repo/common-lib/types/request';
+import { requestStorage } from './request-storage';
 @Global()
 @Module({
   exports: [
@@ -52,11 +45,11 @@ import { RequestStore } from '@repo/common-lib/types/request';
     Helpers,
     TempUploadService,
     MailProcessor,
-    LogProcessor,
     LogRetentionTask,
     {
       provide: AsyncLocalStorage,
-      useValue: new AsyncLocalStorage<RequestStore>()
+      // The module-level store, so loggers built outside DI read the same requests.
+      useValue: requestStorage,
     },
     {
       provide: StorageService,
@@ -105,20 +98,11 @@ import { RequestStore } from '@repo/common-lib/types/request';
     },
     {
       provide: LogService,
-      useFactory: (logQueue: Queue, requestService: RequestService) => {
-        // Derive a config instead of assigning onto the shared `logConfig.api` singleton.
-        return FactoryLogService.createLogService(
-          'file',
-          { ...logConfig.api, ...requestService.logBinding() },
-          logQueue,
-        );
-      },
-      inject: [getQueueToken(LOG_QUEUE), RequestService],
+      useFactory: () => createApiLogger(),
     },
   ],
   imports: [
     BullModule.registerQueue({ name: MAIL_QUEUE }),
-    BullModule.registerQueue({ name: LOG_QUEUE }),
     CacheModule.registerAsync({
       isGlobal: true,
       inject: [ConfigService],

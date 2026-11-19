@@ -1,7 +1,6 @@
 import { Processor } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { MailService, EmailDriverOptions } from '@repo/backend-lib/services/mail-service';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { ViewService } from '@repo/backend-lib/services/view-service';
 import {
   MAIL_QUEUE,
@@ -11,7 +10,9 @@ import {
 } from '@repo/common-lib/constants/queues';
 import type { Error500MailPayload } from '@repo/common-lib/types/mail';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
-import { currentJobAttempt, maskEmailAddresses } from '@repo/backend-lib/services/log-service';
+import { maskEmailAddresses } from '@repo/backend-lib/services/log-service';
+import { isFinalAttempt } from '@repo/backend-lib/utils';
+import { createApiLogger } from 'src/common/utils/api-logger';
 import { Error500Mail } from 'src/common/mails/error-500.mail';
 
 /** The provider's id for a sent message (Resend `data.id`, nodemailer `messageId`). Never the response. */
@@ -30,35 +31,28 @@ const mailErrorFields = (error: unknown) => ({
 @Processor(MAIL_QUEUE)
 export class MailProcessor extends GlobalProcessor {
   /** Final send failures log `critical` (admin alert); a failed alert mail logs `error` only (no recursion). */
-  private readonly logger = FactoryLogService.createLogService('file', {
-    channel: 'mail',
-  });
+  private readonly logger = createApiLogger({ channel: 'mail' });
 
   constructor(
     private readonly mailService: MailService,
     private readonly viewService: ViewService,
-    private readonly logService: LogService,
   ) {
     super();
   }
 
   async process(job: Job): Promise<any> {
-    try {
-      switch (job.name) {
-        case JOB_SEND_MAIL:
-          return await this.sendMail(job.data);
+    switch (job.name) {
+      case JOB_SEND_MAIL:
+        return await this.sendMail(job.data, job);
 
-        case JOB_SEND_BATCH_EMAIL:
-          return await this.sendBatchMail(job.data);
+      case JOB_SEND_BATCH_EMAIL:
+        return await this.sendBatchMail(job.data, job);
 
-        case JOB_ERROR_500_MAIL:
-          return await this.sendError500Mail(job.data);
+      case JOB_ERROR_500_MAIL:
+        return await this.sendError500Mail(job.data);
 
-        default:
-          throw new Error(`Job name "${job.name}" not recognized`);
-      }
-    } finally {
-      await this.logService.flushAsync();
+      default:
+        throw new Error(`Job name "${job.name}" not recognized`);
     }
   }
 
@@ -85,7 +79,7 @@ export class MailProcessor extends GlobalProcessor {
     }
   }
 
-  private async sendMail(data: EmailDriverOptions) {
+  private async sendMail(data: EmailDriverOptions, job: Job) {
     const startedAt = Date.now();
     try {
       const result = await this.mailService.sendRaw(data);
@@ -100,12 +94,12 @@ export class MailProcessor extends GlobalProcessor {
       );
       return result;
     } catch (error) {
-      this.logSendFailure('send-mail', { ...mailErrorFields(error), duration_ms: Date.now() - startedAt });
+      this.logSendFailure(job, 'send-mail', { ...mailErrorFields(error), duration_ms: Date.now() - startedAt });
       throw error;
     }
   }
 
-  private async sendBatchMail(data: EmailDriverOptions[]) {
+  private async sendBatchMail(data: EmailDriverOptions[], job: Job) {
     const startedAt = Date.now();
     try {
       const result = await this.mailService.sendBatchRaw(data);
@@ -116,7 +110,7 @@ export class MailProcessor extends GlobalProcessor {
       );
       return result;
     } catch (error) {
-      this.logSendFailure('send-batch-mail', {
+      this.logSendFailure(job, 'send-batch-mail', {
         count: data.length,
         ...mailErrorFields(error),
         duration_ms: Date.now() - startedAt,
@@ -126,8 +120,8 @@ export class MailProcessor extends GlobalProcessor {
   }
 
   /** Alerts on the final attempt only; earlier attempts are retried and logged `error`. */
-  private logSendFailure(operation: string, fields: Record<string, unknown>) {
-    if (currentJobAttempt()?.is_final) {
+  private logSendFailure(job: Job, operation: string, fields: Record<string, unknown>) {
+    if (isFinalAttempt(job)) {
       this.logger.critical('Mail send failed permanently', { ...fields, will_retry: false }, { operation });
     } else {
       this.logger.error('Mail send failed', { ...fields, will_retry: true }, { operation });

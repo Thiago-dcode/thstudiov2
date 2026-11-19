@@ -8,6 +8,7 @@ import { EDGE_PURGE_LOCALE_PREFIXES } from '@repo/common-lib/constants/edge-cach
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import { canonicalProductionOrigin } from 'src/common/utils/canonical-origin';
 import { ArtistPublicPagesChangedEvent } from './events/artist-public-pages-changed.event';
+import { apiLogConfig } from 'src/common/utils/api-logger';
 
 /** Cloudflare's per-request cap on purge-by-prefix. */
 export const MAX_PREFIXES_PER_REQUEST = 100;
@@ -42,15 +43,13 @@ export class EdgeCacheService {
       await QueueHelper.createPurgeArtistEdgeCacheJob({
         user_id: event.userId,
         ...(event.usernames?.length ? { usernames: event.usernames } : {}),
-      });
+      }, apiLogConfig());
     } catch (error) {
       this.logger
         .name('enqueue')
         .error(
           `Could not enqueue the edge purge of user [${event.userId}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
         );
-      // In-process: a queued flush would need the Redis that just failed.
-      await LogService.flush().catch(() => undefined);
     }
   }
 

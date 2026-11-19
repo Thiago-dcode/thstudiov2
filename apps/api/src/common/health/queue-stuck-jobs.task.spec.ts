@@ -5,10 +5,19 @@ let lockClient: unknown;
 const mockRunCron = jest.fn();
 let appConfig: { env: string; url: string };
 
-jest.mock('@repo/backend-lib/services/log-service', () => {
-  // Patch the real class so backend-lib's internal imports see the mock too.
-  const actual = jest.requireActual('@repo/backend-lib/services/log-service');
-  Object.assign(actual.FactoryLogService, { createLogService: () => mockLog });
+jest.mock('@repo/backend-lib/config/logging', () => {
+  // Patch the real factories so backend-lib's internal loggers see the mock too.
+  const actual = jest.requireActual('@repo/backend-lib/config/logging');
+  const create = () => mockLog;
+  const factory = (service: string | null) => (overrides: Record<string, unknown> = {}) =>
+    (create as (buffer: unknown, cfg: any) => unknown)(undefined, { service, ...overrides });
+  // backend-lib's own import cycle (config/logging -> critical-alert-mail -> job-trace) re-enters
+  // this factory before the module has finished loading; patch once `logService` exists.
+  if (actual.logService) {
+    Object.assign(actual.logService, {
+      api: factory('api'), worker: factory('worker'), dbcli: factory('dbcli'), web: factory('web'), lib: factory(null),
+    });
+  }
   return actual;
 });
 jest.mock('@repo/common-lib/config/utils', () => ({ getConfigValue: () => appConfig }));
@@ -21,7 +30,7 @@ jest.mock('../utils/cron-lock', () => ({
   runCronExclusive: (...args: unknown[]) => mockRunCron(...args),
 }));
 
-import { LogService } from '@repo/backend-lib/services/log-service';
+import { logBuffer } from '@repo/backend-lib/config/logging';
 import {
   delayedDueAt,
   delayedJobDueAt,
@@ -243,7 +252,6 @@ describe('QueueStuckJobsTask', () => {
         return 'OK';
       }),
     };
-    jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
     seedWatermark('stripe-webhooks');
     seedWatermark('plan-subscriptions');
   });
@@ -459,9 +467,10 @@ describe('QueueStuckJobsTask', () => {
     expect(mockLog.critical).toHaveBeenCalledTimes(1);
   });
 
-  it('AC-18: flushes logs at the end of a run so alerts are enqueued', async () => {
+  it('AC-18: never flushes at the end of a run (the worker writes the lines)', async () => {
     const { task } = build();
+    const flush = jest.spyOn(logBuffer, 'flush');
     await task.run();
-    expect(LogService.flush).toHaveBeenCalled();
+    expect(flush).not.toHaveBeenCalled();
   });
 });

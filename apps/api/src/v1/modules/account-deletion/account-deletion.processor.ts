@@ -1,6 +1,7 @@
 import { Processor } from '@nestjs/bullmq';
 import { MailService } from '@repo/backend-lib/services/mail-service';
-import { LogService, addLogCorrelation, currentJobAttempt } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { isFinalAttempt } from '@repo/backend-lib/utils';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import {
   ACCOUNT_DELETION_GRACE_DAYS,
@@ -18,6 +19,7 @@ import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { AccountDeletionWarningMail } from '../users/mails/account-deletion-warning.mail';
 import { UserRepository } from '../users/users.repository';
 import { UserService } from '../users/users.service';
+import { apiLogConfig } from 'src/common/utils/api-logger';
 
 /** URL prefix per user language — the web uses `localePrefix: "as-needed"` (EN has none). */
 const LOCALE_PREFIX: Record<string, string> = { EN: '', ES: '/es', PT: '/pt' };
@@ -35,7 +37,6 @@ export class AccountDeletionProcessor extends GlobalProcessor {
   }
 
   async process(job: Job<AccountDeletionJobInput>): Promise<unknown> {
-    addLogCorrelation({ user_id: job.data?.user_id });
     try {
       switch (job.name) {
         case JOB_SEND_ACCOUNT_DELETION_WARNING:
@@ -47,19 +48,18 @@ export class AccountDeletionProcessor extends GlobalProcessor {
       }
     } catch (error) {
       const failure = {
+        user_id: job.data?.user_id,
         error_name: error instanceof Error ? error.name : typeof error,
         error_message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
       };
       // A missed legal deletion needs a human, but only once retries are exhausted.
-      if (currentJobAttempt()?.is_final) {
+      if (isFinalAttempt(job)) {
         this.logger.critical('Account deletion job failed permanently', { ...failure, will_retry: false });
       } else {
         this.logger.error('Account deletion job failed', { ...failure, will_retry: true });
       }
       throw error;
-    } finally {
-      await this.logger.flushAsync();
     }
   }
 
@@ -73,17 +73,17 @@ export class AccountDeletionProcessor extends GlobalProcessor {
   }
 
   /** Every early return is logged: "why didn't it warn" is the usual question. */
-  private skip<T extends { reason: string }>(result: T): T {
-    this.logger.info('Account deletion step skipped', { step: 'warning', reason: result.reason }, { operation: 'warning' });
+  private skip<T extends { reason: string }>(userId: number, result: T): T {
+    this.logger.info('Account deletion step skipped', { user_id: userId, step: 'warning', reason: result.reason }, { operation: 'warning' });
     return result;
   }
 
   private async sendWarning(userId: number) {
     const state = await this.getState(userId);
     // Reopened (or already deleted) since the task queued this: nothing to warn about.
-    if (!state?.flagged) return this.skip({ sent: false, reason: 'not-flagged' });
-    if (state.warned) return this.skip({ sent: false, reason: 'already-sent' });
-    if (!state.in_warning_window) return this.skip({ sent: false, reason: 'not-due' });
+    if (!state?.flagged) return this.skip(userId, { sent: false, reason: 'not-flagged' });
+    if (state.warned) return this.skip(userId, { sent: false, reason: 'already-sent' });
+    if (!state.in_warning_window) return this.skip(userId, { sent: false, reason: 'not-due' });
 
     const user: User = await this.userRepository.findById(userId);
     const requestedAt = new Date(user.deletion_requested_at!);
@@ -101,11 +101,12 @@ export class AccountDeletionProcessor extends GlobalProcessor {
         lang,
       ),
       { jobId: `account-deletion-warning-mail-${userId}-${requestedAt.getTime()}` },
+      apiLogConfig(),
     );
     // Stamped after queuing the mail: a crash in between re-sends at most once on retry, whereas
     // stamping first could lose the warning entirely.
     await this.userRepository.markDeletionWarningSent(userId);
-    this.logger.info('Account deletion warning queued', undefined, { operation: 'warning' });
+    this.logger.info('Account deletion warning queued', { user_id: userId }, { operation: 'warning' });
     return { sent: true };
   }
 }

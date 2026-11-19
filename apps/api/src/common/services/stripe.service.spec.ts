@@ -1,6 +1,6 @@
 jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({ stripe: {} }));
 
-import { runWithLogContext } from '@repo/backend-lib/services/log-service';
+import { requestStorage, runWithTraceId } from './request-storage';
 import { STRIPE_TRACE_MAX_AGE_SECONDS, StripeService } from './stripe.service';
 
 const NOW = 1_800_000_000;
@@ -10,7 +10,7 @@ describe('StripeService trace helpers', () => {
   afterEach(() => jest.restoreAllMocks());
 
   it('AC-17: traceMetadata in context R has user_id, requestId and requestAt', () => {
-    runWithLogContext({ id: 'R' }, () => {
+    runWithTraceId('R', () => {
       expect(StripeService.traceMetadata(9)).toEqual({ user_id: '9', requestId: 'R', requestAt: String(NOW) });
     });
   });
@@ -19,8 +19,8 @@ describe('StripeService trace helpers', () => {
     expect(StripeService.traceMetadata(9)).toEqual({ user_id: '9' });
   });
 
-  it('AC-17: a context with a null id gives no requestId', () => {
-    runWithLogContext({ id: null }, () => {
+  it('AC-17: a store with an empty id gives no requestId', () => {
+    requestStorage.run({ requestId: '' } as never, () => {
       expect(StripeService.traceMetadata(9)).toEqual({ user_id: '9' });
     });
   });

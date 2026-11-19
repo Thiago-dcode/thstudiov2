@@ -1,8 +1,7 @@
-import { BullModule, getQueueToken } from '@nestjs/bullmq';
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { Queue } from 'bullmq';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { LOG_QUEUE, AI_MEDIA_QUEUE } from '@repo/common-lib/constants/queues';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { AI_MEDIA_QUEUE } from '@repo/common-lib/constants/queues';
 import { AiConsumptionGuard } from 'src/common/guards/ai-consumption.guard';
 import { AddressModule } from '../addresses/address.module';
 import { AiModule } from '../ai/ai.module';
@@ -15,6 +14,7 @@ import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { AiMediaController } from './ai-media.controller';
 import { AiMediaProcessor } from './ai-media.processor';
 import { AiMediaService } from './ai-media.service';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   controllers: [AiMediaController],
@@ -24,12 +24,11 @@ import { AiMediaService } from './ai-media.service';
     AiConsumptionGuard,
     {
       provide: LogService,
-      useFactory: (logQueue: Queue) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'ai-media',
-        }, logQueue);
+        });
       },
-      inject: [getQueueToken(LOG_QUEUE)],
     },
   ],
   // Portfolio/Collection modules are imported for their repositories only: once a media gets its SEO,
@@ -44,7 +43,7 @@ import { AiMediaService } from './ai-media.service';
     PortfolioModule,
     CollectionModule,
     LocationModule,
-    BullModule.registerQueue({ name: AI_MEDIA_QUEUE }, { name: LOG_QUEUE }),
+    BullModule.registerQueue({ name: AI_MEDIA_QUEUE }),
   ],
 })
 export class AiMediaModule {}

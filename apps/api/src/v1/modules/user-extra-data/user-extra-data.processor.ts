@@ -7,7 +7,6 @@ import { CACHE_KEY_USER_EXTRA_DATA } from '@repo/common-lib/constants/cache';
 import { Query } from '@repo/database/facades';
 import { Media } from '@repo/common-lib/types/media';
 import { MediaHelper } from '@repo/common-lib/utils/media';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { CREDIT_CONSUMING_LLM_USAGE_TYPES } from '@repo/common-lib/constants/limits';
 import { AiCreditsHelper } from '@repo/common-lib/utils/ai-credits';
 import { LlmTokensUsageSchema } from '@repo/common-lib/schemas/llm-tokens-usage';
@@ -16,6 +15,7 @@ import {
   JOB_COMPUTE_USER_METRICS,
 } from '@repo/common-lib/constants/queues';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 /** Everything {@link MediaHelper.storageBytes} needs, and nothing else, per media row. */
 type MediaStorageRow = Pick<
@@ -25,29 +25,25 @@ type MediaStorageRow = Pick<
 
 @Processor(USER_METRICS_QUEUE)
 export class UserExtraDataProcessor extends GlobalProcessor {
-  private readonly logger = FactoryLogService.createLogService('file', {
+  private readonly logger = createApiLogger({
     channel: 'user-extra-data',
   });
 
   constructor(
     private readonly userExtraDataRepository: UserExtraDataRepository,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private readonly appLogService: LogService,
   ) {
     super();
   }
 
   async process(job: Job<{ userId: number }>): Promise<any> {
-    try {
-      switch (job.name) {
-        case JOB_COMPUTE_USER_METRICS:
-          return await this.computeUserMetrics(job.data.userId);
 
-        default:
-          throw new Error(`Job name "${job.name}" not recognized`);
-      }
-    } finally {
-      await this.appLogService.flushAsync();
+    switch (job.name) {
+      case JOB_COMPUTE_USER_METRICS:
+        return await this.computeUserMetrics(job.data.userId);
+
+      default:
+        throw new Error(`Job name "${job.name}" not recognized`);
     }
   }
 

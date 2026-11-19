@@ -75,7 +75,7 @@ describe('UserService.importProviderAvatar', () => {
       UPDATE_PROFILE_STATUS_EVENT,
       expect.objectContaining({ userId: USER.id, fields: { has_avatar_field: true } }),
     );
-    expect(logService.success).toHaveBeenCalledWith('Provider avatar imported', { provider: 'google' }, expect.anything());
+    expect(logService.success).toHaveBeenCalledWith('Provider avatar imported', { user_id: 3, provider: 'google' }, expect.anything());
   });
 
   it('does nothing when the user already has an avatar', async () => {

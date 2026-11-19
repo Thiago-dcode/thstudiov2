@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 import { UserSessionsRepository } from './user-sessions.repository';
 import { UserSessionsService } from './user-sessions.service';
 import { RequestService } from 'src/common/services/request.service';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   controllers: [],
@@ -12,13 +13,11 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
     RequestService,
     {
       provide: LogService,
-      useFactory: (requestService: RequestService) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'user-sessions',
-          ...requestService.logBinding(),
         });
       },
-      inject: [RequestService],
     },
   ],
   exports: [UserSessionsService],

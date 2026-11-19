@@ -20,7 +20,6 @@
 import { hash } from '@repo/common-lib/utils/hash';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import Logger from '@repo/backend-lib/utils/console';
 import { randomUUID } from 'node:crypto';
 import { requireEnv } from '@repo/common-lib/utils/require-env';
@@ -44,7 +43,6 @@ export const main = async () => {
     Logger.info(
       `Admin seed skipped: email or username already in use (${ADMIN_EMAIL} / ${ADMIN_USERNAME}).`,
     );
-    await LogService.flush();
     return;
   }
 
@@ -176,5 +174,4 @@ export const main = async () => {
   Logger.success(
     `Admin user seeded: id=${userId} email=${ADMIN_EMAIL} username=${ADMIN_USERNAME}`,
   );
-  await LogService.flush();
 };

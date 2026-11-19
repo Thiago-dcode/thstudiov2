@@ -1,15 +1,23 @@
 import { randomUUID } from 'node:crypto';
-import {
-    FactoryLogService,
-    LogService,
-    runWithLogContext,
-} from '@repo/backend-lib/services/log-service';
+import { LogConfig } from '@repo/backend-lib/services/log-service';
+import { logBuffer, logConfig, logService } from '@repo/backend-lib/config/logging';
 
 /**
- * Audit trail for state-changing dbcli commands in `dbcli/<date>.log`. Each run gets its own
- * trace id, so the jobs it enqueues (`db:backup`, `seo:requeue-user`) carry it into the worker.
+ * The trace id of the running command, set once per `audited` run. A dbcli process runs one
+ * command, so module state is safe here (unlike in a server, where it would leak across requests).
  */
-const dbcliLog = FactoryLogService.createLogService('file', { channel: 'system' });
+let runId: string | null = null;
+
+/**
+ * The dbcli log config with the run's trace id. Pass it to every `QueueHelper` call, so the jobs
+ * a command enqueues (`db:backup`, `seo:requeue-user`) carry the id into the worker.
+ */
+export function dbcliLogConfig(): LogConfig {
+    return { ...logConfig.dbcli, id: () => runId };
+}
+
+/** Audit trail for state-changing dbcli commands in `dbcli/<date>.log` (written by the worker). */
+const dbcliLog = logService.dbcli({ id: () => runId });
 
 /** Only these arguments are logged (snake_case). Never passwords or connection strings. */
 const LOGGED_ARGS = new Set([
@@ -50,38 +58,37 @@ function loggedArgs(positionalNames: string[], args: unknown[]): Record<string, 
     return result;
 }
 
-const flush = () => LogService.flush().catch((error) => console.error('Failed to flush dbcli logs:', error));
-
 /**
- * Wraps a command action: "started" (flushed before running, so the record exists even if the
- * script calls `process.exit`), then "finished" or "failed".
+ * Wraps a command action: "started" (settled before running, so the line is in the shared log
+ * buffer even if the script calls `process.exit`), then "finished" or "failed". Never flushes:
+ * the worker writes the lines.
  */
 export function audited<A extends unknown[]>(
     command: string,
     action: (...args: A) => unknown,
     positionalNames: string[] = [],
 ): (...args: A) => Promise<void> {
-    return (...args: A) =>
-        runWithLogContext({ id: randomUUID() }, async () => {
-            const startedAt = Date.now();
-            dbcliLog.info('dbcli command started', loggedArgs(positionalNames, args), { operation: command });
-            await flush();
-            try {
-                await action(...args);
-                dbcliLog.info('dbcli command finished', { duration_ms: Date.now() - startedAt }, { operation: command });
-            } catch (error) {
-                dbcliLog.error(
-                    'dbcli command failed',
-                    {
-                        duration_ms: Date.now() - startedAt,
-                        error_name: error instanceof Error ? error.name : typeof error,
-                        error_message: error instanceof Error ? error.message : String(error),
-                    },
-                    { operation: command },
-                );
-                throw error;
-            } finally {
-                await flush();
-            }
-        });
+    return async (...args: A) => {
+        runId = randomUUID();
+        const startedAt = Date.now();
+        dbcliLog.info('dbcli command started', loggedArgs(positionalNames, args), { operation: command });
+        await logBuffer.settle();
+        try {
+            await action(...args);
+            dbcliLog.info('dbcli command finished', { duration_ms: Date.now() - startedAt }, { operation: command });
+        } catch (error) {
+            dbcliLog.error(
+                'dbcli command failed',
+                {
+                    duration_ms: Date.now() - startedAt,
+                    error_name: error instanceof Error ? error.name : typeof error,
+                    error_message: error instanceof Error ? error.message : String(error),
+                },
+                { operation: command },
+            );
+            throw error;
+        } finally {
+            await logBuffer.settle();
+        }
+    };
 }

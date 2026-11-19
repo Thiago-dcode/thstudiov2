@@ -1,14 +1,12 @@
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
-import { FactoryLogService } from '../../log-service';
+import { logService } from '../../../config/logging';
 import { FullPaypaAuthResponse, PaypalAuthResponse, PaypalCreateProductInput, PaypalPaymentConfig, PaypalProductResponse, PaypalCreatePlanInput, PaypalPlanResponse, PaypalCreateSubscriptionInput, PaypalSubscriptionResponse } from './types';
 import { config } from '@repo/common-lib/config';
 
 
  class PaypalPaymentService {
 
-  private readonly log = FactoryLogService.createLogService('file',{
-    channel:'paypal',
-});
+  private readonly log = logService.lib({ channel: 'paypal' });
     private authData:PaypalAuthResponse|null;
     
 constructor(public readonly config:PaypalPaymentConfig){

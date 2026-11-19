@@ -1,7 +1,7 @@
 import { WorkerHost } from '@nestjs/bullmq';
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { DiscoveryService } from '@nestjs/core';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { createApiLogger } from '../utils/api-logger';
 import { withTimeout } from '@repo/backend-lib/utils';
 import { getClient } from '@repo/database';
 import { getLockClient } from '../utils/cron-lock';
@@ -28,7 +28,7 @@ export type ApiHealthResult = { healthy: boolean; checks: ApiHealthChecks };
  */
 @Injectable()
 export class ApiHealthService implements OnApplicationBootstrap {
-  private readonly logger = FactoryLogService.createLogService('file', { channel: 'health' });
+  private readonly logger = createApiLogger({ channel: 'health' });
   private consumers: WorkerHost[] = [];
 
   constructor(private readonly discovery: DiscoveryService) {}
@@ -70,7 +70,7 @@ export class ApiHealthService implements OnApplicationBootstrap {
     }
   }
 
-  /** Never throws; logs and flushes only when a check fails. */
+  /** Never throws; logs only when a check fails (the worker writes the line, nothing is flushed here). */
   async check(): Promise<ApiHealthResult> {
     const failures: Record<string, unknown> = {};
     const probe = async (label: keyof ApiHealthChecks, fn: () => Promise<unknown>): Promise<HealthCheck> => {
@@ -99,7 +99,6 @@ export class ApiHealthService implements OnApplicationBootstrap {
     const healthy = Object.values(checks).every((check) => check === 'ok');
     if (!healthy) {
       this.logger.error('API health check failed', { checks, failures }, { operation: 'health-check' });
-      await LogService.flush().catch((error) => console.error('Failed to flush health logs:', error));
     }
     return { healthy, checks };
   }

@@ -19,11 +19,8 @@ import {
   IP_ADDRESS_HEADER,
   APP_TOKEN_HEADER,
 } from '@repo/common-lib/constants/headers';
-import {
-  FactoryLogService,
-  LogService,
-  redactRoutePath,
-} from '@repo/backend-lib/services/log-service';
+import { LogService, redactRoutePath } from '@repo/backend-lib/services/log-service';
+import { createApiLogger } from 'src/common/utils/api-logger';
 const AVAILABLE_LANGUAGES = ENUMS.LANGUAGE_CODE;
 
 export const ACCESS_LOG_CHANNEL = 'api.access' as const;
@@ -46,10 +43,7 @@ export class RequestMiddleware implements NestMiddleware {
     private readonly requestService: RequestService,
     private readonly configService: ConfigService,
   ) {
-    this.accessLog = FactoryLogService.createLogService('file', {
-      channel: ACCESS_LOG_CHANNEL,
-      ...requestService.logBinding(),
-    });
+    this.accessLog = createApiLogger({ channel: ACCESS_LOG_CHANNEL });
   }
 
   async use(req: Request, res: Response, next: NextFunction) {
@@ -156,12 +150,6 @@ export class RequestMiddleware implements NestMiddleware {
       if (status_code >= 500) this.accessLog.error(message, extraInfo, { status_code });
       else if (status_code >= 400 || aborted) this.accessLog.warn(message, extraInfo, { status_code });
       else this.accessLog.info(message, extraInfo, { status_code });
-
-      // In process, not on LOG_QUEUE: with several replicas a queued flush can be consumed by
-      // one that doesn't hold this buffer. The response is already sent, so no client latency.
-      void LogService.flush().catch((flushErr) =>
-        console.error('Failed to flush access logs:', flushErr),
-      );
     } catch (error) {
       console.error('Failed to write access log:', error);
     }

@@ -10,8 +10,8 @@ jest.mock('src/common/utils/user-lock', () => ({
   withUserLock: jest.fn(async (_key: string, _ttl: number, fn: () => Promise<unknown>) => fn()),
 }));
 
-import { LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { consoleLogger } from 'src/common/testing/console-logger';
 import { hash } from '@repo/common-lib/utils/hash';
 import { UserService } from './users.service';
 
@@ -36,7 +36,7 @@ const build = async () => {
       try { lines.push(JSON.parse(String(line))); } catch { /* not a log line */ }
     });
   }
-  const logService = new ConsoleLogService({ channel: 'users' });
+  const logService = consoleLogger({ channel: 'users' });
   const nameSpy = jest.spyOn(logService, 'name');
   const user = { ...baseUser, password: await hash(OLD_PASSWORD) };
   const userRepository = {
@@ -86,10 +86,8 @@ const build = async () => {
 const audit = (message: string) => lines.filter((l) => l.channel === 'users' && l.message === message);
 
 describe('UserService audit lines', () => {
-  beforeEach(() => configureLogProcess({ service: 'api' }));
   afterEach(() => {
     jest.restoreAllMocks();
-    configureLogProcess({ service: '', onCritical: null });
   });
 
   it('AC-27: a username change gives info "Username changed" with the public handles and the subject user', async () => {
@@ -99,7 +97,7 @@ describe('UserService audit lines', () => {
     expect(line.level).toBe('INFO');
     expect(line.operation).toBe('username-change');
     expect(line.extraInfo).toMatchObject({ previous_username: 'oldname', username: 'newname' });
-    expect(line.correlation.user_id).toBe(5);
+    expect(line.extraInfo.user_id).toBe(5);
     expect(JSON.stringify(lines)).not.toContain(EMAIL);
   });
 
@@ -114,8 +112,8 @@ describe('UserService audit lines', () => {
     await service.updatePassword(5, { old_password: OLD_PASSWORD, new_password: NEW_PASSWORD } as never);
     const [line] = audit('Password changed');
     expect(line.operation).toBe('password-change');
-    expect(line.extraInfo).toEqual({ other_sessions_revoked: true });
-    expect(line.correlation.user_id).toBe(5);
+    expect(line.extraInfo).toEqual({ user_id: 5, other_sessions_revoked: true });
+    expect(line.extraInfo.user_id).toBe(5);
     const dumped = JSON.stringify(lines);
     expect(dumped).not.toMatch(new RegExp(`${OLD_PASSWORD}|${NEW_PASSWORD}|${TOKEN}`));
   });
@@ -132,8 +130,8 @@ describe('UserService audit lines', () => {
     const [line] = audit('User banned');
     expect(line.level).toBe('WARN');
     expect(line.operation).toBe('ban');
-    expect(line.extraInfo).toEqual({ reason: 'spam' });
-    expect(line.correlation.user_id).toBe(8);
+    expect(line.extraInfo).toEqual({ user_id: 8, reason: 'spam' });
+    expect(line.extraInfo.user_id).toBe(8);
   });
 
   it('AC-27: deletion request and cancel use a per-call operation and leave the shared logger unrenamed', async () => {
@@ -143,11 +141,11 @@ describe('UserService audit lines', () => {
     const [requested] = audit('Account deletion requested');
     const [cancelled] = audit('Account deletion cancelled');
     expect(requested.operation).toBe('account-deletion');
-    expect(requested.extraInfo).toEqual({ cancel_subscription: true });
+    expect(requested.extraInfo).toEqual({ user_id: 5, cancel_subscription: true });
     expect(cancelled.operation).toBe('account-deletion');
     expect(nameSpy).not.toHaveBeenCalled();
     // The next line from the same logger has no leaked operation.
-    const logger = new ConsoleLogService({ channel: 'users' });
+    const logger = consoleLogger({ channel: 'users' });
     void logger;
     expect(JSON.stringify(lines)).not.toMatch(new RegExp(`${DELETION_CODE}|${EMAIL}`));
   });

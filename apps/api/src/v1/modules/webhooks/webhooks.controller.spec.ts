@@ -5,9 +5,10 @@ jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({
   stripeWebhookSecret: 'whsec_SECRETWEBHOOK',
 }));
 
+import { logService } from '@repo/backend-lib/config/logging';
 import { BadRequestException } from '@nestjs/common';
-import { FactoryLogService, LogService, configureLogProcess, runWithLogContext } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
+import { runWithTraceId } from 'src/common/services/request-storage';
+import { consoleLogger } from 'src/common/testing/console-logger';
 import { WebhooksController } from './webhooks.controller';
 
 const CREATED = 1_800_000_000;
@@ -32,12 +33,11 @@ const setup = () => {
   capture(jest.spyOn(console, 'log'));
   capture(jest.spyOn(console, 'warn'));
   capture(jest.spyOn(console, 'error'));
-  jest.spyOn(FactoryLogService, 'createLogService').mockImplementation((_t, cfg) => new ConsoleLogService(cfg));
-  jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
+  jest.spyOn(logService, 'api').mockImplementation((cfg = {}) => consoleLogger(cfg));
   const queue = { getJob: jest.fn().mockResolvedValue(null), add: jest.fn().mockResolvedValue({ id: 'stripe-evt_1' }), name: 'stripe-webhooks' };
   const controller = new WebhooksController(queue as any);
   const call = (signature: string | undefined, rawBody: Buffer | undefined, body?: unknown) =>
-    runWithLogContext({ id: 'HTTP-1' }, () => controller.stripe(signature as string, { rawBody, body }));
+    runWithTraceId('HTTP-1', () => controller.stripe(signature as string, { rawBody, body }));
   return { controller, queue, lines, call };
 };
 
@@ -46,11 +46,9 @@ const wh = (lines: any[], message: string) => lines.filter((l) => l.channel === 
 describe('WebhooksController logging', () => {
   beforeEach(() => {
     constructEvent.mockReset();
-    configureLogProcess({ service: 'api' });
   });
   afterEach(() => {
     jest.restoreAllMocks();
-    configureLogProcess({ service: '', onCritical: null });
   });
 
   it('AC-23: no signature gives warn "Stripe webhook rejected" {missing_signature} and 400', async () => {
@@ -106,7 +104,7 @@ describe('WebhooksController logging', () => {
     expect(queue.add).not.toHaveBeenCalled();
     const [line] = wh(lines, 'Stripe webhook duplicate ignored');
     expect(line.level).toBe('INFO');
-    expect(line.extraInfo).toEqual({ reason: 'already_queued', job_id: 'stripe-evt_1' });
+    expect(line.extraInfo).toMatchObject({ stripe_event_id: 'evt_1', reason: 'already_queued', job_id: 'stripe-evt_1' });
   });
 
   it('AC-23: accepted with fresh metadata: the line takes the originating id and keeps the HTTP id in extraInfo', async () => {
@@ -115,7 +113,7 @@ describe('WebhooksController logging', () => {
     await expect(call(SIGNATURE, RAW)).resolves.toEqual({ received: true });
     const [line] = wh(lines, 'Stripe webhook accepted');
     expect(line.id).toBe('R');
-    expect(line.correlation).toMatchObject({
+    expect(line.extraInfo).toMatchObject({
       user_id: 9,
       stripe_event_id: 'evt_1',
       stripe_event_type: 'customer.subscription.updated',

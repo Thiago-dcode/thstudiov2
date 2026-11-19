@@ -1,10 +1,10 @@
 import { EventEmitter } from 'events';
-import { AsyncLocalStorage } from 'async_hooks';
 import { ConfigService } from '@nestjs/config';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import type { RequestStore } from '@repo/common-lib/types/request';
+import type { LogService } from '@repo/backend-lib/services/log-service';
 import type { UserAuth } from '@repo/common-lib/types/auth';
 import { RequestService } from 'src/common/services/request.service';
+import { requestStorage } from 'src/common/services/request-storage';
+import { logBuffer, logService } from '@repo/backend-lib/config/logging';
 import {
   ACCESS_LOG_CHANNEL,
   ACCESS_LOG_SKIP_PATHS,
@@ -15,9 +15,9 @@ type Fake = { info: jest.Mock; warn: jest.Mock; error: jest.Mock };
 
 const setup = () => {
   const fake: Fake = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
-  const create = jest.spyOn(FactoryLogService, 'createLogService').mockReturnValue(fake as unknown as LogService);
-  const flush = jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
-  const requestService = new RequestService(new AsyncLocalStorage<RequestStore>());
+  const create = jest.spyOn(logService, 'api').mockReturnValue(fake as unknown as LogService);
+  const flush = jest.spyOn(logBuffer, 'flush');
+  const requestService = new RequestService(requestStorage);
   const config = { get: jest.fn().mockReturnValue('app-token') } as unknown as ConfigService;
   const middleware = new RequestMiddleware(requestService, config);
   return { fake, create, flush, requestService, middleware };
@@ -56,11 +56,11 @@ const run = async (middleware: RequestMiddleware, req: any, res: any) => {
 describe('RequestMiddleware', () => {
   afterEach(() => jest.restoreAllMocks());
 
-  it('AC-14: builds one dedicated api.access FileLogService in the constructor with the binding', () => {
+  it('AC-14: builds one dedicated api.access api logger in the constructor, reading the request per line', () => {
     const { create, requestService } = setup();
     expect(create).toHaveBeenCalledTimes(1);
-    const [type, cfg] = create.mock.calls[0];
-    expect(type).toBe('file');
+    // `logService.api` is the spy: the service is the factory's.
+    const [cfg = {}] = create.mock.calls[0];
     expect(cfg.channel).toBe(ACCESS_LOG_CHANNEL);
     expect(ACCESS_LOG_CHANNEL).toBe('api.access');
     expect(typeof cfg.id).toBe('function');
@@ -269,7 +269,7 @@ describe('RequestMiddleware', () => {
 
   it('AC-14: the listener runs inside the request store (id, method, user set later)', async () => {
     const { middleware, fake, create, requestService } = setup();
-    const binding = create.mock.calls[0][1];
+    const binding = create.mock.calls[0][0]!;
     const resA = makeRes();
     const resB = makeRes();
     let idA: string | null = null;
@@ -302,28 +302,13 @@ describe('RequestMiddleware', () => {
     expect(seen[1].request.user_role).toBe('ADMIN');
   });
 
-  it('AC-18: flushes in process after writing the line', async () => {
+  it('AC-18: writes the line and never flushes (the worker writes the lines)', async () => {
     const { middleware, fake, flush } = setup();
-    const order: string[] = [];
-    fake.info.mockImplementation(() => order.push('write'));
-    flush.mockImplementation(async () => {
-      order.push('flush');
-    });
     const res = makeRes();
     await run(middleware, makeReq({ route: { path: '/v1/x' } }), res);
     res.emit('close');
-    expect(order).toEqual(['write', 'flush']);
-  });
-
-  it('AC-18: a rejected flush is caught and never throws', async () => {
-    const { middleware, flush } = setup();
-    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    flush.mockRejectedValue(new Error('disk full'));
-    const res = makeRes();
-    await run(middleware, makeReq({ route: { path: '/v1/x' } }), res);
-    expect(() => res.emit('close')).not.toThrow();
-    await new Promise((r) => setImmediate(r));
-    expect(errSpy).toHaveBeenCalledWith('Failed to flush access logs:', expect.any(Error));
+    expect(fake.info).toHaveBeenCalledTimes(1);
+    expect(flush).not.toHaveBeenCalled();
   });
 
   it('AC-18: a throwing logger is caught and never throws', async () => {
@@ -364,7 +349,7 @@ describe('RequestMiddleware secret path params', () => {
 
   it.each(SECRET_ROUTES)('AC-19: %s never exposes the secret in requestService.log or the access line', async (url, template, params, masked) => {
     const { middleware, fake, create, requestService } = setup();
-    const binding = create.mock.calls[0][1];
+    const binding = create.mock.calls[0][0]!;
     const res = makeRes({ statusCode: 200 });
     const req = makeReq({ originalUrl: url, route: { path: template }, params });
     let logDuringRequest: any;
@@ -416,7 +401,7 @@ describe('RequestMiddleware secret path params', () => {
 
   it('AC-19: unmatched 404 access line has request.path null and no raw path', async () => {
     const { middleware, fake, create } = setup();
-    const binding = create.mock.calls[0][1];
+    const binding = create.mock.calls[0][0]!;
     const res = makeRes({ statusCode: 404 });
     await run(middleware, makeReq({ originalUrl: '/api/v1/leak/SECRETP?token=SECRETQ' }), res);
     let resolved: any;
@@ -444,7 +429,7 @@ describe('RequestMiddleware secret path params', () => {
 
   it('AC-4: ordinary params are kept (/media/5)', async () => {
     const { middleware, fake, create, requestService } = setup();
-    const binding = create.mock.calls[0][1];
+    const binding = create.mock.calls[0][0]!;
     const res = makeRes();
     const req = makeReq({ originalUrl: '/api/v1/media/5?x=1', route: { path: '/api/v1/media/:id' }, params: { id: '5' } });
     let log: any;

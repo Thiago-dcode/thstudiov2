@@ -18,7 +18,6 @@ const buildLogger = () => {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-    flushAsync: jest.fn().mockResolvedValue(undefined),
   };
   logger.name.mockReturnValue(logger);
   return logger;
@@ -79,11 +78,10 @@ describe('EdgeCacheProcessor', () => {
     expect(Reflect.getMetadata(WORKER_METADATA, EdgeCacheProcessor)).toEqual({ concurrency: 1 });
   });
 
-  it('throws on an unknown job name, and still flushes the logs', async () => {
+  it('throws on an unknown job name', async () => {
     const { processor, logger } = build();
 
     await expect(processor.process(job({}, { name: 'nope' }))).rejects.toThrow('not recognized');
-    expect(logger.flushAsync).toHaveBeenCalled();
   });
 
   describe('the gate', () => {
@@ -305,7 +303,6 @@ describe('EdgeCacheProcessor', () => {
       purgePrefixes.mockRejectedValue(new Error('Cloudflare purge failed, will retry (HTTP 429)'));
 
       await expect(processor.process(job({}))).rejects.toThrow('HTTP 429');
-      expect(logger.flushAsync).toHaveBeenCalled();
     });
 
     it('rethrows an UnrecoverableError as is, so BullMQ does not retry it', async () => {

@@ -5,8 +5,9 @@ jest.mock('@repo/backend-lib/utils', () => ({
   QueueHelper: { createComputeUserMetricsJob: jest.fn().mockResolvedValue(undefined) },
 }));
 
-import { FactoryLogService, LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
+import { logService } from '@repo/backend-lib/config/logging';
+import type { LogService } from '@repo/backend-lib/services/log-service';
+import { consoleLogger } from 'src/common/testing/console-logger';
 import { JOB_RECORD_MEDIA_MODERATION } from '@repo/common-lib/constants/queues';
 import { PERMANENT_BAN_THRESHOLD, STRIKES_TO_BAN } from '@repo/common-lib/constants/limits';
 import { AiProcessor } from './ai.processor';
@@ -20,8 +21,7 @@ const build = (extra: { account_strikes: number; ban_count: number }, row: Recor
       try { lines.push(JSON.parse(String(line))); } catch { /* not a log line */ }
     });
   }
-  jest.spyOn(FactoryLogService, 'createLogService').mockImplementation((_t, cfg) => new ConsoleLogService(cfg));
-  jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
+  jest.spyOn(logService, 'api').mockImplementation((cfg = {}) => consoleLogger(cfg));
   const moderation = { id: 77, is_allowed: true, severity: 1, reason: REASON, ...row };
   const deps = {
     mediaModerationRepository: { create: jest.fn().mockResolvedValue(moderation) },
@@ -52,7 +52,7 @@ const build = (extra: { account_strikes: number; ban_count: number }, row: Recor
     {} as never,
     {} as never,
     {} as never,
-    new ConsoleLogService({ channel: 'ai' }) as unknown as LogService,
+    consoleLogger({ channel: 'ai' }) as unknown as LogService,
     { emit: jest.fn() } as never,
   );
   return { processor, lines, deps };
@@ -70,19 +70,17 @@ const jobOf = (data: Record<string, unknown> = {}): any => ({
 const named = (lines: any[], message: string) => lines.filter((l) => l.message === message);
 
 describe('AiProcessor moderation lines', () => {
-  beforeEach(() => configureLogProcess({ service: 'api' }));
   afterEach(() => {
     jest.restoreAllMocks();
-    configureLogProcess({ service: '', onCritical: null });
   });
 
   it('AC-29: an allowed moderation logs "Moderation recorded" with only the listed keys and no strike', async () => {
     const { processor, lines } = build({ account_strikes: 0, ban_count: 0 }, {});
     await processor.process(jobOf());
     const [line] = named(lines, 'Moderation recorded');
-    expect(line.extraInfo).toEqual({ moderation_id: 77, is_allowed: true, severity: 1, media_id: 41 });
+    expect(line.extraInfo).toEqual({ user_id: 9, moderation_id: 77, is_allowed: true, severity: 1, media_id: 41 });
     expect(line.operation).toBe('moderate-content');
-    expect(line.correlation.user_id).toBe(9);
+    expect(line.extraInfo.user_id).toBe(9);
     expect(named(lines, 'Content rejected by moderation')).toHaveLength(0);
   });
 
@@ -91,7 +89,7 @@ describe('AiProcessor moderation lines', () => {
     await processor.process(jobOf());
     const [line] = named(lines, 'Content rejected by moderation');
     expect(line.level).toBe('WARN');
-    expect(line.extraInfo).toEqual({ moderation_id: 77, severity: 6, account_strikes: 1 });
+    expect(line.extraInfo).toEqual({ user_id: 9, moderation_id: 77, severity: 6, account_strikes: 1 });
     expect(named(lines, 'Account ban applied')).toHaveLength(0);
   });
 

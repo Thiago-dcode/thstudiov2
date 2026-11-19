@@ -2,8 +2,8 @@ import { Module } from "@nestjs/common";
 import { AddressController } from "./address.controller";
 import { AddressRepository } from "./address.repository";
 import { AddressService } from "./address.service";
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { RequestService } from 'src/common/services/request.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   controllers: [AddressController],
@@ -12,13 +12,11 @@ import { RequestService } from 'src/common/services/request.service';
     AddressService,
     {
       provide: LogService,
-      useFactory: (requestService: RequestService) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'addresses',
-          ...requestService.logBinding(),
         });
       },
-      inject: [RequestService],
     },
   ],
   exports: [AddressService],

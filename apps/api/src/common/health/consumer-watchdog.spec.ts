@@ -3,16 +3,25 @@ const mockSet = jest.fn();
 let lockClient: { set: jest.Mock } | null;
 let appConfig: { env: string; url: string };
 
-jest.mock('@repo/backend-lib/services/log-service', () => {
-  // Patch the real class so backend-lib's internal imports see the mock too.
-  const actual = jest.requireActual('@repo/backend-lib/services/log-service');
-  Object.assign(actual.FactoryLogService, { createLogService: () => mockLog });
+jest.mock('@repo/backend-lib/config/logging', () => {
+  // Patch the real factories so backend-lib's internal loggers see the mock too.
+  const actual = jest.requireActual('@repo/backend-lib/config/logging');
+  const create = () => mockLog;
+  const factory = (service: string | null) => (overrides: Record<string, unknown> = {}) =>
+    (create as (buffer: unknown, cfg: any) => unknown)(undefined, { service, ...overrides });
+  // backend-lib's own import cycle (config/logging -> critical-alert-mail -> job-trace) re-enters
+  // this factory before the module has finished loading; patch once `logService` exists.
+  if (actual.logService) {
+    Object.assign(actual.logService, {
+      api: factory('api'), worker: factory('worker'), dbcli: factory('dbcli'), web: factory('web'), lib: factory(null),
+    });
+  }
   return actual;
 });
 jest.mock('@repo/common-lib/config/utils', () => ({ getConfigValue: () => appConfig }));
 jest.mock('../utils/cron-lock', () => ({ getLockClient: async () => lockClient }));
 
-import { LogService } from '@repo/backend-lib/services/log-service';
+import { logBuffer } from '@repo/backend-lib/config/logging';
 import {
   ConsumerWatchdog,
   WATCHDOG_BOOT_GRACE_MS,
@@ -76,7 +85,7 @@ describe('ConsumerWatchdog', () => {
     mockSet.mockReset().mockResolvedValue('OK');
     lockClient = { set: mockSet };
     appConfig = { env: 'production', url: 'https://dev.a11studio.com' };
-    jest.spyOn(LogService, 'flush').mockImplementation(async () => {
+    jest.spyOn(logBuffer, 'flush').mockImplementation(async () => {
       order.push('flush');
     });
   });
@@ -139,12 +148,12 @@ describe('ConsumerWatchdog', () => {
     expect(exitMock).not.toHaveBeenCalled();
   });
 
-  it('AC-10: flushes the critical line before closing workers, and exits last', async () => {
+  it('AC-10: closes the healthy workers, then settles (never flushes) the logs, and exits last', async () => {
     const { watchdog } = setup();
     await ticks(watchdog, 4);
-    // 3 earlier ticks each flush once; the 4th flushes after the critical line.
-    expect(order.lastIndexOf('flush')).toBeLessThan(order.indexOf('close'));
-    expect(order.indexOf('close')).toBeLessThan(order.indexOf('exit'));
+    expect(order).not.toContain('flush');
+    expect(order.indexOf('close')).toBeLessThan(order.indexOf('settle'));
+    expect(order.indexOf('settle')).toBeLessThan(order.indexOf('exit'));
     expect(order[order.length - 1]).toBe('exit');
   });
 
@@ -222,18 +231,20 @@ describe('ConsumerWatchdog', () => {
     expect(exitMock).not.toHaveBeenCalled();
   });
 
-  it('AC-12: a flush failure does not escape the tick', async () => {
+  it('AC-12: a throwing logger does not escape the tick', async () => {
     const { watchdog } = setup();
-    jest.spyOn(LogService, 'flush').mockRejectedValue(new Error('flush down'));
+    mockLog.error.mockImplementationOnce(() => { throw new Error('log down'); });
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
     await expect(watchdog.tick()).resolves.toBeUndefined();
   });
 
-  it('AC-10: settles the alert mail after the critical flush and before closing workers', async () => {
-    const { watchdog } = setup();
-    await ticks(watchdog, 4);
-    expect(order.indexOf('settle')).toBeGreaterThan(order.lastIndexOf('flush'));
-    expect(order.indexOf('settle')).toBeLessThan(order.indexOf('close'));
+  it('AC-10: the real settleLogs waits on logBuffer.settle() and never flushes', async () => {
+    const settle = jest.spyOn(logBuffer, 'settle').mockResolvedValue(undefined);
+    const flush = jest.spyOn(logBuffer, 'flush');
+    const watchdog = new ConsumerWatchdog({} as never);
+    await (watchdog as unknown as { settleLogs(): Promise<void> }).settleLogs();
+    expect(settle).toHaveBeenCalledTimes(1);
+    expect(flush).not.toHaveBeenCalled();
   });
 
   it('AC-10: no consumers discovered -> one critical, never counted, never exits', async () => {

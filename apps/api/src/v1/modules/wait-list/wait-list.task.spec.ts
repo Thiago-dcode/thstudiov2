@@ -42,7 +42,7 @@ const createTask = (dueFollowUps: Partial<WaitList>[] = [], dueInviteCount = 0) 
   const service = { inviteBatch: async (...args: unknown[]) => record('inviteBatch')(...args) };
   const followUpMail = { setData: (...args: unknown[]) => ({ followUp: args }) };
   const mailService = { sendAsync: async (...args: unknown[]) => record('sendAsync')(...args) };
-  const logger = { info: () => undefined, warn: () => undefined, error: () => undefined, flushAsync: async () => undefined };
+  const logger = { info: () => undefined, warn: () => undefined, error: () => undefined };
 
   const task = new WaitListTask(
     repository as unknown as WaitListRepository,

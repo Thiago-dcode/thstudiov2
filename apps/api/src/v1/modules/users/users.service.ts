@@ -90,6 +90,7 @@ import {
   MAX_ACCOUNT_DELETION_CODES_PER_DAY,
   TWOFA_RESEND_COOLDOWN_SECONDS,
 } from '@repo/common-lib/constants/limits';
+import { apiLogConfig } from 'src/common/utils/api-logger';
 
 /** One lock for sending and checking deletion codes, so their reads and writes never interleave. */
 const deletionLockKey = (userId: number) => `account-deletion:${userId}`;
@@ -392,8 +393,8 @@ export class UserService {
       // PUT accepts any body, whatever `content_type` the client declared.
       this.logService.warn(
         'Profile image rejected',
-        { kind, reason: 'invalid_image' },
-        { operation: 'profile-image', correlation: { user_id: user.id } },
+        { user_id: user.id, kind, reason: 'invalid_image' },
+        { operation: 'profile-image' },
       );
       throw new BadRequestException('Uploaded file is not a valid image');
     }
@@ -403,12 +404,13 @@ export class UserService {
     const { moderation } = await this.aiService.moderateContent(
       `data:image/webp;base64,${optimized.toString('base64')}`,
       { user_id: user.id },
+      apiLogConfig(),
     );
     if (!moderation.is_allowed) {
       this.logService.warn(
         'Profile image rejected',
-        { kind, reason: 'moderation' },
-        { operation: 'profile-image', correlation: { user_id: user.id } },
+        { user_id: user.id, kind, reason: 'moderation' },
+        { operation: 'profile-image' },
       );
       throw new MediaModerationException(moderation.reason);
     }
@@ -439,7 +441,7 @@ export class UserService {
     provider: string;
     nameParts: (string | null | undefined)[];
   }): Promise<void> {
-    const fields = { operation: 'profile-image', correlation: { user_id: user.id } };
+    const fields = { operation: 'profile-image' };
     try {
       if (await this.userRepository.getAvatar(user.id)) return;
 
@@ -455,7 +457,7 @@ export class UserService {
       // Conditional: an avatar uploaded while this ran wins, and ours is removed.
       if (!(await this.userRepository.setAvatarIfEmpty(user.id, path))) {
         await this.helpers.deleteAsset(path);
-        this.logService.info('Provider avatar skipped', { provider, reason: 'avatar_already_set' }, fields);
+        this.logService.info('Provider avatar skipped', { user_id: user.id, provider, reason: 'avatar_already_set' }, fields);
         return;
       }
 
@@ -464,13 +466,14 @@ export class UserService {
         new UpdateProfileStatusEvent(user.id, { has_avatar_field: true }),
       );
       this.emitArtistPagesChanged(user.id);
-      this.logService.success('Provider avatar imported', { provider }, fields);
+      this.logService.success('Provider avatar imported', { user_id: user.id, provider }, fields);
     } catch (error: unknown) {
       // A rejected image already logged its warn in `moderateAndStoreProfileImage`.
       if (error instanceof MediaModerationException || error instanceof BadRequestException) return;
       this.logService.error(
         'Provider avatar import failed',
         {
+          user_id: user.id,
           provider,
           error_name: error instanceof Error ? error.name : typeof error,
           error_message: error instanceof Error ? error.message : String(error),
@@ -684,11 +687,12 @@ export class UserService {
       this.logService.info(
         'Username changed',
         {
+          user_id: user.id,
           previous_username: previousUsername,
           username: userUpdateData.username,
           username_reset_count: userUpdateData.username_reset_count,
         },
-        { operation: 'username-change', correlation: { user_id: user.id } },
+        { operation: 'username-change' },
       );
     }
 
@@ -729,6 +733,7 @@ export class UserService {
       await QueueHelper.createGenerateSingleEntityMetadataJob(
         { entity: 'user', id: user.id, user_id: user.id },
         { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
+        apiLogConfig(),
       );
     }
     // After the rename's reservation and cache clear. Both names are passed so the purge covers
@@ -772,8 +777,8 @@ export class UserService {
     await this.userSessionsService.expireAllForUser(user.id, this.requestService.user.token);
     this.logService.info(
       'Password changed',
-      { other_sessions_revoked: true },
-      { operation: 'password-change', correlation: { user_id: user.id } },
+      { user_id: user.id, other_sessions_revoked: true },
+      { operation: 'password-change' },
     );
     return updatedUser;
   }
@@ -785,7 +790,7 @@ export class UserService {
     // resolveUserAuth does not read `banned`, so live sessions must be ended here.
     await this.userSessionsService.expireAllForUser(userId);
     this.emitArtistPagesChanged(userId);
-    this.logService.warn('User banned', { reason }, { operation: 'ban', correlation: { user_id: userId } });
+    this.logService.warn('User banned', { user_id: userId, reason }, { operation: 'ban' });
     return bannedUser;
   }
 
@@ -802,7 +807,7 @@ export class UserService {
   }
 
   private async sendDeletionCodeLocked(userId: number): Promise<AccountDeletionCodeResult> {
-    const fields = { operation: 'account-deletion', correlation: { user_id: userId } };
+    const fields = { operation: 'account-deletion' };
     const user = await this.userRepository.findById(userId);
     if (!user) throw new UnauthorizedException();
     if (user.deletion_requested_at) {
@@ -824,7 +829,7 @@ export class UserService {
     const sent = await this.helpers.getCached<{ count: number; window_ends_at: string }>(sentKey);
     const sentWindowMs = sent ? new Date(sent.window_ends_at).getTime() - Date.now() : 0;
     if (sent && sentWindowMs > 0 && sent.count >= MAX_ACCOUNT_DELETION_CODES_PER_DAY) {
-      this.logService.warn('Account deletion code refused', { reason: 'daily_limit' }, fields);
+      this.logService.warn('Account deletion code refused', { user_id: userId, reason: 'daily_limit' }, fields);
       throw new ApiException(
         API_ERRORS.ACCOUNT_DELETION_CODE_DAILY_LIMIT,
         'Too many codes today, try again tomorrow',
@@ -859,6 +864,7 @@ export class UserService {
       this.logService.error(
         'Failed to send account deletion code',
         {
+          user_id: userId,
           error_name: error instanceof Error ? error.name : typeof error,
           error_message: maskEmailAddresses(error instanceof Error ? error.message : String(error)),
         },
@@ -877,7 +883,7 @@ export class UserService {
     );
 
     // Never the code.
-    this.logService.info('Account deletion code sent', undefined, fields);
+    this.logService.info('Account deletion code sent', { user_id: userId }, fields);
     return {
       expires_at: expiresAt,
       resend_available_at: new Date(issuedAt.getTime() + TWOFA_RESEND_COOLDOWN_SECONDS * 1000),
@@ -891,12 +897,12 @@ export class UserService {
    * run under the deletion lock: the read-check-write of `attempts` is not atomic on its own.
    */
   private async verifyDeletionCode(userId: number, code: string): Promise<void> {
-    const fields = { operation: 'account-deletion', correlation: { user_id: userId } };
+    const fields = { operation: 'account-deletion' };
     const key = CACHE_KEY_ACCOUNT_DELETION_CODE(userId);
     const pending = await this.helpers.getCached<PendingDeletionCode>(key);
     const remainingMs = pending ? new Date(pending.expires_at).getTime() - Date.now() : 0;
     if (!pending || remainingMs <= 0) {
-      this.logService.warn('Account deletion rejected', { reason: 'no_pending_code' }, fields);
+      this.logService.warn('Account deletion rejected', { user_id: userId, reason: 'no_pending_code' }, fields);
       throw new BadRequestException('Invalid or expired code');
     }
 
@@ -908,7 +914,7 @@ export class UserService {
       } else {
         await this.helpers.setCached(key, { ...pending, attempts }, remainingMs);
       }
-      this.logService.warn('Account deletion rejected', { reason: 'wrong_code', attempts, code_burned: burned }, fields);
+      this.logService.warn('Account deletion rejected', { user_id: userId, reason: 'wrong_code', attempts, code_burned: burned }, fields);
       throw new BadRequestException('Invalid or expired code');
     }
   }
@@ -953,8 +959,8 @@ export class UserService {
     }
     this.logService.info(
       'Account deletion requested',
-      { cancel_subscription: Boolean(request.cancel_subscription) },
-      { operation: 'account-deletion', correlation: { user_id: userId } },
+      { user_id: userId, cancel_subscription: Boolean(request.cancel_subscription) },
+      { operation: 'account-deletion' },
     );
     this.emitArtistPagesChanged(userId);
 
@@ -971,9 +977,8 @@ export class UserService {
    */
   async cancelDeletion(userId: number) {
     if (await this.userRepository.unflagDeletion(userId, ACCOUNT_DELETION_GRACE_DAYS)) {
-      this.logService.info('Account deletion cancelled', undefined, {
+      this.logService.info('Account deletion cancelled', { user_id: userId }, {
         operation: 'account-deletion',
-        correlation: { user_id: userId },
       });
       this.emitArtistPagesChanged(userId);
       return { deletion_requested_at: null };
@@ -1008,11 +1013,11 @@ export class UserService {
     forceDelete = false,
   ): Promise<{ deleted: boolean; reason?: string }> {
     // Per-call operation: never the name builder on this shared DI logger.
-    const op = { operation: 'hard-delete', correlation: { user_id: userId } };
+    const op = { operation: 'hard-delete' };
     const log = {
-      info: (message: string, extra?: Record<string, unknown>) => this.logService.info(message, extra, op),
-      warn: (message: string, extra?: Record<string, unknown>) => this.logService.warn(message, extra, op),
-      error: (message: string, extra?: Record<string, unknown>) => this.logService.error(message, extra, op),
+      info: (message: string, extra?: Record<string, unknown>) => this.logService.info(message, { user_id: userId, ...extra }, op),
+      warn: (message: string, extra?: Record<string, unknown>) => this.logService.warn(message, { user_id: userId, ...extra }, op),
+      error: (message: string, extra?: Record<string, unknown>) => this.logService.error(message, { user_id: userId, ...extra }, op),
     };
     // Every early return is logged: "why didn't it delete" is the usual question.
     const skip = (reason: string) => {
@@ -1142,13 +1147,13 @@ export class UserService {
     // A visit to `/artists/{name}` before anyone owned it cached "does not exist" for a week, which
     // would 404 the new owner's page. Logged, not thrown: onboarding below must still run.
     // Per-call operation: never the name builder on this shared DI logger.
-    const fields = { operation: 'new-user', correlation: { user_id: event.user.id } };
+    const fields = { operation: 'new-user' };
     await this.helpers
       .deleteManyCached([CACHE_KEY_USERNAME_EXISTS(event.user.username)])
       .catch((error: unknown) =>
         this.logService.error(
           'Username cache clear failed for new user',
-          { error_name: error instanceof Error ? error.name : typeof error },
+          { user_id: event.user.id, error_name: error instanceof Error ? error.name : typeof error },
           fields,
         ),
       );
@@ -1159,7 +1164,7 @@ export class UserService {
       await QueueHelper.createOrUpdateEmailPreferenceJob({
         email: event.user.email,
         user_id: event.user.id,
-      });
+      }, apiLogConfig());
 
       //Create stripe customer
       step = 'stripe-customer';
@@ -1176,10 +1181,11 @@ export class UserService {
         metadata: StripeService.traceMetadata(event.user.id),
       });
       // Ids only: the customer object carries email, phone and address.
-      this.logService.info('Stripe customer created', undefined, {
-        ...fields,
-        correlation: { ...fields.correlation, stripe_customer_id: stripeCustomer.id },
-      });
+      this.logService.info(
+        'Stripe customer created',
+        { user_id: event.user.id, stripe_customer_id: stripeCustomer.id },
+        fields,
+      );
       //UPDATE USER
       step = 'store-customer';
       await this.userRepository.updateById(event.user.id, {
@@ -1207,8 +1213,8 @@ export class UserService {
       // a name the mail uses its nameless greeting, never the random username.
       await this.mailService.sendAsync(this.notifyNewUserMail.setUser(profile, profile.language), {
         delay: 3 * 60 * 1000
-      });
-      this.logService.info('New user onboarding completed', undefined, fields);
+      }, apiLogConfig());
+      this.logService.info('New user onboarding completed', { user_id: event.user.id }, fields);
     } catch (error) {
       const failure = {
         step,
@@ -1218,9 +1224,9 @@ export class UserService {
       };
       // Until someone runs `dbcli create:stripe-customers`, this account cannot subscribe.
       if (step === 'stripe-customer' || step === 'store-customer') {
-        this.logService.critical('Stripe customer creation failed for new user', failure, fields);
+        this.logService.critical('Stripe customer creation failed for new user', { user_id: event.user.id, ...failure }, fields);
       } else {
-        this.logService.error('New user onboarding failed', failure, fields);
+        this.logService.error('New user onboarding failed', { user_id: event.user.id, ...failure }, fields);
       }
       throw error;
     }

@@ -44,16 +44,23 @@ describe('PlanSubscriptionsService.cancelPayments', () => {
     expect(stripe.customers.del).toHaveBeenCalledWith('cus_1');
   });
 
-  it('AC-28: logs one "Account payments cancelled" with the outcome flags and no ids or emails in the fields', async () => {
+  it('AC-28: logs one "Account payments cancelled" with the ids and outcome flags and no emails', async () => {
     planSubscriptionsRepository.findActiveSubscription.mockResolvedValue({ stripe_id: 'sub_1', paypal_id: null });
 
     await service.cancelPayments(7, 'cus_1');
 
     const calls = logger.info.mock.calls.filter((c) => c[0] === 'Account payments cancelled');
     expect(calls).toHaveLength(1);
-    expect(calls[0][1]).toEqual({ stripe_subscription_cancelled: true, stripe_customer_deleted: true, paypal_cancelled: false });
+    expect(calls[0][1]).toEqual({
+      user_id: 7,
+      stripe_subscription_id: 'sub_1',
+      stripe_customer_id: 'cus_1',
+      stripe_subscription_cancelled: true,
+      stripe_customer_deleted: true,
+      paypal_cancelled: false,
+    });
     expect(calls[0][2]).toEqual({ operation: 'hard-delete' });
-    expect(JSON.stringify(calls)).not.toMatch(/sub_1|cus_1/);
+    expect(JSON.stringify(calls)).not.toMatch(/@/);
   });
 
   it('AC-28: treats an already-cancelled Stripe subscription as done, reported as not cancelled', async () => {

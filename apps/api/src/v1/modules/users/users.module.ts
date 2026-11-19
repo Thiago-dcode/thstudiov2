@@ -3,11 +3,7 @@ import { UserService } from './users.service';
 import { UserController } from './users.controller';
 import { UserRepository } from './users.repository';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
-import { logConfig } from '@repo/backend-lib/config/logging';
-import {
-  FactoryLogService,
-  LogService,
-} from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
 import { UserAuthDevicesModule } from '../user-auth-devices/user-auth-devices.module';
 import { PlansModule } from '../plans/plans.module';
@@ -20,6 +16,7 @@ import { AuthCoreModule } from '../auth/auth-core.module';
 import { AccountDeletionCodeMail } from './mails/account-deletion-code.mail';
 import { UserSessionsModule } from '../user-sessions/user-sessions.module';
 import { UsernameHistoryModule } from '../username-history/username-history.module';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   controllers: [UserController],
@@ -31,7 +28,7 @@ import { UsernameHistoryModule } from '../username-history/username-history.modu
     {
       provide: LogService,
       useFactory: () => {
-        return FactoryLogService.createLogService('file', logConfig.users);
+        return createApiLogger({ channel: 'users' });
       },
     },
   ],

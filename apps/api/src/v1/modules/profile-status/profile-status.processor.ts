@@ -1,6 +1,5 @@
 import { Processor } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import {
   JOB_UPDATE_PROFILE_STATUS,
   PROFILE_STATUS_QUEUE,
@@ -13,21 +12,16 @@ import { ProfileStatusService } from './profile-status.service';
 export class ProfileStatusProcessor extends GlobalProcessor {
   constructor(
     private readonly profileStatusService: ProfileStatusService,
-    private readonly logger: LogService,
   ) {
     super();
   }
 
   async process(job: Job): Promise<unknown> {
-    try {
-      switch (job.name) {
-        case JOB_UPDATE_PROFILE_STATUS:
-          return await this.handleUpdate(job.data);
-        default:
-          throw new Error(`Job name "${job.name}" not recognized`);
-      }
-    } finally {
-      await this.logger.flushAsync();
+    switch (job.name) {
+      case JOB_UPDATE_PROFILE_STATUS:
+        return await this.handleUpdate(job.data);
+      default:
+        throw new Error(`Job name "${job.name}" not recognized`);
     }
   }
 

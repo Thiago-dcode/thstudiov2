@@ -1,5 +1,6 @@
 import Logger from '@repo/backend-lib/utils/console';
 import { QueueHelper } from '@repo/backend-lib/utils';
+import { dbcliLogConfig } from '../../bin/dbcli-audit';
 import { killClient } from '../client';
 import { Query } from '../facades';
 import { connectDb } from './utils';
@@ -62,7 +63,7 @@ const generateMediaThumbnail = async ({ mediaId, dryRun }: GenerateMediaThumbnai
       process.exit(0);
     }
 
-    await QueueHelper.createRegenerateMediaThumbnailJob({ media_id: media.id });
+    await QueueHelper.createRegenerateMediaThumbnailJob({ media_id: media.id }, dbcliLogConfig());
     Logger.success('✅ Queued 1 job. The worker processes it in the background.');
     process.exit(0);
   } catch (error) {

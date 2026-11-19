@@ -19,7 +19,6 @@
  * (e.g. `pnpm dbcli db:seed -n media` for `thsworld`).
  */
 
-import { LogService } from '@repo/backend-lib/services/log-service';
 import Logger from '@repo/backend-lib/utils/console';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { getConfigValue } from '@repo/common-lib/config/utils';
@@ -172,7 +171,6 @@ async function seedCollectionForUsername(
   Logger.success(
     `Collection seed: created ${amount} collection(s) for user=${username} (ids: ${createdIds.join(', ')}).`,
   );
-  await LogService.flush();
 }
 
 /**
@@ -184,7 +182,6 @@ export const main = async (username?: string, amount?: number) => {
     Logger.info(
       'Collection seed skipped: not a local app env (set NODE_ENV to development, local, or test).',
     );
-    await LogService.flush();
     return;
   }
   const resolved = username?.trim() || COLLECTION_SEED_USERNAME;

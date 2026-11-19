@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { IndexNowService } from './indexnow.service';
 import { CRON_LOCK_TTL, runCronExclusive } from 'src/common/utils/cron-lock';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 /**
  * Hourly IndexNow submission of the public pages changed in the last hour.
@@ -17,7 +17,7 @@ import { CRON_LOCK_TTL, runCronExclusive } from 'src/common/utils/cron-lock';
 export class IndexNowTask {
   private static readonly WINDOW_MS = 65 * 60 * 1000;
 
-  private readonly logger = FactoryLogService.createLogService('file', {
+  private readonly logger = createApiLogger({
     channel: 'indexnow',
   });
 
@@ -46,8 +46,6 @@ export class IndexNowTask {
           { error_message: error instanceof Error ? error.message : 'Unknown error' },
           op,
         );
-      } finally {
-        await LogService.flush();
       }
     });
   }

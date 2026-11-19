@@ -1,7 +1,7 @@
 import { InjectQueue, Processor } from '@nestjs/bullmq';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Job, Queue, Worker } from 'bullmq';
-import { LogService, addLogCorrelation } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { EDGE_HTML_MAX_STALE_MS } from '@repo/common-lib/constants/edge-cache';
 import { EDGE_CACHE_QUEUE, JOB_PURGE_ARTIST_EDGE_CACHE } from '@repo/common-lib/constants/queues';
 import { PurgeArtistEdgeCacheJobInput } from '@repo/common-lib/types/edge-cache';
@@ -45,15 +45,11 @@ export class EdgeCacheProcessor extends GlobalProcessor {
   }
 
   async process(job: Job<PurgeArtistEdgeCacheJobInput>): Promise<unknown> {
-    try {
-      switch (job.name) {
-        case JOB_PURGE_ARTIST_EDGE_CACHE:
-          return await this.purgeArtist(job);
-        default:
-          throw new Error(`Job name "${job.name}" not recognized`);
-      }
-    } finally {
-      await this.logger.flushAsync();
+    switch (job.name) {
+      case JOB_PURGE_ARTIST_EDGE_CACHE:
+        return await this.purgeArtist(job);
+      default:
+        throw new Error(`Job name "${job.name}" not recognized`);
     }
   }
 
@@ -61,12 +57,11 @@ export class EdgeCacheProcessor extends GlobalProcessor {
     job: Job<PurgeArtistEdgeCacheJobInput>,
   ): Promise<PurgeArtistEdgeCacheResult> {
     const userId = job.data.user_id;
-    // Per-call operation: never the name builder on this shared logger. The user is a correlation field.
-    addLogCorrelation({ user_id: userId });
+    // Per-call operation: never the name builder on this shared logger. The user id is on every line.
     const op = { operation: 'purge' };
     const log = {
-      info: (message: string, extra?: Record<string, unknown>) => this.logger.info(message, extra, op),
-      warn: (message: string, extra?: Record<string, unknown>) => this.logger.warn(message, extra, op),
+      info: (message: string, extra?: Record<string, unknown>) => this.logger.info(message, { user_id: userId, ...extra }, op),
+      warn: (message: string, extra?: Record<string, unknown>) => this.logger.warn(message, { user_id: userId, ...extra }, op),
     };
 
     const target = this.edgeCacheService.purgeTarget();

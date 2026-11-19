@@ -1,5 +1,4 @@
 import { Injectable } from "@nestjs/common";
-// import { FactoryLogService } from "@repo/backend-lib/services/log-service";
 import { Helpers } from "src/common/services/helpers.service";
 
 import { FullPortfolio, Portfolio, PortfolioIndexRequest } from "@repo/common-lib/types/portfolio";

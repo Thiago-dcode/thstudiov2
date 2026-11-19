@@ -2,7 +2,8 @@ import { LLMCompletionResponse, LLMService } from '@repo/backend-lib/services/ll
 import { MAX_TAGS_MEDIA, MAX_TECHNIQUES_MEDIA } from '@repo/common-lib/constants/limits';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { openAiLLMConfig } from '@repo/backend-lib/config/llm';
-import { FactoryLogService } from '@repo/backend-lib/services/log-service';
+import { LogConfig } from '@repo/backend-lib/services/log-service';
+import { logService } from '@repo/backend-lib/config/logging';
 import {
   ContentModerationFields,
   GenerateEntityMetadataResponse,
@@ -212,9 +213,7 @@ const SEO_STOPWORDS = new Set([
 
 export class AiService {
   /** Failures log `critical` here, which is what mails the admins (no separate error logger). */
-  private readonly logger = FactoryLogService.createLogService('file', {
-    channel: 'ai',
-  });
+  private readonly logger = logService.lib({ channel: 'ai' });
 
   constructor(
     private readonly llmService: LLMService,
@@ -247,6 +246,7 @@ export class AiService {
     meta: { media_id: number; user_id: number; media_type: EnumType<'MEDIA_TYPE'> | null | undefined },
     notes?: MediaArtistNotes,
     selectedCategories: MediaMetadataPromptCategory[] = [],
+    log: Partial<LogConfig> = {},
   ): Promise<GenerateMediaMetadataResponse> {
     try {
       this.logger.name('generate-media-metadata').warn('Starting to generate metadata', {
@@ -431,7 +431,7 @@ ${categoryLines.join(', AND\n')}.
         user_id: meta.user_id,
         usage_type: AiCreditsHelper.metadataUsageType(meta.media_type),
         matches_expected_response: matchesExpectedResponse,
-      });
+      }, log);
 
       const response = { seo_filename: seoFilename, category_ids: categoryIds, translations, usage: result.usage };
       this.logger
@@ -459,6 +459,7 @@ ${categoryLines.join(', AND\n')}.
     portfolio: FullPortfolio,
     artist: ArtistSeoContext,
     meta: { portfolio_id: number; user_id: number },
+    log: Partial<LogConfig> = {},
   ): Promise<GenerateEntityMetadataResponse> {
     const context = {
       artist: artistIdentity(artist),
@@ -484,6 +485,7 @@ ${categoryLines.join(', AND\n')}.
       extraInfo: SEO_EXTRA_INFO.portfolio,
       context,
       meta: { user_id: meta.user_id, entity_id: meta.portfolio_id, entity_id_key: 'portfolio_id' },
+      log,
     });
   }
 
@@ -495,6 +497,7 @@ ${categoryLines.join(', AND\n')}.
     collection: FullCollection,
     artist: ArtistSeoContext,
     meta: { collection_id: number; user_id: number },
+    log: Partial<LogConfig> = {},
   ): Promise<GenerateEntityMetadataResponse> {
     const context = {
       artist: artistIdentity(artist),
@@ -510,6 +513,7 @@ ${categoryLines.join(', AND\n')}.
       extraInfo: SEO_EXTRA_INFO.collection,
       context,
       meta: { user_id: meta.user_id, entity_id: meta.collection_id, entity_id_key: 'collection_id' },
+      log,
     });
   }
 
@@ -519,6 +523,7 @@ ${categoryLines.join(', AND\n')}.
     service: FullService,
     artist: ArtistSeoContext,
     meta: { service_id: number; user_id: number },
+    log: Partial<LogConfig> = {},
   ): Promise<GenerateEntityMetadataResponse> {
     const context = {
       artist,
@@ -540,6 +545,7 @@ ${categoryLines.join(', AND\n')}.
       extraInfo: SEO_EXTRA_INFO.service,
       context,
       meta: { user_id: meta.user_id, entity_id: meta.service_id, entity_id_key: 'service_id' },
+      log,
     });
   }
 
@@ -548,6 +554,7 @@ ${categoryLines.join(', AND\n')}.
   public async generateUserMetadata(
     profile: UserProfile,
     meta: { user_id: number },
+    log: Partial<LogConfig> = {},
   ): Promise<GenerateEntityMetadataResponse> {
     const context = {
       artist: {
@@ -572,6 +579,7 @@ ${categoryLines.join(', AND\n')}.
       extraInfo: SEO_EXTRA_INFO.user,
       context,
       meta: { user_id: meta.user_id, entity_id: meta.user_id, entity_id_key: 'user_id' },
+      log,
     });
   }
 
@@ -581,7 +589,7 @@ ${categoryLines.join(', AND\n')}.
    * @param url one image, or the frames sampled from one video — several frames still produce a
    * single verdict, a single usage record and a single moderation job.
    */
-  public async moderateContent(url: string | string[], meta: { user_id: number }) {
+  public async moderateContent(url: string | string[], meta: { user_id: number }, log: Partial<LogConfig> = {}) {
     try {
       this.logger.name('moderate-content').warn('Starting to moderate content', {
         // Inline frames (an animated GIF's) are logged by size, not as kilobytes of base64.
@@ -611,7 +619,7 @@ ${categoryLines.join(', AND\n')}.
           user_id: meta.user_id,
           usage_type: 'MODERATE_MEDIA_CONTENT',
           matches_expected_response: matchesExpectedResponse,
-        });
+        }, log);
       }
 
       // Fail closed: no verdict means the media is not published. Throwing (rather than
@@ -638,7 +646,7 @@ ${categoryLines.join(', AND\n')}.
         content_type: moderation.content_type ?? 'unknown',
         reason: moderation.reason ?? null,
         user_id: meta.user_id,
-      });
+      }, log);
 
       return {
         moderation,
@@ -794,8 +802,10 @@ ${categoryLines.join(', AND\n')}.
       entity_id: number;
       entity_id_key: 'portfolio_id' | 'collection_id' | 'service_id' | 'user_id';
     };
+    /** The caller's log config: the usage job carries its trace id. */
+    log: Partial<LogConfig>;
   }): Promise<GenerateEntityMetadataResponse> {
-    const { entityLabel, logName, usageType, extraInfo, context, meta } = params;
+    const { entityLabel, logName, usageType, extraInfo, context, meta, log } = params;
 
     try {
 
@@ -845,7 +855,7 @@ ${categoryLines.join(', AND\n')}.
         user_id: meta.user_id,
         usage_type: usageType,
         matches_expected_response: matchesExpectedResponse,
-      });
+      }, log);
 
       this.logger
         .name(logName)
@@ -930,7 +940,7 @@ ${categoryLines.join(', AND\n')}.
     user_id: number;
     usage_type: EnumType<'LLM_USAGE_TYPE'>;
     matches_expected_response: boolean;
-  }): Promise<void> {
+  }, log: Partial<LogConfig>): Promise<void> {
     if (!params.tokens) return;
     await QueueHelper.createLlmUsageJob({
       tokens: params.tokens,
@@ -938,7 +948,7 @@ ${categoryLines.join(', AND\n')}.
       user_id: params.user_id,
       usage_type: params.usage_type,
       matches_expected_response: params.matches_expected_response,
-    });
+    }, log);
   }
 
   /**

@@ -13,6 +13,7 @@ import { MediaHelper } from '@repo/common-lib/utils/media';
 import { AiCreditsHelper } from '@repo/common-lib/utils/ai-credits';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
 import { RequestService } from 'src/common/services/request.service';
+import { apiLogConfig } from 'src/common/utils/api-logger';
 
 @Injectable()
 export class AiMediaService {
@@ -218,9 +219,9 @@ export class AiMediaService {
         entity_id: request.media_id,
         type: 'GENERATE_MEDIA_METADATA',
         user_id: request.user_id,
-      });
+      }, apiLogConfig());
 
-      await QueueHelper.createGenerateMediaMetadataJob(request);
+      await QueueHelper.createGenerateMediaMetadataJob(request, apiLogConfig());
 
       this.logger.info(
         `Generate media metadata job enqueued: media [${request.media_id}]`,

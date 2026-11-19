@@ -10,6 +10,7 @@ import { WaitListReminderMail } from './mails/wait-list-reminder.mail';
 import { WaitListFollowUpMail } from './mails/wait-list-follow-up.mail';
 import { WAIT_LIST_SHOWCASE_PATH } from './wait-list.constants';
 import { CRON_LOCK_TTL, runCronExclusive } from 'src/common/utils/cron-lock';
+import { apiLogConfig } from 'src/common/utils/api-logger';
 
 @Injectable()
 export class WaitListTask {
@@ -56,15 +57,11 @@ export class WaitListTask {
   @Cron('0 11 * * *', { name: 'wait-list-invites', timeZone: 'UTC' })
   async handleWaitListInvites() {
     await runCronExclusive('wait-list-invites', CRON_LOCK_TTL.daily, async () => {
-      try {
-        const anchor = WaitListTask.dailyAnchor();
-        // Follow-ups first: their window ends where today's invite cutoff begins, so nobody in
-        // this run gets both.
-        await this.sendFollowUps(anchor);
-        await this.queueInvites(anchor);
-      } finally {
-        await this.logger.flushAsync();
-      }
+      const anchor = WaitListTask.dailyAnchor();
+      // Follow-ups first: their window ends where today's invite cutoff begins, so nobody in
+      // this run gets both.
+      await this.sendFollowUps(anchor);
+      await this.queueInvites(anchor);
     });
   }
 
@@ -112,6 +109,7 @@ export class WaitListTask {
           await this.mailService.sendAsync(
             this.waitListFollowUpMail.setData({ email: row.email, showcaseUrl }, row.language),
             { jobId: `wait-list-follow-up-${row.id}` },
+            apiLogConfig(),
           );
           await this.waitListRepository.updateById(row.id, { follow_up_email_sent_at: new Date() });
           sentCount++;
@@ -214,6 +212,7 @@ export class WaitListTask {
               {
                 jobId: `wait-list-reminder-${row.id}-${row.reminder_count}`,
               },
+              apiLogConfig(),
             );
 
             await this.waitListRepository.markReminderSent(row.id, row.reminder_count + 1, new Date());
@@ -234,8 +233,6 @@ export class WaitListTask {
           `wait-list reminder cron failed - ${error instanceof Error ? error.message : 'Unknown error'}`,
           error,
         );
-      } finally {
-        await this.logger.flushAsync();
       }
     });
   }

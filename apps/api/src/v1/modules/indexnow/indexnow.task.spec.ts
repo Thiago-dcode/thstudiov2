@@ -6,12 +6,12 @@ jest.mock('src/common/utils/cron-lock', () => ({
   runCronExclusive: async (_name: string, _ttl: number, job: () => Promise<void>) => job(),
 }));
 
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { logService } from '@repo/backend-lib/config/logging';
+import type { LogService } from '@repo/backend-lib/services/log-service';
 import { IndexNowTask } from './indexnow.task';
 
 const build = (result: unknown | Error) => {
-  jest.spyOn(FactoryLogService, 'createLogService').mockReturnValue(mockLog as unknown as LogService);
-  jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
+  jest.spyOn(logService, 'api').mockReturnValue(mockLog as unknown as LogService);
   const service = {
     submitChangedSince: result instanceof Error ? jest.fn().mockRejectedValue(result) : jest.fn().mockResolvedValue(result),
   };
@@ -54,12 +54,11 @@ describe('IndexNowTask logging', () => {
     for (const fn of Object.values(mockLog)) expect(fn).not.toHaveBeenCalled();
   });
 
-  it('AC-33: a failure logs error with a constant message and the error text in fields; flush still runs', async () => {
+  it('AC-33: a failure logs error with a constant message and the error text in fields', async () => {
     const task = build(new Error('network down'));
     await task.submitRecentChanges();
     expect(mockLog.error).toHaveBeenCalledTimes(1);
     expect(mockLog.error.mock.calls[0][0]).toBe('IndexNow submission failed');
     expect(mockLog.error.mock.calls[0][1]).toEqual({ error_message: 'network down' });
-    expect(LogService.flush).toHaveBeenCalled();
   });
 });

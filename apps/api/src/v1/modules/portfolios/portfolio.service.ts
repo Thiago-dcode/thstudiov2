@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
-import { FactoryLogService } from "@repo/backend-lib/services/log-service";
 import { MAX_HIGHLIGHT_PORTFOLIOS } from "@repo/common-lib/constants/highlights";
 import type { HighlightCount } from "@repo/common-lib/types/general";
 import type { FullPortfolio } from "@repo/common-lib/types/portfolio";
@@ -32,6 +31,7 @@ import { ENTITY_CREATE_LOCK_TTL_MS, withUserLock } from "src/common/utils/user-l
 import { descriptiveFilename, versionedAssetPath } from "src/common/utils/asset-path.util";
 import { PublicViewerService } from "src/common/services/public-viewer.service";
 import { PUBLIC_ENTITY_FILTERS } from "src/common/utils/public-entity";
+import { apiLogConfig, createApiLogger } from 'src/common/utils/api-logger';
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -47,7 +47,7 @@ export const FEATURED_PORTFOLIO_CACHE_KEY = 'portfolio-featured';
 
 @Injectable()
 export class PortfolioService {
-  private readonly logger = FactoryLogService.createLogService('file', {
+  private readonly logger = createApiLogger({
     channel: 'portfolios',
   });
   constructor(
@@ -245,7 +245,7 @@ export class PortfolioService {
       const thumbnailUrl = await this.helpers.getAsset(thumbnailPath);
       const { moderation } = await this.aiService.moderateContent(thumbnailUrl, {
         user_id: request.user_id,
-      });
+      }, apiLogConfig());
 
       // If not allowed → delete thumbnail and throw
       if (!moderation.is_allowed) {
@@ -277,7 +277,7 @@ export class PortfolioService {
       resolvedLayout.config,
     );
     await this.invalidateHighlightCountCache(request.user_id);
-    await QueueHelper.createComputeUserMetricsJob(request.user_id);
+    await QueueHelper.createComputeUserMetricsJob(request.user_id, apiLogConfig());
     this.eventEmitter.emit(
       UPDATE_PROFILE_STATUS_EVENT,
       new UpdateProfileStatusEvent(request.user_id, { has_portfolio: true }),
@@ -289,6 +289,7 @@ export class PortfolioService {
         user_id: portfolio.user_id,
       },
       { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
+      apiLogConfig(),
     );
     this.eventEmitter.emit(
       ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
@@ -379,7 +380,7 @@ export class PortfolioService {
       const thumbnailUrl = await this.helpers.getAsset(thumbnailPath);
       const { moderation } = await this.aiService.moderateContent(thumbnailUrl, {
         user_id: portfolio.user_id,
-      });
+      }, apiLogConfig());
 
       // If not allowed → delete thumbnail and throw
       if (!moderation.is_allowed) {
@@ -443,7 +444,7 @@ export class PortfolioService {
       this.portfolioRepository.delete(id),
     ]);
     await this.invalidateHighlightCountCache(portfolio.user_id);
-    await QueueHelper.createComputeUserMetricsJob(portfolio.user_id);
+    await QueueHelper.createComputeUserMetricsJob(portfolio.user_id, apiLogConfig());
     const stillHasPortfolio = await this.portfolioRepository.exists({
       user_id: portfolio.user_id,
     });

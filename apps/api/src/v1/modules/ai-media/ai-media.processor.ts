@@ -20,6 +20,7 @@ import { MediaService } from '../media/media.service';
 import { PortfolioRepository } from '../portfolios/portfolio.repository';
 import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
 import { AiMediaService } from './ai-media.service';
+import { apiLogConfig } from 'src/common/utils/api-logger';
 
 @Processor(AI_MEDIA_QUEUE)
 export class AiMediaProcessor extends GlobalProcessor {
@@ -39,17 +40,13 @@ export class AiMediaProcessor extends GlobalProcessor {
   }
 
   async process(job: Job): Promise<unknown> {
-    try {
-      switch (job.name) {
-        case JOB_GENERATE_MEDIA_METADATA:
-          return await this.generateMediaMetadata(job.data);
-        case JOB_GENERATE_MEDIA_METADATA_AND_NOTIFY:
-          return await this.generateMediaMetadataAndNotify(job.data);
-        default:
-          throw new Error(`Job name "${job.name}" not recognized`);
-      }
-    } finally {
-      await this.logger.flushAsync();
+    switch (job.name) {
+      case JOB_GENERATE_MEDIA_METADATA:
+        return await this.generateMediaMetadata(job.data);
+      case JOB_GENERATE_MEDIA_METADATA_AND_NOTIFY:
+        return await this.generateMediaMetadataAndNotify(job.data);
+      default:
+        throw new Error(`Job name "${job.name}" not recognized`);
     }
   }
 
@@ -112,6 +109,7 @@ export class AiMediaProcessor extends GlobalProcessor {
         // can name what the pixels cannot (subject, project, where it was made).
         { title: asset.title, description: asset.description, location },
         selectedCategories,
+        apiLogConfig(),
       );
 
       // EN row (fallback to first) → the main-row SEO columns; filename is shared across locales.
@@ -153,7 +151,7 @@ export class AiMediaProcessor extends GlobalProcessor {
         user_id: request.user_id,
         entity_id: request.media_id,
         read_at: null,
-      });
+      }, apiLogConfig());
 
       return media;
     } catch (error) {
@@ -166,7 +164,7 @@ export class AiMediaProcessor extends GlobalProcessor {
         user_id: request.user_id,
         entity_id: request.media_id,
         read_at: null,
-      });
+      }, apiLogConfig());
 
       log.error(
         `Failed to generate metadata for media [${request.media_id}] (user ${request.user_id}) - ${error instanceof Error ? error.message : 'Unknown error'}`,

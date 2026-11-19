@@ -77,6 +77,7 @@ import {
 import { JobsOptions, Queue, QueueEvents } from "bullmq";
 import { randomUUID } from 'node:crypto';
 import { enqueueJob, enqueueJobs } from './job-trace';
+import type { LogConfig } from '../services/log-service/types';
 
 /**
  * BullMQ silently drops an `add` whose jobId already exists. `Date.now()` alone collides for jobs
@@ -98,7 +99,7 @@ export class QueueHelper {
      * never queue two deletions of the same account; `removeOnFail` so a failed run is retried by
      * the next day's task instead of being blocked by the dead job id.
      */
-    static async createDeleteUserAccountJob(dto: AccountDeletionJobInput) {
+    static async createDeleteUserAccountJob(dto: AccountDeletionJobInput, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(ACCOUNT_DELETION_QUEUE),
             JOB_DELETE_USER_ACCOUNT,
             dto,
@@ -110,6 +111,7 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
@@ -117,7 +119,7 @@ export class QueueHelper {
      * The "your account will be deleted in 2 days" email. Deterministic per user; the processor's
      * `deletion_warning_sent_at` stamp is what keeps a later re-enqueue from sending it twice.
      */
-    static async createAccountDeletionWarningJob(dto: AccountDeletionJobInput) {
+    static async createAccountDeletionWarningJob(dto: AccountDeletionJobInput, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(ACCOUNT_DELETION_QUEUE),
             JOB_SEND_ACCOUNT_DELETION_WARNING,
             dto,
@@ -129,6 +131,7 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
@@ -156,7 +159,7 @@ export class QueueHelper {
      * merged with a scheduled run. No retries: the caller is watching and can simply run it again.
      * Rejects when the job fails or does not finish within `timeoutMs` (e.g. no worker running).
      */
-    static async runDatabaseBackupJob(timeoutMs: number): Promise<unknown> {
+    static async runDatabaseBackupJob(timeoutMs: number, log: Partial<LogConfig> = {}): Promise<unknown> {
         const connection = { url: config().redis.url };
         const queue = new Queue(BACKUP_QUEUE, { connection });
         const events = new QueueEvents(BACKUP_QUEUE, { connection });
@@ -168,7 +171,7 @@ export class QueueHelper {
                 attempts: 1,
                 removeOnComplete: 30,
                 removeOnFail: 30,
-            });
+            }, log);
             return await job.waitUntilFinished(events, timeoutMs);
         } finally {
             await events.close();
@@ -180,7 +183,7 @@ export class QueueHelper {
      * `deduplication` drops the job when one with the same id was added within `ttl` ms, across
      * every process sharing Redis (the critical alert throttle uses it).
      */
-    static async createMailJob(dto: MailJob, opts?: { deduplication?: { id: string; ttl: number } }) {
+    static async createMailJob(dto: MailJob, opts?: { deduplication?: { id: string; ttl: number } }, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.getMailQueue(),
             dto.name,
             dto.payload,
@@ -192,10 +195,11 @@ export class QueueHelper {
                 backoff: { type: 'exponential', delay: 1000 },
                 ...(opts?.deduplication ? { deduplication: opts.deduplication } : {}),
             },
+            log,
         );
     }
 
-    static async createLlmUsageJob(dto: CreateLlmTokensUsageInput) {
+    static async createLlmUsageJob(dto: CreateLlmTokensUsageInput, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(AI_QUEUE),
             JOB_RECORD_LLM_USAGE,
             dto,
@@ -206,10 +210,11 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
-    static async createMediaModerationJob(dto: CreateMediaModerationInput) {
+    static async createMediaModerationJob(dto: CreateMediaModerationInput, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(AI_QUEUE),
             JOB_RECORD_MEDIA_MODERATION,
             dto,
@@ -220,10 +225,11 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
-    static async createGenerateEntityMetadataJob(dto: GenerateEntityMetadataPayload) {
+    static async createGenerateEntityMetadataJob(dto: GenerateEntityMetadataPayload, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(AI_QUEUE),
             JOB_GENERATE_ENTITY_METADATA,
             dto,
@@ -234,6 +240,7 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
@@ -245,6 +252,7 @@ export class QueueHelper {
     static async createGenerateSingleEntityMetadataJob(
         dto: GenerateSingleEntityMetadataPayload,
         jobOptions?: JobsOptions,
+        log: Partial<LogConfig> = {},
     ) {
         await enqueueJob(QueueHelper.createQueue(AI_QUEUE),
             JOB_GENERATE_SINGLE_ENTITY_METADATA,
@@ -258,6 +266,7 @@ export class QueueHelper {
                 backoff: { type: 'exponential', delay: 1000 },
                 ...jobOptions,
             },
+            log,
         );
     }
 
@@ -266,7 +275,7 @@ export class QueueHelper {
      * double-clicks collapse into one generation. removeOnFail so a failed job does not
      * block a later retry.
      */
-    static async createGenerateMediaMetadataJob(dto: GenerateMediaMetadataInput) {
+    static async createGenerateMediaMetadataJob(dto: GenerateMediaMetadataInput, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(AI_MEDIA_QUEUE),
             JOB_GENERATE_MEDIA_METADATA,
             dto,
@@ -278,6 +287,7 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
@@ -285,7 +295,7 @@ export class QueueHelper {
      * Enqueue status update + notification + generate-media-metadata job. Deterministic jobId so
      * double-clicks collapse. removeOnFail so a failed job does not block a later retry.
      */
-    static async createGenerateMediaMetadataAndNotifyJob(dto: GenerateMediaMetadataInput) {
+    static async createGenerateMediaMetadataAndNotifyJob(dto: GenerateMediaMetadataInput, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(AI_MEDIA_QUEUE),
             JOB_GENERATE_MEDIA_METADATA_AND_NOTIFY,
             dto,
@@ -297,10 +307,11 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
-    static async createUserContactJob(dto: CreateUserContactInput) {
+    static async createUserContactJob(dto: CreateUserContactInput, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(USER_CONTACTS_QUEUE),
             JOB_CREATE_USER_CONTACT,
             dto,
@@ -311,10 +322,11 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
-    static async createWaitListEntryJob(dto: CreateWaitListJobInput) {
+    static async createWaitListEntryJob(dto: CreateWaitListJobInput, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(WAIT_LIST_QUEUE),
             JOB_CREATE_WAIT_LIST_ENTRY,
             dto,
@@ -325,6 +337,7 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
@@ -334,7 +347,7 @@ export class QueueHelper {
      * failed job doesn't block a later enqueue; the processor's `validated_email_sent_at` check is
      * what keeps a re-enqueue after completion from sending twice.
      */
-    static async createWaitListValidatedEmailJob(dto: SendWaitListValidatedEmailJobInput) {
+    static async createWaitListValidatedEmailJob(dto: SendWaitListValidatedEmailJobInput, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(WAIT_LIST_QUEUE),
             JOB_SEND_WAIT_LIST_VALIDATED_EMAIL,
             dto,
@@ -346,10 +359,11 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
-    static async createInviteWaitListBatchJob(dto: InviteWaitListBatchJobInput) {
+    static async createInviteWaitListBatchJob(dto: InviteWaitListBatchJobInput, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(WAIT_LIST_QUEUE),
             JOB_INVITE_WAIT_LIST_BATCH,
             dto,
@@ -359,6 +373,7 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
@@ -372,7 +387,7 @@ export class QueueHelper {
      * Duplicates are harmless in return: the processor upserts the row by `(type, entity_id)` and
      * `getPayload` re-reads the entity, so each run emits current state.
      */
-    static async createOrUpdateUserNotificationJob(dto: CreateUserNotificationInput) {
+    static async createOrUpdateUserNotificationJob(dto: CreateUserNotificationInput, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(USER_NOTIFICATIONS_QUEUE),
             JOB_CREATE_OR_UPDATE_USER_NOTIFICATION,
             dto,
@@ -384,10 +399,11 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
-    static async createOrUpdateLocationJob(dto: CreateOrUpdateLocationPayload) {
+    static async createOrUpdateLocationJob(dto: CreateOrUpdateLocationPayload, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(LOCATION_QUEUE),
             JOB_CREATE_OR_UPDATE_LOCATION,
             dto,
@@ -398,10 +414,11 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
-    static async createStorageRequestJob(dto: CreateUserStorageRequestInput) {
+    static async createStorageRequestJob(dto: CreateUserStorageRequestInput, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(STORAGE_REQUESTS_QUEUE),
             JOB_CREATE_STORAGE_REQUEST,
             dto,
@@ -412,10 +429,11 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
-    static async createOrUpdateEmailPreferenceJob(dto: CreateOrUpdateEmailPreferencePayload) {
+    static async createOrUpdateEmailPreferenceJob(dto: CreateOrUpdateEmailPreferencePayload, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(EMAIL_PREFERENCES_QUEUE),
             JOB_UPSERT_EMAIL_PREFERENCE_BY_EMAIL,
             dto,
@@ -426,10 +444,11 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
-    static async createComputeUserMetricsJob(userId: number) {
+    static async createComputeUserMetricsJob(userId: number, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(USER_METRICS_QUEUE),
             JOB_COMPUTE_USER_METRICS,
             { userId },
@@ -440,10 +459,11 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
-    static async createProcessMediaJob(dto:MediaJobDto) {
+    static async createProcessMediaJob(dto:MediaJobDto, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(MEDIA_QUEUE),
             JOB_PROCESS_MEDIA,
             dto,
@@ -454,6 +474,7 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
@@ -464,15 +485,15 @@ export class QueueHelper {
      * of 1, so a backfill over a whole user runs strictly one thumbnail after another (across
      * every worker instance) and never holds up upload processing.
      */
-    static async createRegenerateMediaThumbnailJob(dto: RegenerateMediaThumbnailJobInput) {
-        await QueueHelper.createRegenerateMediaThumbnailJobs([dto]);
+    static async createRegenerateMediaThumbnailJob(dto: RegenerateMediaThumbnailJobInput, log: Partial<LogConfig> = {}) {
+        await QueueHelper.createRegenerateMediaThumbnailJobs([dto], log);
     }
 
     /**
      * Bulk form for backfills: ONE queue connection (closed afterwards) for the whole batch,
      * where `createQueue` per job would open a Redis connection per media and never close it.
      */
-    static async createRegenerateMediaThumbnailJobs(dtos: RegenerateMediaThumbnailJobInput[]) {
+    static async createRegenerateMediaThumbnailJobs(dtos: RegenerateMediaThumbnailJobInput[], log: Partial<LogConfig> = {}) {
         if (!dtos.length) return;
         const queue = QueueHelper.createQueue(MEDIA_THUMBNAIL_QUEUE);
         try {
@@ -488,6 +509,7 @@ export class QueueHelper {
                         backoff: { type: 'exponential' as const, delay: 1000 },
                     },
                 })),
+                log,
             );
         } finally {
             await queue.close();
@@ -503,7 +525,7 @@ export class QueueHelper {
      * is still waiting, and the cover would end up at the stale second. FIFO order means the last
      * pick is the one that lands.
      */
-    static async createSetVideoThumbnailJob(dto: SetVideoThumbnailJobInput) {
+    static async createSetVideoThumbnailJob(dto: SetVideoThumbnailJobInput, log: Partial<LogConfig> = {}) {
         const queue = QueueHelper.createQueue(MEDIA_THUMBNAIL_QUEUE);
         try {
             await enqueueJob(queue, JOB_SET_VIDEO_THUMBNAIL, dto, {
@@ -514,7 +536,7 @@ export class QueueHelper {
                 // rather than raced, and those take tens of seconds. 3+6+12+24+48s ≈ 1.5min.
                 attempts: 6,
                 backoff: { type: 'exponential', delay: 3000 },
-            });
+            }, log);
         } finally {
             await queue.close();
         }
@@ -529,6 +551,7 @@ export class QueueHelper {
     static async createDeleteReplacedMediaObjectJob(
         dto: DeleteReplacedMediaObjectJobInput,
         delayMs: number,
+        log: Partial<LogConfig> = {},
     ) {
         const queue = QueueHelper.createQueue(MEDIA_THUMBNAIL_QUEUE);
         try {
@@ -539,7 +562,7 @@ export class QueueHelper {
                 removeOnFail: true,
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
-            });
+            }, log);
         } finally {
             await queue.close();
         }
@@ -549,7 +572,7 @@ export class QueueHelper {
      * Drops a media's cached SEO metadata from a process that has no handle on the API's cache
      * (the worker). Consumed by the API's media processor, which owns that cache.
      */
-    static async createInvalidateMediaSeoCacheJob(dto: InvalidateMediaSeoCacheJobInput) {
+    static async createInvalidateMediaSeoCacheJob(dto: InvalidateMediaSeoCacheJobInput, log: Partial<LogConfig> = {}) {
         const queue = QueueHelper.createQueue(MEDIA_UPDATE_QUEUE);
         try {
             await enqueueJob(queue, JOB_INVALIDATE_MEDIA_SEO_CACHE, dto, {
@@ -558,13 +581,13 @@ export class QueueHelper {
                 removeOnFail: true,
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
-            });
+            }, log);
         } finally {
             await queue.close();
         }
     }
 
-    static async createUpdateMediaJob(dto: UpdateMediaJobInput) {
+    static async createUpdateMediaJob(dto: UpdateMediaJobInput, log: Partial<LogConfig> = {}) {
         await enqueueJob(QueueHelper.createQueue(MEDIA_UPDATE_QUEUE),
             JOB_UPDATE_MEDIA,
             dto,
@@ -576,6 +599,7 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 
@@ -593,7 +617,7 @@ export class QueueHelper {
      * Not gated on the environment: dev and local create the job too, and the processor skips it.
      * That keeps Cloudflare settings out of every process that only enqueues (the worker).
      */
-    static async createPurgeArtistEdgeCacheJob(dto: PurgeArtistEdgeCacheJobInput) {
+    static async createPurgeArtistEdgeCacheJob(dto: PurgeArtistEdgeCacheJobInput, log: Partial<LogConfig> = {}) {
         const queue = QueueHelper.createQueue(EDGE_CACHE_QUEUE);
         try {
             await enqueueJob(queue, JOB_PURGE_ARTIST_EDGE_CACHE, dto, {
@@ -611,13 +635,13 @@ export class QueueHelper {
                 // 20 s, 40 s, 80 s: the last retry still lands inside the edge TTL.
                 attempts: 4,
                 backoff: { type: 'exponential', delay: 20_000 },
-            });
+            }, log);
         } finally {
             await queue.close();
         }
     }
 
-    static async createUpdateProfileStatusJob(dto: UpdateProfileStatusJobInput) {
+    static async createUpdateProfileStatusJob(dto: UpdateProfileStatusJobInput, log: Partial<LogConfig> = {}) {
         const fieldKeys = Object.keys(dto.fields).sort().join('-');
         await enqueueJob(QueueHelper.createQueue(PROFILE_STATUS_QUEUE),
             JOB_UPDATE_PROFILE_STATUS,
@@ -630,6 +654,7 @@ export class QueueHelper {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },
+            log,
         );
     }
 }

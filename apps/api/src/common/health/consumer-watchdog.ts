@@ -1,12 +1,10 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { getConfigValue } from '@repo/common-lib/config/utils';
-import {
-  FactoryLogService,
-  LogService,
-  getLogProcessContext,
-} from '@repo/backend-lib/services/log-service';
+import os from 'node:os';
+import { logBuffer } from '@repo/backend-lib/config/logging';
 import { withTimeout } from '@repo/backend-lib/utils';
+import { createApiLogger } from '../utils/api-logger';
 import { displayHost } from '../utils';
 import { getLockClient } from '../utils/cron-lock';
 import { ApiHealthService } from './api-health.service';
@@ -25,7 +23,7 @@ export const WATCHDOG_RESTART_LOCK_KEY = 'api-watchdog:restart';
 export const WATCHDOG_RESTART_LOCK_TTL_MS = 120_000;
 /** Upper bound for closing the healthy workers before exit. */
 export const WATCHDOG_CLOSE_TIMEOUT_MS = 10_000;
-/** Upper bound for waiting on the alert mail enqueue before exit (`LogService.flushAndSettle`). */
+/** Upper bound for waiting on the alert mail enqueue before exit (`logBuffer.settle`). */
 export const WATCHDOG_ALERT_SETTLE_MS = 5_000;
 
 /**
@@ -40,8 +38,8 @@ export const WATCHDOG_ALERT_SETTLE_MS = 5_000;
  */
 @Injectable()
 export class ConsumerWatchdog implements OnApplicationBootstrap {
-  private readonly logger = FactoryLogService.createLogService('file', { channel: 'health' });
-  private readonly instanceId = `${getLogProcessContext().replica}:${process.pid}`;
+  private readonly logger = createApiLogger({ channel: 'health' });
+  private readonly instanceId = `${replica()}:${process.pid}`;
   private startedAt: number;
   private consecutiveFailures = 0;
   private restarting = false;
@@ -61,14 +59,14 @@ export class ConsumerWatchdog implements OnApplicationBootstrap {
   }
 
   /**
-   * Waits for the critical line's alert mail to be enqueued. The line's own flush took it, so a
-   * plain `flush()` would return first. Bounded: a hung Redis must not keep a broken replica up.
+   * Waits for the critical line's push and its alert mail enqueue. Never a flush: the worker
+   * writes the lines. Bounded: a hung Redis must not keep a broken replica up.
    */
   protected async settleLogs(): Promise<void> {
     try {
-      await withTimeout(LogService.flushAndSettle(), WATCHDOG_ALERT_SETTLE_MS, 'settle logs');
+      await withTimeout(logBuffer.settle(), WATCHDOG_ALERT_SETTLE_MS, 'settle logs');
     } catch {
-      // Out of time: exit anyway; the line is on disk, only the mail may be lost.
+      // Out of time: exit anyway; the line or the mail may be lost.
     }
   }
 
@@ -90,7 +88,6 @@ export class ConsumerWatchdog implements OnApplicationBootstrap {
         { error_message: error instanceof Error ? error.message : String(error) },
         { operation: 'consumer-watchdog' },
       );
-      await this.flushLogs();
     }
   }
 
@@ -102,10 +99,9 @@ export class ConsumerWatchdog implements OnApplicationBootstrap {
         this.noConsumersReported = true;
         this.logger.critical(
           `API replica has no queue consumers (${displayHost(getConfigValue('app').url)})`,
-          { replica: getLogProcessContext().replica },
+          { replica: replica() },
           { operation: 'consumer-watchdog' },
         );
-        await this.flushLogs();
       }
       this.consecutiveFailures = 0;
       return;
@@ -133,7 +129,6 @@ export class ConsumerWatchdog implements OnApplicationBootstrap {
       { operation: 'consumer-watchdog' },
     );
     if (this.consecutiveFailures < WATCHDOG_FAILURES_BEFORE_RESTART) {
-      await this.flushLogs();
       return;
     }
 
@@ -141,12 +136,11 @@ export class ConsumerWatchdog implements OnApplicationBootstrap {
     // Locally there is nothing to restart us (`nest start --watch` would just stay down): alert only.
     if (!isLocal && !(await this.acquireRestartLock())) {
       // The other replica is restarting; try again next tick so the two never drop together.
-      await this.flushLogs();
       return;
     }
 
     this.logger.critical(
-      `API replica restarting: queue consumer down (${displayHost(getConfigValue('app').url)}, ${getLogProcessContext().replica})`,
+      `API replica restarting: queue consumer down (${displayHost(getConfigValue('app').url)}, ${replica()})`,
       {
         consumers: summarize(failing),
         consecutive_failures: this.consecutiveFailures,
@@ -154,7 +148,6 @@ export class ConsumerWatchdog implements OnApplicationBootstrap {
       },
       { operation: 'consumer-watchdog' },
     );
-    await this.flushLogs();
 
     if (isLocal) {
       this.consecutiveFailures = 0;
@@ -162,8 +155,9 @@ export class ConsumerWatchdog implements OnApplicationBootstrap {
     }
 
     this.restarting = true;
-    await this.settleLogs();
+    // Same order as the worker's shutdown: the closing jobs' lines are pushed too, then settle.
     await this.closeHealthyWorkers(failing);
+    await this.settleLogs();
     this.exit(1);
   }
 
@@ -197,10 +191,9 @@ export class ConsumerWatchdog implements OnApplicationBootstrap {
       // Out of time: exit anyway, BullMQ redelivers whatever was still active.
     }
   }
-
-  private flushLogs(): Promise<void> {
-    return LogService.flush().catch((error) => console.error('Failed to flush watchdog logs:', error));
-  }
 }
+
+/** The replica name lines carry: the hostname (the container id in Docker). */
+const replica = () => os.hostname().slice(0, 64);
 
 const summarize = (failing: ConsumerStatus[]) => failing.map(({ queue, reason }) => ({ queue, reason }));

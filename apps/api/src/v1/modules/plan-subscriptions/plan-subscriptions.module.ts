@@ -7,8 +7,8 @@ import { PlansModule } from '../plans/plans.module';
 import { PaymentMethodsService } from '../utils/payment-methods.service';
 import { UserBenefitModule } from '../user-benefit/user-benefit.module';
 import { UserModule } from '../users/users.module';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { RequestService } from 'src/common/services/request.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [
@@ -24,13 +24,11 @@ import { RequestService } from 'src/common/services/request.service';
     PaymentMethodsService,
     {
       provide: LogService,
-      useFactory: (requestService: RequestService) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'plan-subscriptions',
-          ...requestService.logBinding(),
         });
       },
-      inject: [RequestService],
     },
   ],
   exports: [PlanSubscriptionsService],

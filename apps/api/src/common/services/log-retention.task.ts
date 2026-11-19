@@ -1,17 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import {
-  FactoryLogService,
-  LogService,
-  pruneDailyLogFiles,
-  resolveDefaultLogFolder,
-} from '@repo/backend-lib/services/log-service';
+import { pruneDailyLogFiles, resolveDefaultLogFolder } from '@repo/backend-lib/services/log-service';
 import { getLogRetentionDays } from '@repo/backend-lib/config/logging';
 import { CRON_LOCK_TTL, runCronExclusive } from '../utils/cron-lock';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Injectable()
 export class LogRetentionTask {
-  private readonly logger = FactoryLogService.createLogService('file', {
+  private readonly logger = createApiLogger({
     channel: 'system',
   });
 
@@ -55,8 +51,6 @@ export class LogRetentionTask {
           `Log retention cleanup failed - ${error instanceof Error ? error.message : 'Unknown error'}`,
           error,
         );
-      } finally {
-        await LogService.flush();
       }
     });
   }

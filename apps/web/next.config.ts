@@ -35,6 +35,15 @@ const nextConfig: NextConfig = {
   // also lets a notFound() in generateMetadata still produce a real 404 status despite the root
   // loading.tsx (a streamed notFound can only inject noindex into a 200).
   htmlLimitedBots: /.*/,
+  // npm packages NOT copied into the server bundle. Wherever server code imports one (here: bullmq,
+  // imported by backend-lib's queue-helper for the web logger's critical alert mail, and ioredis,
+  // the client of the Redis log buffer every web log line is pushed to), the import stays a plain
+  // `require` and Node loads the package from node_modules at runtime; `next build` copies it into
+  // .next/standalone/node_modules. Both are Node-only (Redis sockets, child_process/worker_threads),
+  // so there is nothing to gain from bundling them.
+  //
+  // Workspace packages can't be listed here: Turbopack bundles @repo/* regardless.
+  serverExternalPackages: ["bullmq", "ioredis"],
   experimental: {
     // Next 16.2 cannot drive TypeScript 7 through the programmatic compiler API.
     // Shelling out to the project-local `tsc` CLI is the supported path until

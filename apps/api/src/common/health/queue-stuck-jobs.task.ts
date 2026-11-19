@@ -6,11 +6,8 @@ import {
   PLAN_SUBSCRIPTIONS_QUEUE,
   STRIPE_WEBHOOKS_QUEUE,
 } from '@repo/common-lib/constants/queues';
-import {
-  FactoryLogService,
-  LogService,
-  maskEmailAddresses,
-} from '@repo/backend-lib/services/log-service';
+import { maskEmailAddresses } from '@repo/backend-lib/services/log-service';
+import { createApiLogger } from '../utils/api-logger';
 import { Job, JobType, Queue } from 'bullmq';
 import { displayHost } from '../utils';
 import { CRON_LOCK_TTL, getLockClient, runCronExclusive } from '../utils/cron-lock';
@@ -171,7 +168,7 @@ const toSeconds = (ms: number | null) => (ms === null ? null : Math.round(ms / 1
  */
 @Injectable()
 export class QueueStuckJobsTask {
-  private readonly logger = FactoryLogService.createLogService('file', { channel: 'queue-health' });
+  private readonly logger = createApiLogger({ channel: 'queue-health' });
   private readonly queues: Queue[];
 
   constructor(
@@ -194,21 +191,17 @@ export class QueueStuckJobsTask {
 
   /** Never throws: one queue failing to answer does not skip the others. */
   async run(): Promise<void> {
-    try {
-      for (const queue of this.queues) {
-        try {
-          await this.checkStuck(queue);
-          await this.checkFailed(queue);
-        } catch (error) {
-          this.logger.error(
-            'Queue health check failed',
-            { queue: queue.name, error_message: error instanceof Error ? error.message : String(error) },
-            { operation: 'stuck-jobs' },
-          );
-        }
+    for (const queue of this.queues) {
+      try {
+        await this.checkStuck(queue);
+        await this.checkFailed(queue);
+      } catch (error) {
+        this.logger.error(
+          'Queue health check failed',
+          { queue: queue.name, error_message: error instanceof Error ? error.message : String(error) },
+          { operation: 'stuck-jobs' },
+        );
       }
-    } finally {
-      await LogService.flush().catch((error) => console.error('Failed to flush queue-health logs:', error));
     }
   }
 

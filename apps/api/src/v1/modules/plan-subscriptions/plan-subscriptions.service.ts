@@ -26,7 +26,7 @@ import {
 import { Helpers } from 'src/common/services/helpers.service';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { StripeService } from 'src/common/services/stripe.service';
-import { LogService, addLogCorrelation } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 import { PaymentMethodsService } from '../utils/payment-methods.service';
 import {
@@ -185,7 +185,6 @@ export class PlanSubscriptionsService {
   }
 
   async cancel(userId: number) {
-    addLogCorrelation({ user_id: userId });
     const activeSubscription = await this.findActiveSubscription(userId);
 
     if (activeSubscription.plan_price.plan.is_free) {
@@ -194,7 +193,6 @@ export class PlanSubscriptionsService {
     }
 
     if (activeSubscription.stripe_id) {
-      addLogCorrelation({ stripe_subscription_id: activeSubscription.stripe_id });
       // Cancel at end of billing cycle, not immediately
       const updatedStripeSub = await stripe.subscriptions.update(
         activeSubscription.stripe_id,
@@ -206,7 +204,7 @@ export class PlanSubscriptionsService {
           ? new Date(updatedStripeSub.cancel_at * 1000)
           : null,
       });
-      this.logger.info('Updated subscription status in database to cancel at period end', { subscriptionId: activeSubscription.id, cancel_at: updatedStripeSub.cancel_at });
+      this.logger.info('Updated subscription status in database to cancel at period end', { userId, subscriptionId: activeSubscription.id, stripe_subscription_id: activeSubscription.stripe_id, cancel_at: updatedStripeSub.cancel_at });
     } else {
       this.logger.info('No Stripe ID found, canceling subscription immediately in database', { subscriptionId: activeSubscription.id, userId });
       await this.update(activeSubscription.id, {
@@ -253,7 +251,6 @@ export class PlanSubscriptionsService {
   }: HandleSubscriptionProcessInput): Promise<HandleSubscriptionProcessResponse> {
     const customerId = await this.resolveStripeCustomerId();
     const userId = this.requestService.user.id;
-    addLogCorrelation({ user_id: userId, stripe_customer_id: customerId ?? undefined });
 
     // Validate required Stripe IDs
     if (!customerId) {
@@ -337,12 +334,14 @@ export class PlanSubscriptionsService {
         this.logger.info(
           'Stripe checkout session created',
           {
+            user_id: userId,
+            stripe_customer_id: customerId,
+            stripe_checkout_session_id: session.id,
             plan_price_id: newPlanPrice.id,
             stripe_price_id: newPlanPrice.stripe_id,
             trial_days: benefit?.trial_days ?? null,
             benefit_id: benefit ? benefit_id : null,
           },
-          { correlation: { stripe_checkout_session_id: session.id } },
         );
 
         return {
@@ -378,13 +377,15 @@ export class PlanSubscriptionsService {
       this.logger.info(
         'Stripe subscription plan changed',
         {
+          user_id: userId,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: currentUserSubscription.stripe_id,
           from_plan_price_id: currentUserSubscription.plan_price_id,
           to_plan_price_id: newPlanPrice.id,
           is_upgrade: isUpgrade,
           proration_behavior: prorationBehavior,
           stripe_status: updatedSubscription?.status ?? null,
         },
-        { correlation: { stripe_subscription_id: currentUserSubscription.stripe_id } },
       );
       return {
         ok: true,
@@ -399,6 +400,8 @@ export class PlanSubscriptionsService {
       // customer's and only warns.
       const isServerFailure = !stripeError || stripeError.statusCode >= 500;
       const logContext = {
+        user_id: userId,
+        stripe_customer_id: customerId,
         stripe_error: StripeService.errorSummary(stripeError, error),
         current_plan_subscription_id: currentUserSubscription?.id ?? null,
         to_plan_price_id: newPlanPrice?.id ?? null,
@@ -478,7 +481,6 @@ export class PlanSubscriptionsService {
     url: string;
   }> {
     const customerId = await this.resolveStripeCustomerId();
-    addLogCorrelation({ stripe_customer_id: customerId ?? undefined });
     if (!customerId) {
       this.logger.error('Stripe customer not found for portal session', { userId: this.requestService.user?.id });
       throw new HttpException('Stripe customer not found', 422);
@@ -504,7 +506,7 @@ export class PlanSubscriptionsService {
       return_url: request.return_url,
     });
     // Never `session.url`: it is a bearer link into the customer's billing portal.
-    this.logger.info('Stripe billing portal session created', { portal_session_id: session?.id ?? null });
+    this.logger.info('Stripe billing portal session created', { stripe_customer_id: customerId, portal_session_id: session?.id ?? null });
     if (!session?.url) {
       this.logger.error('Could not create customer portal session (no URL returned)', { customerId });
       throw new HttpException('Could not create customer portal session', 500);
@@ -649,10 +651,11 @@ export class PlanSubscriptionsService {
    */
   async cancelPayments(userId: number, stripeCustomerId: string | null) {
     const subscription = await this.planSubscriptionsRepository.findActiveSubscription(userId);
-    addLogCorrelation({
+    const ids = {
+      user_id: userId,
       stripe_subscription_id: subscription?.stripe_id ?? undefined,
       stripe_customer_id: stripeCustomerId ?? undefined,
-    });
+    };
     const outcome = { stripe_subscription_cancelled: false, stripe_customer_deleted: false, paypal_cancelled: false };
     if (subscription?.stripe_id) {
       try {
@@ -674,7 +677,7 @@ export class PlanSubscriptionsService {
         // check the subscription by its id.
         this.logger.critical(
           'PayPal subscription of deleted user could not be cancelled; check it manually',
-          { paypal_subscription_id: subscription.paypal_id },
+          { ...ids, paypal_subscription_id: subscription.paypal_id },
           { operation: 'hard-delete' },
         );
       }
@@ -687,7 +690,7 @@ export class PlanSubscriptionsService {
         if (!this.isStripeMissing(error)) throw error;
       }
     }
-    this.logger.info('Account payments cancelled', outcome, { operation: 'hard-delete' });
+    this.logger.info('Account payments cancelled', { ...ids, ...outcome }, { operation: 'hard-delete' });
   }
 
   /** Already cancelled/deleted on a previous attempt: treat as done so retries stay idempotent. */
@@ -739,8 +742,7 @@ export class PlanSubscriptionsService {
     const result = await this.setFreeSubscription(event.userId);
     this.logger.info(
       'Free plan set',
-      { plan_subscription_id: (result as { id?: number } | null)?.id ?? null },
-      { correlation: { user_id: event.userId } },
+      { user_id: event.userId, plan_subscription_id: (result as { id?: number } | null)?.id ?? null },
     );
   }
 }

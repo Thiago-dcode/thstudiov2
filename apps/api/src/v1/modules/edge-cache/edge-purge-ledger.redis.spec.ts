@@ -105,7 +105,6 @@ describeRedis('EdgePurgeLedger + BullMQ rate limit (real Redis)', () => {
       info: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
-      flushAsync: async () => undefined,
     };
     const service = new EdgeCacheService(logger as never);
     jest

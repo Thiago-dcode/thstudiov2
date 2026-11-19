@@ -53,7 +53,6 @@ const simulate = (triggers: Trigger[], { purgeTakesMs = 0 } = {}) => {
     info: () => undefined,
     warn: () => undefined,
     error: () => undefined,
-    flushAsync: async () => undefined,
   };
   const service = new EdgeCacheService(logger as never);
   jest.spyOn(service, 'purgeTarget').mockReturnValue(TARGET);

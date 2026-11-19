@@ -1,8 +1,7 @@
-import { BullModule, getQueueToken } from '@nestjs/bullmq';
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { Queue } from 'bullmq';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { LOG_QUEUE, MEDIA_UPDATE_QUEUE } from '@repo/common-lib/constants/queues';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { MEDIA_UPDATE_QUEUE } from '@repo/common-lib/constants/queues';
 import { UserModule } from '../users/users.module';
 import { AuthCoreModule } from '../auth/auth-core.module';
 import { LocationModule } from '../locations/location.module';
@@ -11,6 +10,7 @@ import { MediaController } from './media.controller';
 import { MediaProcessor } from './media.processor';
 import { MediaRepository } from './media.repository';
 import { MediaService } from './media.service';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   controllers: [MediaController],
@@ -21,12 +21,11 @@ import { MediaService } from './media.service';
     MediaCleanupTask,
     {
       provide: LogService,
-      useFactory: (logQueue: Queue) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'media',
-        }, logQueue);
+        });
       },
-      inject: [getQueueToken(LOG_QUEUE)],
     },
   ],
   // No AiModule / UserExtraDataModule: moderation and the storage-quota check both belonged to
@@ -37,7 +36,7 @@ import { MediaService } from './media.service';
     LocationModule,
     // `PublicArtistGuard` resolves the owner's token on hidden accounts.
     AuthCoreModule,
-    BullModule.registerQueue({ name: MEDIA_UPDATE_QUEUE }, { name: LOG_QUEUE }),
+    BullModule.registerQueue({ name: MEDIA_UPDATE_QUEUE }),
   ],
   // MediaRepository is exported for SitemapModule, which reads the public-media predicate directly
   // (same pattern as the other feature modules the sitemap depends on).

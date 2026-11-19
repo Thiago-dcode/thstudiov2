@@ -42,7 +42,6 @@ const buildLogger = () => {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-    flushAsync: jest.fn().mockResolvedValue(undefined),
   };
   logger.name.mockReturnValue(logger);
   return logger;
@@ -135,7 +134,7 @@ describe('edge purge acceptance (service + processor together)', () => {
         const lines = [...logger.info.mock.calls, ...logger.warn.mock.calls, ...logger.error.mock.calls];
         expect(lines).toHaveLength(1);
         expect(String(lines[0][0])).toBe("Edge purge skipped");
-        expect(lines[0][1]).toEqual({ reason });
+        expect(lines[0][1]).toEqual({ user_id: 7, reason });
         expect(everythingLogged(logger)).not.toContain(TOKEN);
       },
     );
@@ -256,7 +255,7 @@ describe('edge purge acceptance (service + processor together)', () => {
       await expect(
         emitter.emitAsync(ARTIST_PUBLIC_PAGES_CHANGED_EVENT, new ArtistPublicPagesChangedEvent(7, ['ana'])),
       ).resolves.toBeDefined();
-      expect(enqueue).toHaveBeenCalledWith({ user_id: 7, usernames: ['ana'] });
+      expect(enqueue).toHaveBeenCalledWith({ user_id: 7, usernames: ['ana'] }, expect.objectContaining({ service: 'api' }));
       expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('redis down'));
     });
   });

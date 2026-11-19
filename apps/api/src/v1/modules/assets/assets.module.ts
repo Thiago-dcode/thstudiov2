@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { AssetsController } from './assets.controller';
 import { AssetsService } from './assets.service';
 import { AssetsRepository } from './assets.repository';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { RequestService } from 'src/common/services/request.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   controllers: [AssetsController],
@@ -12,13 +12,11 @@ import { RequestService } from 'src/common/services/request.service';
     AssetsRepository,
     {
       provide: LogService,
-      useFactory: (requestService: RequestService) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'assets',
-          ...requestService.logBinding(),
         });
       },
-      inject: [RequestService],
     },
   ],
   exports: [AssetsService],

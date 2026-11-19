@@ -18,7 +18,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { FactoryStorageService } from '@repo/backend-lib/services/storage-service';
 import type { S3StorageConfig } from '@repo/backend-lib/services/storage-service';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import Logger from '@repo/backend-lib/utils/console';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { getConfigValue } from '@repo/common-lib/config/utils';
@@ -153,7 +152,6 @@ async function seedAssets(): Promise<void> {
 
   if (entries.length === 0) {
     Logger.warn(`No files found in ${assetsDir}; nothing to seed.`);
-    await LogService.flush();
     return;
   }
 
@@ -197,7 +195,6 @@ async function seedAssets(): Promise<void> {
   }
 
   Logger.success(`Assets seed: ${created} file(s) uploaded to S3 and inserted.`);
-  await LogService.flush();
 }
 
 export const main = async () => {

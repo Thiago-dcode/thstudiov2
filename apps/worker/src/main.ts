@@ -1,17 +1,17 @@
-// First: sets the log service and the critical handler before anything else can log.
-import './log-process';
+import { logBuffer, logConfig, setLogProcessService } from '@repo/backend-lib/config/logging';
 import { config } from '@repo/common-lib/config';
-import {
-    BACKUP_QUEUE,
-    JOB_DATABASE_BACKUP,
-    MEDIA_THUMBNAIL_QUEUE,
-} from '@repo/common-lib/constants/queues';
+import { MEDIA_THUMBNAIL_QUEUE } from '@repo/common-lib/constants/queues';
 import { DatabaseConfig } from '@repo/common-lib/types/database';
 import { getClient, init, killClient } from '@repo/database';
-import { Queue, Worker } from 'bullmq';
+import { Worker } from 'bullmq';
 import express from 'express';
 import { logPermanentJobFailure, withTimeout } from '@repo/backend-lib/utils';
 import { jobResolver, runWorkerJob } from './job-runner';
+import { Connection, scheduleDatabaseBackup, scheduleLogFlush, withQueue } from './schedulers';
+
+// Before anything logs: every line of this process, backend-lib's own included, goes under `worker/`.
+// The service is read per line, so loggers built at import time pick it up too.
+setLogProcessService('worker');
 
 /**
  * How long a worker may hold a job before BullMQ assumes it died.
@@ -22,17 +22,8 @@ import { jobResolver, runWorkerJob } from './job-runner';
  */
 const MEDIA_JOB_LOCK_MS = 10 * 60 * 1000;
 
-type Connection = { url: string };
-
-/** Runs `configure` against a short-lived handle on `queueName`, always closing it afterwards. */
-async function withQueue(connection: Connection, queueName: string, configure: (queue: Queue) => Promise<unknown>) {
-    const queue = new Queue(queueName, { connection });
-    try {
-        await configure(queue);
-    } finally {
-        await queue.close();
-    }
-}
+/** Upper bound for settling the log buffer on shutdown, so a stuck push can't hold the exit. */
+const SETTLE_LOGS_TIMEOUT_MS = 5000;
 
 /**
  * One thumbnail at a time across ALL worker instances: a per-Worker concurrency of 1 would not
@@ -40,27 +31,6 @@ async function withQueue(connection: Connection, queueName: string, configure: (
  */
 const limitThumbnailConcurrency = (connection: Connection) =>
     withQueue(connection, MEDIA_THUMBNAIL_QUEUE, (queue) => queue.setGlobalConcurrency(1));
-
-/**
- * upsertJobScheduler is idempotent (keyed by id, stored in Redis), so every worker instance and every
- * restart can call it without duplicating the schedule. The backup itself no-ops outside production.
- */
-const scheduleDatabaseBackup = (connection: Connection) =>
-    withQueue(connection, BACKUP_QUEUE, (queue) =>
-        queue.upsertJobScheduler(
-            JOB_DATABASE_BACKUP,
-            { pattern: config().backup.cron, tz: 'UTC' },
-            {
-                name: JOB_DATABASE_BACKUP,
-                opts: {
-                    attempts: 3,
-                    backoff: { type: 'exponential', delay: 5 * 60 * 1000 },
-                    removeOnComplete: 30,
-                    removeOnFail: 30,
-                },
-            },
-        ),
-    );
 
 const createWorkers = (connection: Connection) =>
     Object.keys(jobResolver).map((queue) => {
@@ -81,7 +51,7 @@ const createWorkers = (connection: Connection) =>
             },
         );
         // The worker had no permanent-failure line at all; this is the same one api jobs get.
-        worker.on('failed', (job, error, prev) => void logPermanentJobFailure(job, error, prev));
+        worker.on('failed', (job, error, prev) => void logPermanentJobFailure(job, error, prev, logConfig.worker));
         return worker;
     });
 
@@ -157,6 +127,7 @@ async function bootstrap() {
 
     await limitThumbnailConcurrency(connection);
     await scheduleDatabaseBackup(connection);
+    await scheduleLogFlush(connection);
 
     const workers = createWorkers(connection);
     const server = startHealthServer(process.env.WORKER_PORT || 8081, redisUrl, workers);
@@ -164,6 +135,10 @@ async function bootstrap() {
     async function shutdown() {
         console.log('[worker] shutting down...');
         await Promise.all(workers.map((worker) => worker.close()));
+        // Never a flush: the lines stay in Redis for the next scheduled run (on any instance).
+        await withTimeout(logBuffer.settle(), SETTLE_LOGS_TIMEOUT_MS, 'settle logs').catch((error) =>
+            console.error('[worker] settling logs failed:', error instanceof Error ? error.message : error),
+        );
         await killClient();
         server.close();
         process.exit(0);

@@ -4,7 +4,7 @@ import { Job } from 'bullmq';
 import { LlmTokensUsageRepository } from './llm-tokens-usage.repository';
 import { MediaModerationRepository } from './media-moderation.repository';
 import { AiService } from '@repo/backend-lib/services/ai-service';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { UserAiCreditsEndedMail } from '../user-extra-data/mails/user-metrics-ended';
@@ -49,10 +49,11 @@ import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
+import { apiLogConfig, createApiLogger } from 'src/common/utils/api-logger';
 
 @Processor(AI_QUEUE)
 export class AiProcessor extends GlobalProcessor {
-  private readonly logger = FactoryLogService.createLogService('file', {
+  private readonly logger = createApiLogger({
     channel: 'ai',
   });
 
@@ -71,7 +72,6 @@ export class AiProcessor extends GlobalProcessor {
     private readonly collectionRepository: CollectionRepository,
     private readonly serviceRepository: ServiceRepository,
     private readonly userRepository: UserRepository,
-    private readonly appLogService: LogService,
     private readonly eventEmitter: EventEmitter2,
   ) {
     super();
@@ -80,21 +80,17 @@ export class AiProcessor extends GlobalProcessor {
   // ==================== JOB PROCESSOR ====================
 
   async process(job: Job): Promise<any> {
-    try {
-      switch (job.name) {
-        case JOB_RECORD_LLM_USAGE:
-          return await this.recordLlmUsage(job.data);
-        case JOB_RECORD_MEDIA_MODERATION:
-          return await this.handleMediaModeration(job.data);
-        case JOB_GENERATE_ENTITY_METADATA:
-          return await this.generateDueEntityMetadata(job.data);
-        case JOB_GENERATE_SINGLE_ENTITY_METADATA:
-          return await this.generateSingleEntityMetadata(job.data);
-        default:
-          throw new Error(`Job name "${job.name}" not recognized`);
-      }
-    } finally {
-      await this.appLogService.flushAsync();
+    switch (job.name) {
+      case JOB_RECORD_LLM_USAGE:
+        return await this.recordLlmUsage(job.data);
+      case JOB_RECORD_MEDIA_MODERATION:
+        return await this.handleMediaModeration(job.data);
+      case JOB_GENERATE_ENTITY_METADATA:
+        return await this.generateDueEntityMetadata(job.data);
+      case JOB_GENERATE_SINGLE_ENTITY_METADATA:
+        return await this.generateSingleEntityMetadata(job.data);
+      default:
+        throw new Error(`Job name "${job.name}" not recognized`);
     }
   }
 
@@ -137,7 +133,7 @@ export class AiProcessor extends GlobalProcessor {
         }
       }
 
-      await QueueHelper.createComputeUserMetricsJob(usageData.user_id);
+      await QueueHelper.createComputeUserMetricsJob(usageData.user_id, apiLogConfig());
 
       return usage;
     } catch (error) {
@@ -153,7 +149,7 @@ export class AiProcessor extends GlobalProcessor {
 
   private async handleMediaModeration(moderationData: CreateMediaModerationInput) {
     // Per-call operation and subject user: never the name builder on this shared logger.
-    const fields = { operation: 'moderate-content', correlation: { user_id: moderationData.user_id } };
+    const fields = { operation: 'moderate-content' };
     // Only the insert may fail the job. Once the row exists, a BullMQ retry would insert it again
     // and count the same violation twice (a second strike, a second ban step), so failures after
     // this point are logged and the job completes.
@@ -163,7 +159,7 @@ export class AiProcessor extends GlobalProcessor {
     } catch (error) {
       this.logger.error(
         'Failed to record moderation',
-        { error_message: error instanceof Error ? error.message : 'Unknown error' },
+        { user_id: moderationData.user_id, error_message: error instanceof Error ? error.message : 'Unknown error' },
         fields,
       );
       throw error;
@@ -173,6 +169,7 @@ export class AiProcessor extends GlobalProcessor {
     this.logger.info(
       'Moderation recorded',
       {
+        user_id: moderationData.user_id,
         moderation_id: moderation.id,
         is_allowed: moderation.is_allowed,
         severity: moderation.severity,
@@ -192,7 +189,7 @@ export class AiProcessor extends GlobalProcessor {
         const totalStrikes = extraData.account_strikes + 1;
         this.logger.warn(
           'Content rejected by moderation',
-          { moderation_id: moderation.id, severity: moderation.severity, account_strikes: totalStrikes },
+          { user_id: moderationData.user_id, moderation_id: moderation.id, severity: moderation.severity, account_strikes: totalStrikes },
           fields,
         );
 
@@ -227,7 +224,7 @@ export class AiProcessor extends GlobalProcessor {
           ]);
           this.logger.warn(
             'Account ban applied',
-            { ban_count: newBanCount, ban_lift: banLift.toISOString(), permanent: isPermanentBan },
+            { user_id: moderationData.user_id, ban_count: newBanCount, ban_lift: banLift.toISOString(), permanent: isPermanentBan },
             fields,
           );
 
@@ -236,11 +233,11 @@ export class AiProcessor extends GlobalProcessor {
             await this.mailService.send(
               this.userAccountBannedMail.setUser(user, user.language),
             );
-            this.logger.info('Account banned email sent', { ban_count: newBanCount }, fields);
+            this.logger.info('Account banned email sent', { user_id: moderationData.user_id, ban_count: newBanCount }, fields);
           }
         }
 
-        await QueueHelper.createComputeUserMetricsJob(moderationData.user_id);
+        await QueueHelper.createComputeUserMetricsJob(moderationData.user_id, apiLogConfig());
       }
 
 
@@ -248,7 +245,7 @@ export class AiProcessor extends GlobalProcessor {
     } catch (error) {
       this.logger.error(
         'Moderation recorded but applying it failed',
-        { moderation_id: moderation.id, error_message: error instanceof Error ? error.message : 'Unknown error' },
+        { user_id: moderationData.user_id, moderation_id: moderation.id, error_message: error instanceof Error ? error.message : 'Unknown error' },
         fields,
       );
     }
@@ -293,6 +290,8 @@ export class AiProcessor extends GlobalProcessor {
     for (const row of dueRows) {
       await QueueHelper.createGenerateSingleEntityMetadataJob(
         { entity: payload.entity, id: row.id, user_id: row.user_id },
+        undefined,
+        apiLogConfig(),
       );
     }
 
@@ -319,7 +318,7 @@ export class AiProcessor extends GlobalProcessor {
           const { translations } = await this.aiService.generatePortfolioMetadata(portfolio, artist, {
             portfolio_id: id,
             user_id,
-          });
+          }, apiLogConfig());
           if (!this.hasSeo(translations)) {
             log.warn(`No metadata generated for portfolio [${id}], leaving unstamped to retry next run`);
             return { skipped: true };
@@ -341,7 +340,7 @@ export class AiProcessor extends GlobalProcessor {
           const { translations } = await this.aiService.generateCollectionMetadata(collection, artist, {
             collection_id: id,
             user_id,
-          });
+          }, apiLogConfig());
           if (!this.hasSeo(translations)) {
             log.warn(`No metadata generated for collection [${id}], leaving unstamped to retry next run`);
             return { skipped: true };
@@ -363,7 +362,7 @@ export class AiProcessor extends GlobalProcessor {
           const { translations } = await this.aiService.generateServiceMetadata(service, artist, {
             service_id: id,
             user_id,
-          });
+          }, apiLogConfig());
           if (!this.hasSeo(translations)) {
             log.warn(`No metadata generated for service [${id}], leaving unstamped to retry next run`);
             return { skipped: true };
@@ -383,7 +382,7 @@ export class AiProcessor extends GlobalProcessor {
             log.warn(`User profile [${id}] not found or missing name/profession, skipping`);
             return { skipped: true };
           }
-          const { translations } = await this.aiService.generateUserMetadata(profile, { user_id });
+          const { translations } = await this.aiService.generateUserMetadata(profile, { user_id }, apiLogConfig());
           if (!this.hasSeo(translations)) {
             log.warn(`No metadata generated for user [${id}], leaving unstamped to retry next run`);
             return { skipped: true };

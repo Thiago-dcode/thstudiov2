@@ -3,8 +3,8 @@ jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({ paypal: 
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { consoleLogger } from 'src/common/testing/console-logger';
 import { JOB_ON_SUBSCRIPTION_CHANGES } from '@repo/common-lib/constants/queues';
 import { PlanSubscriptionProcessor } from './plan-subscription.processor';
 
@@ -34,7 +34,7 @@ const build = (planService: unknown) => {
       try { lines.push(JSON.parse(String(line))); } catch { /* not a log line */ }
     });
   }
-  const logger = new ConsoleLogService({ channel: 'plan-subscriptions', name: 'on-subscription-changes' });
+  const logger = consoleLogger({ channel: 'plan-subscriptions', name: 'on-subscription-changes' });
   const nameSpy = jest.spyOn(logger, 'name');
   const processor = new PlanSubscriptionProcessor(
     logger as unknown as LogService,
@@ -50,12 +50,9 @@ const build = (planService: unknown) => {
 
 describe('PlanSubscriptionProcessor logging', () => {
   beforeEach(() => {
-    configureLogProcess({ service: 'api' });
-    jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
   });
   afterEach(() => {
     jest.restoreAllMocks();
-    configureLogProcess({ service: '', onCritical: null });
   });
 
   it('AC-25: the source never calls this.logger.name(', () => {
@@ -63,12 +60,12 @@ describe('PlanSubscriptionProcessor logging', () => {
     expect(source).not.toMatch(/this\.logger\.name\(/);
   });
 
-  it('AC-25: the data line carries user_id correlation and prev_plan_id, and never the user row', async () => {
+  it('AC-25: the data line carries user_id and prev_plan_id, and never the user row', async () => {
     const { processor, lines, nameSpy } = build({ findUserActivePlan: jest.fn().mockResolvedValue(null) });
     await expect(processor.process(jobOf(1))).rejects.toThrow();
     const [line] = lines.filter((l) => l.message === 'Processing subscription changes');
-    expect(line.correlation.user_id).toBe(7);
-    expect(line.extraInfo).toEqual({ prev_plan_id: 2 });
+    expect(line.extraInfo.user_id).toBe(7);
+    expect(line.extraInfo).toEqual({ user_id: 7, prev_plan_id: 2 });
     expect(line.operation).toBe('on-subscription-changes');
     const dumped = JSON.stringify(lines.filter((l) => l.channel === 'plan-subscriptions'));
     expect(dumped).not.toMatch(/victim@example\.com|"email"|"name":"Ana"|Lopez|"surname"/);

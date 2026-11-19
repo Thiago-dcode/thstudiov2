@@ -69,7 +69,6 @@ export class MediaCleanupTask {
           );
       } finally {
         await Promise.all([...queues.values()].map((queue) => queue.close()));
-        await this.logger.flushAsync();
       }
     });
   }
