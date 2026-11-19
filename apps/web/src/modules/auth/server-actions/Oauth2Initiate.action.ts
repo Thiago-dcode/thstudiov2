@@ -40,7 +40,8 @@ export const oauth2InitiateAction = async (
         webLogger.warn(
           "OAuth initiate rejected",
           { ...info, api_error_code: data.error.api_error_code ?? null },
-          { ...LOG_FIELDS, status_code: data.error.status_code },yes
+          { ...LOG_FIELDS, status_code: data.error.status_code },
+          yes,
         );
         return {
           data: null,
