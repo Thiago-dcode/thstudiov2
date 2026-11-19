@@ -1,16 +1,15 @@
 import { EventEmitter } from 'events';
-import { AsyncLocalStorage } from 'async_hooks';
+import { logService } from '@repo/backend-lib/config/logging';
 import { ConfigService } from '@nestjs/config';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import type { RequestStore } from '@repo/common-lib/types/request';
+import type { LogService } from '@repo/backend-lib/services/log-service';
 import { RequestService } from 'src/common/services/request.service';
+import { requestStorage } from 'src/common/services/request-storage';
 import { ACCESS_LOG_CHANNEL, RequestMiddleware } from './request.middleware';
 
 const setup = () => {
   const fake = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
-  const create = jest.spyOn(FactoryLogService, 'createLogService').mockReturnValue(fake as unknown as LogService);
-  jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
-  const requestService = new RequestService(new AsyncLocalStorage<RequestStore>());
+  const create = jest.spyOn(logService, 'api').mockReturnValue(fake as unknown as LogService);
+  const requestService = new RequestService(requestStorage);
   const middleware = new RequestMiddleware(requestService, { get: jest.fn() } as unknown as ConfigService);
   return { fake, create, middleware };
 };
@@ -43,7 +42,7 @@ describe('RequestMiddleware access line fields', () => {
   it('AC-24: ACCESS_LOG_CHANNEL is api.access and the dedicated logger uses it', () => {
     const { create } = setup();
     expect(ACCESS_LOG_CHANNEL).toBe('api.access');
-    expect(create.mock.calls[0][1].channel).toBe('api.access');
+    expect(create.mock.calls[0][0]?.channel).toBe('api.access');
   });
 
   it.each([

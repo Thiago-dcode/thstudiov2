@@ -1,14 +1,13 @@
 import { BadRequestException, HttpException } from '@nestjs/common';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import type { LogService } from '@repo/backend-lib/services/log-service';
+import { logBuffer, logService } from '@repo/backend-lib/config/logging';
 import { ResponseExceptionFilter } from './response-exception.filter';
 import { RequestService } from '../services/request.service';
 
 const setup = () => {
   const logger: any = { warn: jest.fn(), error: jest.fn(), critical: jest.fn() };
-  const create = jest.spyOn(FactoryLogService, 'createLogService').mockReturnValue(logger as LogService);
-  jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
-  const binding = { id: () => 'rid', request: () => null };
-  const requestService = { logBinding: jest.fn().mockReturnValue(binding) } as unknown as RequestService;
+  const create = jest.spyOn(logService, 'api').mockReturnValue(logger as LogService);
+  const requestService = {} as unknown as RequestService;
   const filter = new ResponseExceptionFilter(requestService);
   const json = jest.fn();
   const response: any = { status: jest.fn().mockReturnValue({ json }) };
@@ -44,7 +43,7 @@ describe('ResponseExceptionFilter levels (every 5xx is critical)', () => {
     const { filter, create, logger, host } = setup();
     filter.catch(new HttpException('Service Unavailable', 503), host);
     expect(create).toHaveBeenCalledTimes(1);
-    expect(create.mock.calls[0][1].channel).toBe('api.error');
+    expect(create.mock.calls[0][0]?.channel).toBe('api.error');
     expect(logger.critical).toHaveBeenCalledTimes(1);
     expect(logger.critical.mock.calls[0][0]).toBe('Service Unavailable');
   });
@@ -62,7 +61,7 @@ describe('ResponseExceptionFilter levels (every 5xx is critical)', () => {
     });
     filter.catch(new BadRequestException('x'), host);
     expect(create).toHaveBeenCalledTimes(2);
-    expect(create.mock.calls[1][1].channel).toBe('api.error');
+    expect(create.mock.calls[1][0]?.channel).toBe('api.error');
     const fallback = logger.critical.mock.calls.at(-1);
     expect(fallback[0]).toBe('response broke');
     expect(fallback[2]).toEqual({ status_code: 500 });
@@ -74,9 +73,10 @@ describe('ResponseExceptionFilter levels (every 5xx is critical)', () => {
     expect(json.mock.calls[0][0].error.message).toBe('Internal Server Error');
   });
 
-  it('AC-23: the in-process flush still runs after logging', () => {
+  it('AC-23: never flushes after logging (the worker writes the lines)', () => {
     const { filter, host } = setup();
+    const flush = jest.spyOn(logBuffer, 'flush');
     filter.catch(new HttpException('x', 503), host);
-    expect(LogService.flush).toHaveBeenCalled();
+    expect(flush).not.toHaveBeenCalled();
   });
 });

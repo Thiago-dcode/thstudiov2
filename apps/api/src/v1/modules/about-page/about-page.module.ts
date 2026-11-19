@@ -4,8 +4,8 @@ import { AboutPageRepositoy } from "./about-page.repository";
 import { AboutPageService } from "./about-page.service";
 import { UserModule } from "../users/users.module";
 import { AiModule } from "../ai/ai.module";
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { RequestService } from 'src/common/services/request.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
     controllers:[AboutPageController],
@@ -14,13 +14,11 @@ import { RequestService } from 'src/common/services/request.service';
         AboutPageService,
         {
             provide: LogService,
-            useFactory: (requestService: RequestService) => {
-                return FactoryLogService.createLogService('file', {
+            useFactory: () => {
+                return createApiLogger({
                     channel: 'about-page',
-                    ...requestService.logBinding(),
                 });
             },
-            inject: [RequestService],
         },
     ],
     exports:[AboutPageService],

@@ -1,7 +1,6 @@
 #!/usr/bin/env ts-node
 
-// First: every log line of this process goes to `dbcli/<date>.log`.
-import './log-process';
+import { setLogProcessService, logBuffer } from '@repo/backend-lib/config/logging';
 import { audited } from './dbcli-audit';
 import { Command } from 'commander';
 import { migrate } from '../lib/scripts/migrate';
@@ -31,6 +30,9 @@ import {
 
 // Migration/seed directories are resolved in `@repo/backend-lib/utils/paths`:
 // scaffolding writes `.ts` to `src/**`, execution loads `.js` from `dist/src/**`.
+
+// First: every line of this process, backend-lib's own included, goes to `dbcli/<date>.log`.
+setLogProcessService('dbcli');
 
 const program = new Command();
 
@@ -415,4 +417,11 @@ program
     });
   }));
 
-program.parse(process.argv);
+// Settle, then exit: the log buffer's Redis socket would otherwise keep the CLI alive.
+program.parseAsync(process.argv).then(
+  () => logBuffer.settle().finally(() => process.exit(0)),
+  (error: unknown) => {
+    console.error(error);
+    return logBuffer.settle().finally(() => process.exit(1));
+  },
+);

@@ -6,17 +6,20 @@ const logger: Record<string, jest.Mock> = {
   warn: jest.fn(),
 };
 
-import { FactoryLogService, LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
+import type { LogService } from '@repo/backend-lib/services/log-service';
+import { logBuffer, logService } from '@repo/backend-lib/config/logging';
+import { consoleLogger } from 'src/common/testing/console-logger';
 import { JOB_ERROR_500_MAIL, JOB_SEND_BATCH_EMAIL, JOB_SEND_MAIL } from '@repo/common-lib/constants/queues';
 import { MailProcessor } from './mail.processor';
 
-const flushAsync = jest.fn();
-
 const build = () => {
-  const create = jest.spyOn(FactoryLogService, 'createLogService').mockReturnValue(logger as unknown as LogService);
+  // The processor's own `mail` logger; the job wrapper's lifecycle loggers get a silent one.
+  const quiet = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn() };
+  const create = jest
+    .spyOn(logService, 'api')
+    .mockImplementation((cfg = {}) => (cfg.channel === 'mail' ? logger : quiet) as unknown as LogService);
   const mailService = { send: jest.fn(), sendRaw: jest.fn(), sendBatchRaw: jest.fn() };
-  const processor = new MailProcessor(mailService as any, {} as any, { flushAsync } as unknown as LogService);
+  const processor = new MailProcessor(mailService as any, {} as any);
   return { processor, mailService, create };
 };
 
@@ -37,18 +40,14 @@ describe('MailProcessor alerting and lines', () => {
   beforeEach(() => {
     Object.values(logger).forEach((fn) => fn.mockReset());
     logger.name.mockReturnValue(logger);
-    flushAsync.mockReset().mockResolvedValue(undefined);
-    // The job wrapper flushes in process; keep the unit test away from real log files.
-    jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
   });
   afterEach(() => {
     jest.restoreAllMocks();
-    configureLogProcess({ service: '', onCritical: null });
   });
 
   it('AC-14: the processor logger carries its channel in the config', () => {
     const { create } = build();
-    expect(create.mock.calls.at(-1)?.[1]).toEqual({ channel: 'mail' });
+    expect(create.mock.calls.at(-1)?.[0]).toMatchObject({ channel: 'mail' });
   });
 
   it('AC-32: a successful single mail logs "Mail sent" with the recipient count and provider id', async () => {
@@ -122,9 +121,7 @@ describe('MailProcessor alerting and lines', () => {
     expect(logger.critical.mock.calls[0][0]).toBe('Mail send failed permanently');
   });
 
-  it('AC-22: a failing alert mail logs error, never critical, on every attempt, and the handler is not called', async () => {
-    const handler = jest.fn().mockResolvedValue(undefined);
-    configureLogProcess({ service: 'api', onCritical: handler });
+  it('AC-22: a failing alert mail logs error, never critical, on every attempt', async () => {
     const { processor, mailService } = build();
     mailService.send.mockRejectedValue(new Error('smtp down'));
     for (const attempt of [1, 3]) {
@@ -135,31 +132,30 @@ describe('MailProcessor alerting and lines', () => {
     expect(logger.error).toHaveBeenCalledTimes(2);
     expect(logger.error.mock.calls[0][0]).toBe('Alert mail send failed');
     expect(logger.critical).not.toHaveBeenCalled();
-    expect(handler).not.toHaveBeenCalled();
   });
 
-  it('AC-22: through the real LogService dispatch path the handler is still not called', async () => {
+  it('AC-22: through the real LogService dispatch path no critical line reaches the callback', async () => {
     const handler = jest.fn().mockResolvedValue(undefined);
-    configureLogProcess({ service: 'api', onCritical: handler });
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
     jest.spyOn(console, 'log').mockImplementation(() => undefined);
-    jest.spyOn(FactoryLogService, 'createLogService').mockImplementation((_t, cfg) => new ConsoleLogService(cfg));
+    jest.spyOn(logService, 'api').mockImplementation((cfg = {}) => consoleLogger({ ...cfg, callback: handler }));
     const mailService = { send: jest.fn().mockRejectedValue(new Error('smtp down')) };
-    const processor = new MailProcessor(mailService as any, {} as any, { flushAsync } as unknown as LogService);
+    const processor = new MailProcessor(mailService as any, {} as any);
     await expect(
       processor.process(jobOf(JOB_ERROR_500_MAIL, { message: 'm', options: {} }, 3, 3)),
     ).rejects.toThrow('smtp down');
     await new Promise((r) => setImmediate(r));
-    expect(handler).not.toHaveBeenCalled();
+    expect(handler.mock.calls.filter(([entry]) => entry.level === 'CRITICAL')).toEqual([]);
   });
 
-  it('AC-32: the logger is flushed whether the job succeeds or fails', async () => {
+  it('AC-32: the job never flushes the logs, whether it succeeds or fails', async () => {
     const { processor, mailService } = build();
+    const flush = jest.spyOn(logBuffer, 'flush');
     mailService.sendRaw.mockResolvedValue({ id: 1 });
     await processor.process(jobOf(JOB_SEND_MAIL, { to: 'a@b.c' }));
     mailService.sendRaw.mockRejectedValue(new Error('x'));
     await expect(processor.process(jobOf(JOB_SEND_MAIL, { to: 'a@b.c' }))).rejects.toThrow();
-    expect(flushAsync).toHaveBeenCalledTimes(2);
+    expect(flush).not.toHaveBeenCalled();
   });
 
   // The error message of a failed send must not carry the recipient (provider errors quote it).

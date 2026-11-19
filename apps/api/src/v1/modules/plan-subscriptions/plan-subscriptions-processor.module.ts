@@ -1,20 +1,17 @@
 import { Module } from '@nestjs/common';
-import { BullModule, getQueueToken } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import {
-  PLAN_SUBSCRIPTIONS_QUEUE,
-  LOG_QUEUE,
-} from '@repo/common-lib/constants/queues';
+import { BullModule } from '@nestjs/bullmq';
+import { PLAN_SUBSCRIPTIONS_QUEUE } from '@repo/common-lib/constants/queues';
 import { PlanSubscriptionProcessor } from './plan-subscription.processor';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { PlansModule } from '../plans/plans.module';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { SubscriptionChangedMail } from './mails/subscription-changed.mail';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [
-    BullModule.registerQueue({ name: PLAN_SUBSCRIPTIONS_QUEUE }, { name: LOG_QUEUE }),
+    BullModule.registerQueue({ name: PLAN_SUBSCRIPTIONS_QUEUE }),
     UserExtraDataModule,
     PlansModule,
     EmailPreferencesModule,
@@ -24,13 +21,12 @@ import { SubscriptionChangedMail } from './mails/subscription-changed.mail';
     SubscriptionChangedMail,
     {
       provide: LogService,
-      useFactory: (logQueue: Queue) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'plan-subscriptions',
           name: 'on-subscription-changes',
-        }, logQueue);
+        });
       },
-      inject: [getQueueToken(LOG_QUEUE)],
     },
   ],
 })

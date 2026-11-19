@@ -1,7 +1,7 @@
 import type Stripe from 'stripe';
-import { FactoryLogService } from '../../log-service/factory-log.service';
+import { logService } from '../../../config/logging';
 
-const stripeLog = FactoryLogService.createLogService('file', { channel: 'stripe', name: 'api-call' });
+const stripeLog = logService.lib({ channel: 'stripe', name: 'api-call' });
 
 /**
  * One line per Stripe API call: outcome, duration and Stripe's `req_…` id, which is also the
@@ -17,11 +17,11 @@ export function logStripeResponse(event: Stripe.ResponseEvent): void {
             status,
             duration_ms: event.elapsed,
             api_version: event.api_version,
+            stripe_request_id: event.request_id,
         };
-        const fields = { correlation: { stripe_request_id: event.request_id } };
-        if (status >= 500) stripeLog.error('Stripe API call', extraInfo, fields);
-        else if (status >= 400) stripeLog.warn('Stripe API call', extraInfo, fields);
-        else stripeLog.info('Stripe API call', extraInfo, fields);
+        if (status >= 500) stripeLog.error('Stripe API call', extraInfo);
+        else if (status >= 400) stripeLog.warn('Stripe API call', extraInfo);
+        else stripeLog.info('Stripe API call', extraInfo);
     } catch (error) {
         // Never throw into the SDK's event emitter; never log through LogService from here.
         console.error('Stripe call logging failed', error);

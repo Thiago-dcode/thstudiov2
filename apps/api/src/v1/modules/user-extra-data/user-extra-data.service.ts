@@ -8,13 +8,13 @@ import { SetInitialUserExtraDataEvent } from './events/set-initial-user-extra-da
 import { Helpers } from 'src/common/services/helpers.service';
 import { PlansService } from '../plans/plans.service';
 import { UserStorageRequestService } from '../user-storage-requests/user-storage-request.service';
-import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { UpdateOrCreateUserExtraDataInput } from '@repo/common-lib/types/user-extra-data';
 import { UserLimits } from '@repo/common-lib/utils/user-limits';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Injectable()
 export class UserExtraDataService {
-  private readonly logger = FactoryLogService.createLogService('file', {
+  private readonly logger = createApiLogger({
     channel: 'user-extra-data',
   });
 

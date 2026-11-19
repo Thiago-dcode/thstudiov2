@@ -9,8 +9,8 @@ jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({ paypal: 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { Queue } from 'bullmq';
-import { LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { consoleLogger } from 'src/common/testing/console-logger';
 import { WebhookProcessor } from './webhooks-processor.service';
 
 const CREATED = 1_800_000_000;
@@ -55,9 +55,9 @@ const build = (opts: { planPrice?: unknown; user?: unknown } = {}) => {
   push(jest.spyOn(console, 'log'));
   push(jest.spyOn(console, 'warn'));
   push(jest.spyOn(console, 'error'));
-  const logger = new ConsoleLogService({ channel: 'webhooks', name: 'stripe-webhook' });
+  const logger = consoleLogger({ channel: 'webhooks', name: 'stripe-webhook' });
   const nameSpy = jest.spyOn(logger, 'name');
-  const idSpy = jest.spyOn(logger, 'id');
+  const idSpy = jest.spyOn(logger, 'id', 'set');
   const planSubscriptionService = {
     findActiveSubscription: jest.fn().mockResolvedValue(null),
     findLatestSubscription: jest.fn().mockResolvedValue(null),
@@ -86,12 +86,9 @@ describe('WebhookProcessor logging', () => {
     retrieve.mockReset();
     list.mockReset().mockResolvedValue({ data: [] });
     cancel.mockReset().mockResolvedValue({});
-    configureLogProcess({ service: 'api' });
-    jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
   });
   afterEach(() => {
     jest.restoreAllMocks();
-    configureLogProcess({ service: '', onCritical: null });
   });
 
   it('AC-24: the processor source never calls this.logger.name( or this.logger.id(', () => {
@@ -99,22 +96,19 @@ describe('WebhookProcessor logging', () => {
     expect(source).not.toMatch(/this\.logger\.(name|id)\(/);
   });
 
-  it('AC-24: a created subscription logs "Subscription synced from Stripe" with correlation ids and the fresh trace id', async () => {
+  it('AC-24: a created subscription logs "Subscription synced from Stripe" with the event ids and the fresh trace id', async () => {
     const sub = subscription();
     retrieve.mockResolvedValue(sub);
     const { processor, lines, nameSpy, idSpy } = build();
     await processor.process(jobOf(eventOf('customer.subscription.created', sub)));
     const [line] = wh(lines, 'Subscription synced from Stripe');
     expect(line.extraInfo).toMatchObject({ action: 'created', plan_subscription_id: 9, plan_price_id: 3, stripe_status: 'active', is_active: true });
-    expect(line.correlation).toMatchObject({
+    expect(line.extraInfo).toMatchObject({
       stripe_event_id: 'evt_1',
       stripe_event_type: 'customer.subscription.created',
       stripe_subscription_id: 'sub_1',
       stripe_customer_id: 'cus_1',
       user_id: 7,
-      job_id: 'stripe-evt_1',
-      queue: 'stripe-webhooks',
-      attempt: 1,
     });
     expect(line.id).toBe('R');
     expect(nameSpy).not.toHaveBeenCalled();
@@ -144,18 +138,19 @@ describe('WebhookProcessor logging', () => {
     const synced = wh(lines, 'Subscription synced from Stripe');
     expect(synced).toHaveLength(2);
     for (const line of synced) {
-      const expected = line.correlation.stripe_event_id === 'evt_A' ? 'TRACE-A' : 'TRACE-B';
+      const expected = line.extraInfo.stripe_event_id === 'evt_A' ? 'TRACE-A' : 'TRACE-B';
       expect(line.id).toBe(expected);
-      expect(line.correlation.stripe_subscription_id).toBe(line.correlation.stripe_event_id === 'evt_A' ? 'sub_A' : 'sub_B');
+      expect(line.extraInfo.stripe_subscription_id).toBe(line.extraInfo.stripe_event_id === 'evt_A' ? 'sub_A' : 'sub_B');
     }
     // A later event with no trace of its own must not inherit either id.
     const later = await (async () => {
       const sub = subscription({ id: 'sub_C', metadata: {} });
       retrieve.mockResolvedValue(sub);
       await processor.process(jobOf(eventOf('customer.subscription.created', sub, 'evt_C')));
-      return wh(lines, 'Subscription synced from Stripe').find((l) => l.correlation.stripe_event_id === 'evt_C');
+      return wh(lines, 'Subscription synced from Stripe').find((l) => l.extraInfo.stripe_event_id === 'evt_C');
     })();
-    expect(later.id).toBeNull();
+    expect(typeof later.id).toBe('string');
+    expect(later.id).not.toMatch(/^TRACE-/);
   });
 
   it('AC-24: a live status different from the event status logs the stale-snapshot line', async () => {
@@ -163,7 +158,7 @@ describe('WebhookProcessor logging', () => {
     const { processor, lines } = build();
     await processor.process(jobOf(eventOf('customer.subscription.updated', subscription({ status: 'active' }))));
     const [line] = wh(lines, 'Stripe event snapshot stale; applied live state');
-    expect(line.extraInfo).toEqual({ event_status: 'active', live_status: 'canceled' });
+    expect(line.extraInfo).toMatchObject({ event_status: 'active', live_status: 'canceled' });
     const [ignored] = wh(lines, 'Stripe webhook event ignored');
     expect(ignored.extraInfo).toMatchObject({ reason: 'inactive_without_match', stripe_status: 'canceled' });
   });
@@ -174,7 +169,7 @@ describe('WebhookProcessor logging', () => {
     await expect(processor.process(jobOf(eventOf('customer.subscription.created', subscription())))).rejects.toThrow('No plan price for Stripe price');
     const [line] = wh(lines, 'No plan price for Stripe price');
     expect(line.level).toBe('ERROR');
-    expect(line.extraInfo).toEqual({ stripe_price_id: 'price_1' });
+    expect(line.extraInfo).toMatchObject({ stripe_price_id: 'price_1' });
   });
 
   it('AC-24: two other active Stripe subscriptions give one "Duplicate Stripe subscriptions cancelled" {count:2}', async () => {
@@ -184,7 +179,7 @@ describe('WebhookProcessor logging', () => {
     await processor.process(jobOf(eventOf('customer.subscription.created', subscription())));
     const dup = wh(lines, 'Duplicate Stripe subscriptions cancelled');
     expect(dup).toHaveLength(1);
-    expect(dup[0].extraInfo).toEqual({ count: 2, stripe_subscription_ids: ['sub_X', 'sub_Y'] });
+    expect(dup[0].extraInfo).toMatchObject({ count: 2, stripe_subscription_ids: ['sub_X', 'sub_Y'] });
     expect(cancel).toHaveBeenCalledTimes(2);
   });
 
@@ -200,7 +195,7 @@ describe('WebhookProcessor logging', () => {
     const { processor, lines } = build();
     await processor.process(jobOf(eventOf('charge.refunded', { object: 'charge', id: 'ch_1' })));
     const [line] = wh(lines, 'Stripe webhook event ignored');
-    expect(line.extraInfo).toEqual({ reason: 'unhandled_type' });
+    expect(line.extraInfo).toMatchObject({ reason: 'unhandled_type' });
     expect(line.level).toBe('INFO');
   });
 
@@ -212,7 +207,7 @@ describe('WebhookProcessor logging', () => {
     const [line] = wh(lines, 'Stripe invoice payment failed');
     expect(line.level).toBe('WARN');
     expect(line.extraInfo).toMatchObject({ attempt_count: 2, amount_due: 1000, currency: 'eur' });
-    expect(line.correlation.stripe_invoice_id).toBe('in_1');
+    expect(line.extraInfo.stripe_invoice_id).toBe('in_1');
   });
 
   it('AC-24: a handler throw on attempt 1/5 logs error {will_retry:true} and no critical', async () => {

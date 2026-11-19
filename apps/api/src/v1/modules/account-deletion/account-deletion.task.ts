@@ -8,6 +8,7 @@ import {
 } from '@repo/common-lib/constants/limits';
 import { CRON_LOCK_TTL, runCronExclusive } from 'src/common/utils/cron-lock';
 import { UserRepository } from '../users/users.repository';
+import { apiLogConfig } from 'src/common/utils/api-logger';
 
 /**
  * Daily self-service account deletion run:
@@ -30,13 +31,9 @@ export class AccountDeletionTask {
   @Cron('0 3 * * *', { name: 'account-deletion', timeZone: 'UTC' })
   async handleAccountDeletion() {
     await runCronExclusive('account-deletion', CRON_LOCK_TTL.daily, async () => {
-      try {
-        // Warnings first, so an account flagged long ago never gets deleted without one.
-        await this.queueWarnings();
-        await this.queueDeletions();
-      } finally {
-        await this.logger.flushAsync();
-      }
+      // Warnings first, so an account flagged long ago never gets deleted without one.
+      await this.queueWarnings();
+      await this.queueDeletions();
     });
   }
 
@@ -48,7 +45,7 @@ export class AccountDeletionTask {
       AccountDeletionTask.MAX_PER_RUN,
     );
     for (const { id } of due) {
-      await QueueHelper.createAccountDeletionWarningJob({ user_id: id });
+      await QueueHelper.createAccountDeletionWarningJob({ user_id: id }, apiLogConfig());
     }
     this.logger.info('Account deletion warnings queued', { count: due.length });
   }
@@ -59,7 +56,7 @@ export class AccountDeletionTask {
       AccountDeletionTask.MAX_PER_RUN,
     );
     for (const { id } of due) {
-      await QueueHelper.createDeleteUserAccountJob({ user_id: id });
+      await QueueHelper.createDeleteUserAccountJob({ user_id: id }, apiLogConfig());
     }
     this.logger.info('Account deletions queued', { count: due.length });
   }

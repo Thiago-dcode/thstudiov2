@@ -92,10 +92,7 @@ export class AuthService {
     extraInfo?: Record<string, unknown>,
     userId?: number,
   ) {
-    this.logService[level](message, extraInfo, {
-      operation,
-      ...(userId ? { correlation: { user_id: userId } } : {}),
-    });
+    this.logService[level](message, userId ? { user_id: userId, ...extraInfo } : extraInfo, { operation });
   }
 
   private rejectRegistration(reason: string, invitationLinkId?: number) {
@@ -720,8 +717,7 @@ export class AuthService {
       throw this.accountCreationError(error, step, context);
     }
 
-    const userFields = { ...fields, correlation: { user_id: user.id } };
-    this.logService.info('User row created', { ...context, step: 'create-user' }, userFields);
+    this.logService.info('User row created', { user_id: user.id, ...context, step: 'create-user' }, fields);
 
     // The account exists from here on: these steps never undo it nor fail the sign-up.
     if (waitList) {
@@ -730,31 +726,31 @@ export class AuthService {
           status: 'REGISTERED',
           redeemed_at: new Date(),
         });
-        this.logService.info('Wait-list entry redeemed', { step: 'wait-list', wait_list_id: waitList.id }, userFields);
+        this.logService.info('Wait-list entry redeemed', { user_id: user.id, step: 'wait-list', wait_list_id: waitList.id }, fields);
       } catch (error) {
         // Left `INVITED`: the entry still looks open and still holds its email.
         this.logService.critical(
           'Account created but wait-list entry not redeemed',
-          { ...context, step: 'wait-list', ...this.errorInfo(error) },
-          userFields,
+          { user_id: user.id, ...context, step: 'wait-list', ...this.errorInfo(error) },
+          fields,
         );
       }
     }
     if (benefit_id) {
       try {
         await this.userBenefitService.create(user.id, benefit_id);
-        this.logService.info('Benefit granted', { step: 'benefit', benefit_id }, userFields);
+        this.logService.info('Benefit granted', { user_id: user.id, step: 'benefit', benefit_id }, fields);
       } catch (error) {
         // `users.benefit_id` is set but no `user_benefits` row: the user does not get it.
         this.logService.critical(
           'Account created but invitation benefit not granted',
-          { ...context, step: 'benefit', ...this.errorInfo(error) },
-          userFields,
+          { user_id: user.id, ...context, step: 'benefit', ...this.errorInfo(error) },
+          fields,
         );
       }
     }
 
-    this.logService.success('User account created', context, userFields);
+    this.logService.success('User account created', { user_id: user.id, ...context }, fields);
     return user;
   }
 
@@ -1023,15 +1019,13 @@ export class AuthService {
       this.logService.critical(
         'OAuth callback resolved no user',
         {
+          ...(linkedAccount ? { user_id: linkedAccount.user_id } : {}),
           method: provider,
           linked_account: !!linkedAccount,
           trusted,
           signed_up: !alreadyExist,
         },
-        {
-          operation: alreadyExist ? 'login' : 'register',
-          ...(linkedAccount ? { correlation: { user_id: linkedAccount.user_id } } : {}),
-        },
+        { operation: alreadyExist ? 'login' : 'register' },
       );
       throw new InternalServerErrorException(`Could not sign you in with ${provider}, try another method`);
     }

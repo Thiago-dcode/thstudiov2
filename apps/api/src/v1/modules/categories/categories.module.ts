@@ -4,8 +4,8 @@ import { CategoriesService } from './categories.service';
 import { CategoriesRepository } from './categories.repository';
 import { CategoryTranslationsRepository } from './category-translations.repository';
 import { CategoryTranslationsService } from './category-translations.service';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { RequestService } from 'src/common/services/request.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   controllers: [CategoriesController],
@@ -16,13 +16,11 @@ import { RequestService } from 'src/common/services/request.service';
     CategoriesService,
     {
       provide: LogService,
-      useFactory: (requestService: RequestService) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'categories',
-          ...requestService.logBinding(),
         });
       },
-      inject: [RequestService],
     },
   ],
   exports: [CategoriesService, CategoryTranslationsService],

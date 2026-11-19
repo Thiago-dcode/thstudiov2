@@ -31,7 +31,6 @@ const buildLogger = () => {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-    flushAsync: jest.fn(),
   };
   logger.name.mockReturnValue(logger);
   return logger;
@@ -287,7 +286,7 @@ describe('EdgeCacheService', () => {
 
       await service.handleArtistPublicPagesChanged(new ArtistPublicPagesChangedEvent(7));
 
-      expect(enqueue).toHaveBeenCalledWith({ user_id: 7 });
+      expect(enqueue).toHaveBeenCalledWith({ user_id: 7 }, expect.objectContaining({ service: 'api' }));
     });
 
     it('passes the payload names through', async () => {
@@ -299,23 +298,19 @@ describe('EdgeCacheService', () => {
         new ArtistPublicPagesChangedEvent(7, ['old', 'new']),
       );
 
-      expect(enqueue).toHaveBeenCalledWith({ user_id: 7, usernames: ['old', 'new'] });
+      expect(enqueue).toHaveBeenCalledWith({ user_id: 7, usernames: ['old', 'new'] }, expect.objectContaining({ service: 'api' }));
     });
 
     it('swallows and logs an enqueue failure, so the request that changed the page still succeeds', async () => {
       jest
         .spyOn(QueueHelper, 'createPurgeArtistEdgeCacheJob')
         .mockRejectedValue(new Error('connect ECONNREFUSED 127.0.0.1:6379'));
-      const flush = jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
 
       await expect(
         service.handleArtistPublicPagesChanged(new ArtistPublicPagesChangedEvent(7)),
       ).resolves.toBeUndefined();
 
       expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('user [7]'));
-      // In-process, not through the log queue that needs the Redis that just failed.
-      expect(flush).toHaveBeenCalled();
-      expect(logger.flushAsync).not.toHaveBeenCalled();
     });
   });
 });

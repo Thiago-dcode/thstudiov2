@@ -1,13 +1,13 @@
-import { BullModule, getQueueToken } from '@nestjs/bullmq';
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { ACCOUNT_DELETION_QUEUE, LOG_QUEUE } from '@repo/common-lib/constants/queues';
-import { Queue } from 'bullmq';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { ACCOUNT_DELETION_QUEUE } from '@repo/common-lib/constants/queues';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 import { AccountDeletionWarningMail } from '../users/mails/account-deletion-warning.mail';
 import { UserModule } from '../users/users.module';
 import { AccountDeletionProcessor } from './account-deletion.processor';
 import { AccountDeletionTask } from './account-deletion.task';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 /**
  * Worker side of self-service account deletion: the daily task and the queue processor (warning
@@ -20,7 +20,7 @@ import { AccountDeletionTask } from './account-deletion.task';
     EmailPreferencesModule,
     // `UserService.deleteAccount` and `UserRepository` (deletion state, warning stamp).
     UserModule,
-    BullModule.registerQueue({ name: ACCOUNT_DELETION_QUEUE }, { name: LOG_QUEUE }),
+    BullModule.registerQueue({ name: ACCOUNT_DELETION_QUEUE }),
   ],
   providers: [
     AccountDeletionTask,
@@ -28,13 +28,12 @@ import { AccountDeletionTask } from './account-deletion.task';
     AccountDeletionWarningMail,
     {
       provide: LogService,
-      useFactory: (logQueue: Queue) =>
-        FactoryLogService.createLogService('file', {
+      useFactory: () =>
+        createApiLogger({
           channel: 'account-deletion',
           // A failed hard delete is a GDPR obligation not met: the processor logs it `critical`,
           // which mails the admins.
-        }, logQueue),
-      inject: [getQueueToken(LOG_QUEUE)],
+        }),
     },
   ],
 })

@@ -9,6 +9,7 @@ import { ContentReportRepository } from './content-report.repository';
 import { ContentReportAdminMail } from './mails/content-report-admin.mail';
 import { ContentReportReceivedMail } from './mails/content-report-received.mail';
 import { CreateContentReportRequest } from './requests/create-content-report.request';
+import { apiLogConfig } from 'src/common/utils/api-logger';
 
 /** `a11studio.com` and `www.a11studio.com` are the same site. */
 const siteHost = (host: string) => host.toLowerCase().replace(/^www\./, '');
@@ -51,7 +52,7 @@ export class ContentReportService {
 
     await this.mailService.sendAsync(this.contentReportAdminMail.setReport(report), {
       jobId: `content-report-admin-${report.id}`,
-    });
+    }, apiLogConfig());
     if (report.reporter_email) {
       await this.mailService.sendAsync(
         this.contentReportReceivedMail.setReport(
@@ -59,6 +60,7 @@ export class ContentReportService {
           this.requestService.language ?? DEFAULT_LANGUAGE,
         ),
         { jobId: `content-report-received-${report.id}` },
+        apiLogConfig(),
       );
     }
 

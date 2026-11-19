@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { config } from '@repo/common-lib/config';
 import { JOB_ERROR_500_MAIL } from '@repo/common-lib/constants/queues';
-import type { CriticalLogHandler, LogEntry } from '../services/log-service/types';
+import type { LogCallback, LogEntry } from '../services/log-service/types';
 import type { MailJob } from '@repo/common-lib/types/mail';
 import { QueueHelper } from './queue-helper';
 
@@ -68,11 +68,11 @@ export function resetCriticalAlertThrottle(): void {
 }
 
 /**
- * The process-wide `critical` handler: one throttled admin alert mail per distinct failure.
- * Registered by the api and worker entrypoints via `configureLogProcess`. It gets the redacted
- * entry that went to disk, and never logs through a LogService (no alert recursion).
+ * One throttled admin alert mail per distinct failure. Used by `emailCritical`, the log callback
+ * set in `config/logging.ts`. It gets the redacted entry that went to disk, and never logs through
+ * a LogService (no alert recursion).
  */
-export const criticalAlertMail: CriticalLogHandler = async (entry) => {
+export const criticalAlertMail: LogCallback = async (entry) => {
     if (!config().app.sendErrorEmails) return;
 
     const throttleMs = Math.max(0, config().app.errorEmailThrottleMinutes) * 60 * 1000;
@@ -132,9 +132,10 @@ export const criticalAlertMail: CriticalLogHandler = async (entry) => {
                     id: `critical-alert:${createHash('sha1').update(fingerprint).digest('hex')}`,
                     ttl: throttleMs,
                 },
-            });
+            }, { id: entry.id });
         } else {
-            await QueueHelper.createMailJob(job);
+            // The alert mail job keeps the critical line's trace id.
+            await QueueHelper.createMailJob(job, undefined, { id: entry.id });
         }
     } catch (error) {
         release?.();

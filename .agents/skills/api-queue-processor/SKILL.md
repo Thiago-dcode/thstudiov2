@@ -34,7 +34,7 @@ Job payload type in `packages/common-lib/src/types/<entity>.ts` only if the work
 
 ## QueueHelper method
 
-Add a static method on `QueueHelper`. Default options unless `queue-helper.ts` documents a special case:
+Add a static method on `QueueHelper` that takes a trailing `log: LogConfig = {}` and forwards it to `enqueueJob(queue, name, data, opts, log)`, so the job carries the caller's trace id. Default options unless `queue-helper.ts` documents a special case:
 
 ```ts
 {
@@ -60,7 +60,6 @@ If the service uses a deterministic `jobId`, treat “job already exists” as s
 imports: [
   BullModule.registerQueue(
     { name: <ENTITY>_QUEUE },
-    { name: LOG_QUEUE },
     // plus any other queues this processor/service enqueues into
   ),
 ],
@@ -68,14 +67,12 @@ providers: [
   <Entity>Processor,
   {
     provide: LogService,
-    useFactory: (logQueue: Queue) =>
-      FactoryLogService.createLogService('file', { channel: '<entity>' }, logQueue),
-    inject: [getQueueToken(LOG_QUEUE)],
+    useFactory: () => createApiLogger({ channel: '<entity>' }),
   },
 ],
 ```
 
-If the module already registers the queue and logger, only add the new job constant, helper method, and `switch` case.
+`createApiLogger` (`src/common/utils/api-logger.ts`) gives the logger the api service, the critical mail and the current request/job trace id. No log queue to register: the worker flushes the shared log buffer (see the `logging` skill). If the module already registers the queue and logger, only add the new job constant, helper method, and `switch` case.
 
 ## Enqueue and consume
 
@@ -84,24 +81,20 @@ Service: `@InjectQueue(<ENTITY>_QUEUE)`, call the helper, return immediately.
 ```ts
 @InjectQueue(WAIT_LIST_QUEUE) private readonly waitListQueue: Queue
 
-await QueueHelper.createWaitListEntryJob(this.waitListQueue, { email, language });
+await QueueHelper.createWaitListEntryJob({ email, language }, apiLogConfig());
 ```
 
-Processor: `@Processor(<ENTITY>_QUEUE)`, extend `GlobalProcessor`, `switch (job.name)`, rethrow so BullMQ retries, flush logs in `finally`. Unknown job names throw.
+Processor: `@Processor(<ENTITY>_QUEUE)`, extend `GlobalProcessor`, `switch (job.name)`, rethrow so BullMQ retries. Unknown job names throw. Never flush logs (no `finally` for it): `GlobalProcessor` runs the job in its own trace (the enqueuer's id) with start/completed lines, and the worker writes the lines. For a final-attempt check use `isFinalAttempt(job)`.
 
 ```ts
 @Processor(WAIT_LIST_QUEUE)
 export class WaitListProcessor extends GlobalProcessor {
   async process(job: Job): Promise<unknown> {
-    try {
-      switch (job.name) {
-        case JOB_CREATE_WAIT_LIST_ENTRY:
-          return await this.createWaitListEntry(job.data);
-        default:
-          throw new Error(`Job name "${job.name}" not recognized`);
-      }
-    } finally {
-      await this.logger.flushAsync();
+    switch (job.name) {
+      case JOB_CREATE_WAIT_LIST_ENTRY:
+        return await this.createWaitListEntry(job.data);
+      default:
+        throw new Error(`Job name "${job.name}" not recognized`);
     }
   }
 }
@@ -113,9 +106,9 @@ export class WaitListProcessor extends GlobalProcessor {
 
 - [ ] Queue + job constants (new job on an existing queue is enough)
 - [ ] Job payload type if needed
-- [ ] `QueueHelper` method (never raw `queue.add`)
+- [ ] `QueueHelper` method with a trailing `log: LogConfig = {}` (never raw `queue.add`); callers pass `apiLogConfig()`
 - [ ] Processor on `GlobalProcessor` with a `job.name` case
-- [ ] Module `registerQueue` + processor provider + `LOG_QUEUE` logger (skip if already present)
+- [ ] Module `registerQueue` + processor provider + `createApiLogger({ channel })` logger (skip if already present)
 - [ ] An enqueue call only if something must produce the job (service, task, or another processor)
 
 ## After implementing

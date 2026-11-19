@@ -1,6 +1,5 @@
 import { Processor } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import {
   JOB_CREATE_OR_UPDATE_LOCATION,
   LOCATION_QUEUE,
@@ -13,32 +12,28 @@ import type {
 } from '@repo/common-lib/types/location';
 import { LocationService } from './location.service';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Processor(LOCATION_QUEUE)
 export class LocationProcessor extends GlobalProcessor {
-  private readonly logger = FactoryLogService.createLogService('file', {
+  private readonly logger = createApiLogger({
     // A literal, not the queue constant: channels are a closed set named after the module.
     channel: 'locations',
   });
 
   constructor(
     private readonly locationService: LocationService,
-    private readonly appLogService: LogService,
   ) {
     super();
   }
 
   async process(job: Job): Promise<unknown> {
-    try {
-      switch (job.name) {
-        case JOB_CREATE_OR_UPDATE_LOCATION:
-          return await this.createOrUpdateLocation(job.data);
+    switch (job.name) {
+      case JOB_CREATE_OR_UPDATE_LOCATION:
+        return await this.createOrUpdateLocation(job.data);
 
-        default:
-          throw new Error(`Job name "${job.name}" not recognized`);
-      }
-    } finally {
-      await this.appLogService.flushAsync();
+      default:
+        throw new Error(`Job name "${job.name}" not recognized`);
     }
   }
 

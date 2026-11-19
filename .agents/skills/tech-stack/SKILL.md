@@ -12,7 +12,7 @@ description: High-level tech stack, project structure, and core principles. Use 
 - `packages/ui` → Reusable UI components (design system)
 - `packages/database` → Custom ORM & database entry point
 - `packages/common-lib` → Shared cross-platform utilities
-- `packages/backend-lib` → Backend-only shared logic
+- `packages/backend-lib` → Server-side-only shared logic (api, worker, and web server code — never the browser)
 - `packages/frontend-lib` → Frontend-only shared logic
 
 ## Package Manager

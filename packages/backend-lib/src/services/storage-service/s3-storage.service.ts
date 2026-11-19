@@ -11,10 +11,10 @@ import {
     S3Client,
 } from '@aws-sdk/client-s3';
 import { S3StorageConfig, StorageWriteInput } from "./types";
-import { FactoryLogService } from "../log-service/factory-log.service";
+import { logService } from '../../config/logging';
 
 /** Failures and destructive/bulk ops only: puts and gets are summarised by the business lines. */
-const storageLog = FactoryLogService.createLogService("file", { channel: "storage" });
+const storageLog = logService.lib({ channel: "storage" });
 
 /** AWS SDK error fields worth keeping; never the request, credentials or response body. */
 const awsErrorFields = (error: unknown) => {

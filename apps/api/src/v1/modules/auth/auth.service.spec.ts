@@ -243,8 +243,8 @@ describe('AuthService', () => {
       expect(invitationLinkService.releaseUse).not.toHaveBeenCalled();
       expect(logService.critical).toHaveBeenCalledWith(
         'Account created but wait-list entry not redeemed',
-        expect.objectContaining({ step: 'wait-list' }),
-        expect.objectContaining({ correlation: { user_id: user.id } }),
+        expect.objectContaining({ step: 'wait-list', user_id: user.id }),
+        { operation: 'register' },
       );
     });
 

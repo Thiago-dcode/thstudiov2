@@ -23,7 +23,6 @@ import path from 'node:path';
 import { FactoryCompressService } from '@repo/backend-lib/services/compress-service';
 import { FactoryStorageService } from '@repo/backend-lib/services/storage-service';
 import type { S3StorageConfig } from '@repo/backend-lib/services/storage-service';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import Logger from '@repo/backend-lib/utils/console';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { getConfigValue } from '@repo/common-lib/config/utils';
@@ -295,7 +294,6 @@ async function seedServiceForUsername(username: string, amount: number): Promise
   Logger.success(
     `Service seed: created ${amount} service(s) for user=${username} (ids: ${createdIds.join(', ')}).`,
   );
-  await LogService.flush();
 }
 
 /**

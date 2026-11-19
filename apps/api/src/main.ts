@@ -1,27 +1,26 @@
-// First: sets the log service and the critical handler before anything else can log.
-import './log-process';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
-import { checkPortOrGetNext } from '@repo/backend-lib/utils';
+import { checkPortOrGetNext, withTimeout } from '@repo/backend-lib/utils';
 import { init } from '@repo/database';
 import { useContainer } from 'class-validator';
 import { spawn } from 'child_process';
-import { FactoryLogService } from '@repo/backend-lib/services/log-service';
-import { API_ERROR_CHANNEL, logConfig } from '@repo/backend-lib/config/logging';
+import { API_ERROR_CHANNEL, logBuffer, setLogProcessService } from '@repo/backend-lib/config/logging';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
 import { ApiHealthService } from './common/health/api-health.service';
+import { createApiLogger } from './common/utils/api-logger';
 
-const bootstrapLogger = FactoryLogService.createLogService('file', {
-  channel: 'api.bootstrap',
-  logFolder: logConfig.api.logFolder,
-});
+// Before anything logs: every line of this process, backend-lib's own included, goes under `api/`.
+// The service is read per line, so loggers built at import time pick it up too.
+setLogProcessService('api');
+
+/** Upper bound for settling the log buffer on shutdown, so a stuck push can't hold the exit. */
+const SETTLE_LOGS_TIMEOUT_MS = 5000;
+
+const bootstrapLogger = createApiLogger({ channel: 'api.bootstrap' });
 
 /** Fatal process errors only — same channel as HTTP errors in ResponseExceptionFilter. */
-const fatalErrorLogger = FactoryLogService.createLogService('file', {
-  ...logConfig.api,
-  channel: API_ERROR_CHANNEL,
-});
+const fatalErrorLogger = createApiLogger({ channel: API_ERROR_CHANNEL });
 
 function serializeError(error: unknown) {
   if (error instanceof Error) {
@@ -107,6 +106,10 @@ async function bootstrap() {
       process.once(signal, () => {
         void redisIoAdapter
           .disconnectFromRedis()
+          // Never a flush: the worker writes the lines. Settle so in-flight pushes and the
+          // critical mail land before exit.
+          .then(() => withTimeout(logBuffer.settle(), SETTLE_LOGS_TIMEOUT_MS, 'settle logs'))
+          .catch((error) => console.error('Shutdown cleanup failed:', error))
           .finally(() => process.exit(0));
       });
     }

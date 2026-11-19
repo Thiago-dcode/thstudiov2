@@ -9,12 +9,6 @@ import {
   stripe,
   stripeWebhookSecret,
 } from '@repo/backend-lib/services/payment-service/stripe';
-import {
-  FactoryLogService,
-  addLogCorrelation,
-  getLogContext,
-  setLogTraceId,
-} from '@repo/backend-lib/services/log-service';
 import { enqueueJob } from '@repo/backend-lib/utils';
 import type Stripe from 'stripe';
 import { StripeService } from 'src/common/services/stripe.service';
@@ -27,6 +21,8 @@ import {
   JOB_STRIPE_WEBHOOK,
 } from '@repo/common-lib/constants/queues';
 import { Throttle } from '@nestjs/throttler';
+import { currentRequestId } from 'src/common/services/request-storage';
+import { apiLogConfig, createApiLogger } from 'src/common/utils/api-logger';
 
 @Throttle({
   short: { ttl: 1000, limit: 50 },
@@ -35,7 +31,7 @@ import { Throttle } from '@nestjs/throttler';
 })
 @Controller('webhooks')
 export class WebhooksController {
-  private readonly logger = FactoryLogService.createLogService('file', {
+  private readonly logger = createApiLogger({
     channel: 'webhooks',
     name: 'receive-stripe-webhook',
   });
@@ -84,22 +80,22 @@ export class WebhooksController {
       throw new BadRequestException('Webhook signature verification failed');
     }
 
-    // Rejoin the request that caused this event, when the object carries a fresh trace id.
-    // api.access / api.error keep the HTTP request id through logBinding().
-    const webhookRequestId = getLogContext()?.id ?? null;
+    // Rejoin the request that caused this event, when the object carries a fresh trace id: the
+    // webhook's own lines and its job use it. api.access / api.error keep the HTTP request id.
+    const webhookRequestId = currentRequestId();
     const refs = stripeEventRefs(event);
-    addLogCorrelation(refs.correlation);
-    const traceId = StripeService.traceIdFromMetadata(refs.metadata, event.created);
-    if (traceId) setLogTraceId(traceId);
+    const traceId = StripeService.traceIdFromMetadata(refs.metadata, event.created) ?? webhookRequestId;
+    const log = createApiLogger({ channel: 'webhooks', name: 'receive-stripe-webhook', id: traceId });
 
     const jobId = `stripe-${event.id}`;
     // Stripe retries deliveries; BullMQ would silently drop the duplicate add, so say so.
     if (await this.stripeQueue.getJob(jobId)) {
-      this.logger.info('Stripe webhook duplicate ignored', { reason: 'already_queued', job_id: jobId });
+      log.info('Stripe webhook duplicate ignored', { ...refs.ids, reason: 'already_queued', job_id: jobId });
       return { received: true };
     }
 
-    this.logger.info('Stripe webhook accepted', {
+    log.info('Stripe webhook accepted', {
+      ...refs.ids,
       job_id: jobId,
       livemode: event.livemode,
       api_version: event.api_version ?? null,
@@ -112,7 +108,7 @@ export class WebhooksController {
       removeOnComplete: true,
       attempts: 5,
       backoff: { type: 'exponential', delay: 1000 },
-    });
+    }, { ...apiLogConfig(), id: traceId });
 
     return { received: true };
   }

@@ -1,7 +1,6 @@
-import { AsyncLocalStorage } from 'async_hooks';
 import type { UserAuth } from '@repo/common-lib/types/auth';
-import type { RequestStore } from '@repo/common-lib/types/request';
 import { RequestService } from './request.service';
+import { currentRequestId, currentRequestLogContext, requestStorage } from './request-storage';
 
 const LOG_KEYS = [
   'id',
@@ -15,7 +14,7 @@ const LOG_KEYS = [
   'unattributed_app_call',
 ];
 
-const build = () => new RequestService(new AsyncLocalStorage<RequestStore>());
+const build = () => new RequestService(requestStorage);
 
 const user = {
   id: 42,
@@ -29,19 +28,23 @@ describe('RequestService log context', () => {
     expect(build().log).toBeNull();
   });
 
-  it('AC-2: run() initialises method to null and log has exactly the AC-1 keys in order', async () => {
+  it('AC-2: run() initialises method to null (no log context yet); once set, log has exactly the AC-1 keys in order', async () => {
     const svc = build();
     let log: ReturnType<() => typeof svc.log> = null;
+    let before: ReturnType<() => typeof svc.log> = null;
     let method: string | null = 'unset';
     await svc.run(() => {
       method = svc.method;
+      before = svc.log;
+      svc.method = 'GET';
       log = svc.log;
     });
     expect(method).toBeNull();
+    expect(before).toBeNull();
     expect(log).not.toBeNull();
     expect(Object.keys(log!)).toEqual(LOG_KEYS);
     expect(log!.id).toEqual(expect.any(String));
-    expect(log!.method).toBeNull();
+    expect(log!.method).toBe('GET');
     expect(log!.user_id).toBeNull();
     expect(log!.user_role).toBeNull();
     expect(log!.unattributed_app_call).toBe(false);
@@ -59,6 +62,7 @@ describe('RequestService log context', () => {
   it('AC-2: returns a fresh plain object each time, not the store', async () => {
     const svc = build();
     await svc.run(() => {
+      svc.method = 'GET';
       const a = svc.log!;
       const b = svc.log!;
       expect(a).not.toBe(b);
@@ -90,6 +94,7 @@ describe('RequestService log context', () => {
   it('AC-2: user_id/user_role fall back to viewer when there is no user', async () => {
     const svc = build();
     await svc.run(() => {
+      svc.method = 'GET';
       svc.viewer = { id: 9, role: { id: 3, name: 'ADMIN' } } as unknown as UserAuth;
       expect(svc.log!.user_id).toBe(9);
       expect(svc.log!.user_role).toBe('ADMIN');
@@ -98,20 +103,16 @@ describe('RequestService log context', () => {
     });
   });
 
-  it('AC-3: logBinding returns live functions for id and request', async () => {
+  it('AC-3: currentRequestId/currentRequestLogContext read the live request', async () => {
     const svc = build();
-    const binding = svc.logBinding();
-    expect(Object.keys(binding).sort()).toEqual(['id', 'request']);
-    expect(typeof binding.id).toBe('function');
-    expect(typeof binding.request).toBe('function');
-    const idFn = binding.id as () => string | null;
-    const reqFn = binding.request as () => unknown;
+    const idFn = currentRequestId;
+    const reqFn = currentRequestLogContext as () => unknown;
     expect(idFn()).toBeNull();
     expect(reqFn()).toBeNull();
 
     await svc.run(() => {
       expect(idFn()).toBe(svc.requestId);
-      expect((reqFn() as { method: string | null }).method).toBeNull();
+      expect(reqFn()).toBeNull();
       svc.method = 'DELETE';
       svc.user = user;
       expect((reqFn() as { method: string; user_id: number }).method).toBe('DELETE');
@@ -119,9 +120,9 @@ describe('RequestService log context', () => {
     });
   });
 
-  it('AC-3: two concurrent requests see their own context through one binding', async () => {
+  it('AC-3: two concurrent requests see their own context through the shared functions', async () => {
     const svc = build();
-    const binding = svc.logBinding();
+    const binding = { request: currentRequestLogContext };
     const seen: Record<string, string | null> = {};
     const one = (name: string, delay: number) =>
       svc.run(() => {

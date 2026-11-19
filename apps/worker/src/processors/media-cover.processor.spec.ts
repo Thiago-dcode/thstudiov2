@@ -51,7 +51,7 @@ describe('MediaProcessor video cover', () => {
 
     const buildLogger = () => {
         const log = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
-        return { name: () => log, flushAsync: jest.fn() } as any;
+        return { name: () => log } as any;
     };
 
     describe('at upload', () => {
@@ -219,14 +219,14 @@ describe('MediaProcessor video cover', () => {
             expect(delayMs).toBeGreaterThan(24 * 60 * 60 * 1000);
             expect(QueueHelper.createInvalidateMediaSeoCacheJob).toHaveBeenCalledWith({
                 public_id: finishedVideo.public_id,
-            });
+            }, expect.objectContaining({ service: 'worker' }));
             expect(QueueHelper.createStorageRequestJob).toHaveBeenCalledWith({
                 path: update.thumbnail,
                 bytes: 70_000,
                 user_id: 2,
-            });
+            }, expect.objectContaining({ service: 'worker' }));
             // The new cover is on the artist's public pages: their edge cache is purged.
-            expect(QueueHelper.createPurgeArtistEdgeCacheJob).toHaveBeenCalledWith({ user_id: 2 });
+            expect(QueueHelper.createPurgeArtistEdgeCacheJob).toHaveBeenCalledWith({ user_id: 2 }, expect.objectContaining({ service: 'worker' }));
         });
 
         it('still finishes the cover change when the edge purge cannot be enqueued', async () => {
@@ -343,7 +343,7 @@ describe('MediaProcessor.deleteReplacedObject', () => {
             { findOneByColumn: jest.fn().mockResolvedValue(row) } as any,
             {} as any,
             {} as any,
-            { name: () => log, flushAsync: jest.fn() } as any,
+            { name: () => log } as any,
         );
         await processor.deleteReplacedObject();
         return storageService;

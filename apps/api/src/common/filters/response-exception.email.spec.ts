@@ -1,6 +1,7 @@
 import { BadRequestException, HttpException } from '@nestjs/common';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
+import { logService } from '@repo/backend-lib/config/logging';
+import type { LogService } from '@repo/backend-lib/services/log-service';
+import { consoleLogger } from 'src/common/testing/console-logger';
 import { ResponseExceptionFilter } from './response-exception.filter';
 import { RequestService } from '../services/request.service';
 
@@ -11,9 +12,8 @@ const setup = (request: Record<string, unknown>) => {
   for (const method of ['log', 'warn', 'error'] as const) {
     jest.spyOn(console, method).mockImplementation((line: unknown) => { out.push(String(line)); });
   }
-  jest.spyOn(FactoryLogService, 'createLogService').mockImplementation((_t, cfg) => new ConsoleLogService(cfg));
-  jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
-  const requestService = { logBinding: () => ({ id: () => 'rid', request: () => null }) } as unknown as RequestService;
+  jest.spyOn(logService, 'api').mockImplementation((cfg = {}) => consoleLogger(cfg));
+  const requestService = {} as unknown as RequestService;
   const filter = new ResponseExceptionFilter(requestService);
   const json = jest.fn();
   const response: any = { status: jest.fn().mockReturnValue({ json }) };
@@ -102,17 +102,11 @@ describe('ResponseExceptionFilter email handling', () => {
     for (const address of ADDRESSES) expect(logged).not.toContain(address);
   });
 
-  it.each([
-    [404, '4xx'],
-    [503, '5xx'],
-  ])('AC-38: a %i error line carries status_code and status %s right after it', (code, cls) => {
+  it.each([404, 503])('AC-38: a %i error line carries status_code', (code) => {
     const { filter, host, out } = setup(baseRequest());
     filter.catch(new HttpException('x', code), host);
     const line = JSON.parse(out[0]);
     expect(line.status_code).toBe(code);
-    expect(line.status).toBe(cls);
-    const keys = Object.keys(line);
-    expect(keys[keys.indexOf('status_code') + 1]).toBe('status');
   });
 
   it('a primitive or missing body does not break the filter', () => {

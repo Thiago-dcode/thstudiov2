@@ -1,14 +1,13 @@
-import { AsyncLocalStorage } from 'async_hooks';
-import { FactoryLogService, getLogContext } from '@repo/backend-lib/services/log-service';
-import type { RequestStore } from '@repo/common-lib/types/request';
+import { consoleLogger } from 'src/common/testing/console-logger';
 import { RequestService } from './request.service';
+import { currentRequestId, requestStorage } from './request-storage';
 
 describe('RequestService log context', () => {
   afterEach(() => jest.restoreAllMocks());
 
-  it('AC-7: inside run, a logger built without logBinding carries the request id and request object', async () => {
-    const service = new RequestService(new AsyncLocalStorage<RequestStore>());
-    const logger = FactoryLogService.createLogService('console', { channel: 'users' });
+  it('AC-7: inside run, an api logger carries the request id and request object; outside, neither', async () => {
+    const service = new RequestService(requestStorage);
+    const logger = consoleLogger({ channel: 'users' });
     const lines: any[] = [];
     jest.spyOn(console, 'log').mockImplementation((line: unknown) => { lines.push(JSON.parse(String(line))); });
     let requestId: string | null = null;
@@ -24,19 +23,18 @@ describe('RequestService log context', () => {
     expect('request' in lines[1]).toBe(false);
   });
 
-  it('AC-7: the log context id is the request id and the request resolver is live', async () => {
-    const service = new RequestService(new AsyncLocalStorage<RequestStore>());
+  it('AC-7: the store id is the request id and the request context is live', async () => {
+    const service = new RequestService(requestStorage);
     await service.run(() => {
-      const context = getLogContext()!;
-      expect(context.id).toBe(service.requestId);
+      expect(currentRequestId()).toBe(service.requestId);
       service.method = 'DELETE';
-      expect(context.request!()!.method).toBe('DELETE');
+      expect(service.log!.method).toBe('DELETE');
     });
   });
 
   it('AC-7: concurrent requests keep their own ids on one shared logger', async () => {
-    const service = new RequestService(new AsyncLocalStorage<RequestStore>());
-    const logger = FactoryLogService.createLogService('console', { channel: 'users' });
+    const service = new RequestService(requestStorage);
+    const logger = consoleLogger({ channel: 'users' });
     const lines: any[] = [];
     jest.spyOn(console, 'log').mockImplementation((line: unknown) => { lines.push(JSON.parse(String(line))); });
     const seen: Record<string, string | null> = {};

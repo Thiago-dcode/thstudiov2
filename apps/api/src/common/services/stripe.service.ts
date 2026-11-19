@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { ENUMS } from '@repo/common-lib/constants/enums';
 import { StripeError } from '@repo/common-lib/types/stripe';
-import { getLogContext } from '@repo/backend-lib/services/log-service';
+import { currentRequestId } from './request-storage';
 
 /**
  * How long a `requestId` written into Stripe metadata may relabel the webhooks it causes.
@@ -19,7 +19,7 @@ export class StripeService {
    */
   public static traceMetadata(userId: number): Record<string, string> {
     const metadata: Record<string, string> = { user_id: String(userId) };
-    const requestId = getLogContext()?.id;
+    const requestId = currentRequestId();
     if (requestId) {
       metadata.requestId = requestId;
       metadata.requestAt = String(Math.floor(Date.now() / 1000));

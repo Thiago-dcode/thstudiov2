@@ -3,9 +3,9 @@ import { CollectionController } from './collection.controller';
 import { CollectionService } from './collection.service';
 import { CollectionRepository } from './collection.repository';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { RequestService } from 'src/common/services/request.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { AuthCoreModule } from '../auth/auth-core.module';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   controllers: [CollectionController],
@@ -14,13 +14,11 @@ import { AuthCoreModule } from '../auth/auth-core.module';
     CollectionRepository,
     {
       provide: LogService,
-      useFactory: (requestService: RequestService) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'collections',
-          ...requestService.logBinding(),
         });
       },
-      inject: [RequestService],
     },
   ],
   // AuthCoreModule: `PublicViewerService`, so owners still see their hidden collections.

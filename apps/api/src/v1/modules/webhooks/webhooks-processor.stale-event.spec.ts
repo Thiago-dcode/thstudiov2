@@ -42,8 +42,9 @@ const build = () => {
     logger as unknown as LogService,
     { add: jest.fn() } as unknown as Queue,
   );
+  const log = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn(), with: () => log };
   const handle = (sub: unknown) =>
-    (processor as unknown as { handleSubscriptionUpdate(s: unknown): Promise<void> }).handleSubscriptionUpdate(sub);
+    (processor as unknown as { handleSubscriptionUpdate(s: unknown, l: unknown): Promise<void> }).handleSubscriptionUpdate(sub, log);
   return { handle, planSubscriptionService };
 };
 

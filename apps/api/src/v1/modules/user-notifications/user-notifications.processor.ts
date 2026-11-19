@@ -1,6 +1,5 @@
 import { Processor } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import {
   JOB_CREATE_OR_UPDATE_USER_NOTIFICATION,
   USER_NOTIFICATIONS_QUEUE,
@@ -13,33 +12,30 @@ import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { UserNotificationsRepository } from './user-notifications.repository';
 import { UserNotificationsService } from './user-notifications.service';
 import { UserNotificationsGateway } from './user-notifications.gateway';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Processor(USER_NOTIFICATIONS_QUEUE)
 export class UserNotificationsProcessor extends GlobalProcessor {
-  private readonly logger = FactoryLogService.createLogService('file', {
+  private readonly logger = createApiLogger({
     channel: 'user-notifications',
   });
 
   constructor(
     private readonly userNotificationsRepository: UserNotificationsRepository,
     private readonly userNotificationsService: UserNotificationsService,
-    private readonly appLogService: LogService,
     private readonly userNotificationGateway: UserNotificationsGateway
   ) {
     super();
   }
 
   async process(job: Job<CreateUserNotificationInput>): Promise<unknown> {
-    try {
-      switch (job.name) {
-        case JOB_CREATE_OR_UPDATE_USER_NOTIFICATION:
-          return await this.createOrUpdateUserNotification(job.data);
 
-        default:
-          throw new Error(`Job name "${job.name}" not recognized`);
-      }
-    } finally {
-      await this.appLogService.flushAsync();
+    switch (job.name) {
+      case JOB_CREATE_OR_UPDATE_USER_NOTIFICATION:
+        return await this.createOrUpdateUserNotification(job.data);
+
+      default:
+        throw new Error(`Job name "${job.name}" not recognized`);
     }
   }
 

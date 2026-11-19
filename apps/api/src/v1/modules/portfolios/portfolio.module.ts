@@ -4,11 +4,11 @@ import { PortfolioService } from './portfolio.service';
 import { PortfolioRepository } from './portfolio.repository';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { AiModule } from '../ai/ai.module';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { RequestService } from 'src/common/services/request.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { CollectionModule } from '../collections/collection.module';
 import { LayoutModule } from '../layouts/layout.module';
 import { AuthCoreModule } from '../auth/auth-core.module';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   controllers: [PortfolioController],
@@ -17,13 +17,11 @@ import { AuthCoreModule } from '../auth/auth-core.module';
     PortfolioRepository,
     {
       provide: LogService,
-      useFactory: (requestService: RequestService) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'portfolios',
-          ...requestService.logBinding(),
         });
       },
-      inject: [RequestService],
     },
   ],
   imports: [

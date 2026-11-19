@@ -13,7 +13,8 @@ import { compressConfig, s3StorageConfig } from "@repo/backend-lib/config/storag
 import { AiService } from "@repo/backend-lib/services/ai-service";
 import { FactoryLLMService } from "@repo/backend-lib/services/llm-service";
 import { openAiLLMConfig } from "@repo/backend-lib/config/llm";
-import { FactoryLogService, LogService, addLogCorrelation } from "@repo/backend-lib/services/log-service";
+import { LogConfig, LogService } from "@repo/backend-lib/services/log-service";
+import { logConfig, logService } from "@repo/backend-lib/config/logging";
 import {
     compressionLevelToQuality,
     CompressService,
@@ -44,7 +45,7 @@ import {
 import { MediaRepository } from "@repo/database/repositories/media";
 import { UserExtraDataRepository } from "@repo/database/repositories/user-extra-data";
 import { PlansRepository } from "@repo/database/repositories/plans";
-import { QueueHelper } from "@repo/backend-lib/utils";
+import { QueueHelper, jobLogConfig, jobTraceId } from "@repo/backend-lib/utils";
 import { bytesToMB, mbToBytes } from "@repo/common-lib/utils/bytes";
 import { DEFAULT_COMPRESSION_LVL } from "@repo/common-lib/constants/enums";
 import {
@@ -76,14 +77,8 @@ export class MediaProcessor {
     ) { }
 
     static async handle(job: Job): Promise<void> {
-        // Pivot ids for every line of this job: thumbnail jobs carry media_id, the create job
-        // carries the media row.
-        const data = (job.data ?? {}) as { media_id?: number; user_id?: number; media?: { id?: number; user_id?: number } };
-        addLogCorrelation({
-            media_id: data.media_id ?? data.media?.id,
-            user_id: data.user_id ?? data.media?.user_id,
-        });
-        const logger = FactoryLogService.createLogService('file', { channel: 'media' });
+        // The job's own logger, with the trace id of whoever enqueued it (the upload request).
+        const logger = logService.worker({ channel: 'media', id: jobTraceId(job) });
         const instance = new MediaProcessor(
             job,
             FactoryStorageService.create(s3StorageConfig),
@@ -94,26 +89,27 @@ export class MediaProcessor {
             PlansRepository.instance(),
             logger,
         );
-        try {
-            switch (job.name) {
-                case JOB_PROCESS_MEDIA:
-                    return await instance.processMedia();
+        switch (job.name) {
+            case JOB_PROCESS_MEDIA:
+                return await instance.processMedia();
 
-                case JOB_REGENERATE_MEDIA_THUMBNAIL:
-                    return await instance.regenerateThumbnail();
+            case JOB_REGENERATE_MEDIA_THUMBNAIL:
+                return await instance.regenerateThumbnail();
 
-                case JOB_SET_VIDEO_THUMBNAIL:
-                    return await instance.setVideoThumbnail();
+            case JOB_SET_VIDEO_THUMBNAIL:
+                return await instance.setVideoThumbnail();
 
-                case JOB_DELETE_REPLACED_MEDIA_OBJECT:
-                    return await instance.deleteReplacedObject();
+            case JOB_DELETE_REPLACED_MEDIA_OBJECT:
+                return await instance.deleteReplacedObject();
 
-                default:
-                    throw new Error(`Job name "${job.name}" not recognized`);
-            }
-        } finally {
-            await instance.logger.flushAsync();
+            default:
+                throw new Error(`Job name "${job.name}" not recognized`);
         }
+    }
+
+    /** The worker log config with this job's trace id: pass it to every enqueue, so the trace carries on. */
+    private traceLog(): Partial<LogConfig> {
+        return jobLogConfig(this.job, logConfig.worker);
     }
 
     /**
@@ -123,7 +119,7 @@ export class MediaProcessor {
      */
     private async requestEdgePurge(userId: number, log: ReturnType<LogService['name']>) {
         try {
-            await QueueHelper.createPurgeArtistEdgeCacheJob({ user_id: userId });
+            await QueueHelper.createPurgeArtistEdgeCacheJob({ user_id: userId }, this.traceLog());
         } catch (error) {
             log.warn('Could not enqueue the edge purge of the artist pages', {
                 user_id: userId,
@@ -138,7 +134,7 @@ export class MediaProcessor {
             user_id: data.user_id,
             entity_id: data.id,
             read_at: null,
-        });
+        }, this.traceLog());
     }
 
     private async markFailed(
@@ -163,6 +159,7 @@ export class MediaProcessor {
         await this.notifyMediaUpdate(data);
         log.error('Media processing failed', {
             media_id: data.id,
+            user_id: data.user_id,
             public_id: data.public_id,
             failed_reason: reason,
         });
@@ -363,6 +360,7 @@ export class MediaProcessor {
                     previewPaths.map((path) => this.storageService.getUrl(path)),
                 ),
                 { user_id: media.user_id },
+                this.traceLog(),
             );
 
             return {
@@ -394,6 +392,7 @@ export class MediaProcessor {
                 ? gifFrames.map((frame) => `data:image/jpeg;base64,${frame.toString('base64')}`)
                 : await this.storageService.getUrl(sourcePath),
             { user_id: media.user_id },
+            this.traceLog(),
         );
 
         // Always a static WebP, whatever the media is. A GIF thumbnail would be a second
@@ -572,14 +571,15 @@ export class MediaProcessor {
                 path: newKey,
                 bytes: thumbnail.size,
                 user_id: media.user_id,
-            }),
-            QueueHelper.createComputeUserMetricsJob(media.user_id),
+            }, this.traceLog()),
+            QueueHelper.createComputeUserMetricsJob(media.user_id, this.traceLog()),
         ]);
 
         await this.requestEdgePurge(media.user_id, log);
 
         log.info('Thumbnail regenerated', {
             media_id,
+            user_id: media.user_id,
             previous_path: media.thumbnail,
             thumbnail_path: newKey,
             before_bytes: media.thumbnail_bytes,
@@ -686,6 +686,7 @@ export class MediaProcessor {
             const { moderation } = await this.aiService.moderateContent(
                 await this.storageService.getUrl(newKey),
                 { user_id: media.user_id },
+                this.traceLog(),
             );
             if (!moderation.is_allowed) {
                 await this.storageService.delete(newKey);
@@ -749,6 +750,7 @@ export class MediaProcessor {
             await QueueHelper.createDeleteReplacedMediaObjectJob(
                 { media_id: media.id, path: previousKey },
                 REPLACED_COVER_DELETE_DELAY_MS,
+                this.traceLog(),
             );
         } catch (error) {
             log.warn('Could not schedule deletion of the previous cover object', {
@@ -761,13 +763,13 @@ export class MediaProcessor {
         await Promise.all([
             // `og:image` comes from a cache keyed by the thumbnail PATH; drop it so shares pick
             // up the new cover now instead of in a day.
-            QueueHelper.createInvalidateMediaSeoCacheJob({ public_id: media.public_id }),
+            QueueHelper.createInvalidateMediaSeoCacheJob({ public_id: media.public_id }, this.traceLog()),
             QueueHelper.createStorageRequestJob({
                 path: newKey,
                 bytes: cover.size,
                 user_id: media.user_id,
-            }),
-            QueueHelper.createComputeUserMetricsJob(media.user_id),
+            }, this.traceLog()),
+            QueueHelper.createComputeUserMetricsJob(media.user_id, this.traceLog()),
             this.notifyMediaUpdate(media),
         ]);
 
@@ -775,6 +777,7 @@ export class MediaProcessor {
 
         log.info('Video cover changed', {
             media_id,
+            user_id: media.user_id,
             previous_path: previousKey,
             thumbnail_path: newKey,
             seek_seconds: cover.seekSeconds,
@@ -1118,13 +1121,13 @@ export class MediaProcessor {
                         path: object.path,
                         bytes: object.bytes,
                         user_id: media.user_id,
-                    }),
+                    }, this.traceLog()),
                 ),
-                QueueHelper.createComputeUserMetricsJob(media.user_id),
+                QueueHelper.createComputeUserMetricsJob(media.user_id, this.traceLog()),
                 QueueHelper.createUpdateProfileStatusJob({
                     user_id: media.user_id,
                     fields: { has_media: true },
-                }),
+                }, this.traceLog()),
                 this.notifyMediaUpdate(media),
             ]);
             // Only now is the upload public.
@@ -1170,7 +1173,7 @@ export class MediaProcessor {
                     await QueueHelper.createGenerateMediaMetadataAndNotifyJob({
                         media_id: media.id,
                         user_id: media.user_id
-                    })
+                    }, this.traceLog())
                 }
             }
         } catch (error) {

@@ -1,6 +1,5 @@
 import { Query } from '../lib/facades';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import Logger from '@repo/backend-lib/utils/console';
 import {
   CreatePlanWithDetailsInput,
@@ -451,5 +450,4 @@ export const main = async () => {
     }
   }
 
-  await LogService.flush();
 };

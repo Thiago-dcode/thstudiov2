@@ -3,10 +3,10 @@ import { InvitationLinkService } from './invitation-link.service';
 import { InvitationLinkRepository } from './invitation-link.repository';
 import { InvitationLinkController } from './invitation-link.controller';
 import { InvitationLinkMail } from './mails/invitation-link.mail';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { RequestService } from 'src/common/services/request.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { BenefitsModule } from '../benefits/benefits.module';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [BenefitsModule, EmailPreferencesModule],
@@ -17,13 +17,11 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
     InvitationLinkMail,
     {
       provide: LogService,
-      useFactory: (requestService: RequestService) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'invitation-links',
-          ...requestService.logBinding(),
         });
       },
-      inject: [RequestService],
     },
   ],
   exports: [InvitationLinkService],

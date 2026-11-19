@@ -5,6 +5,7 @@ import { UpdateUserContactRequest } from './requests/update-user-contact.request
 import { IndexUserContactRequest } from './requests/index-user-contact.request';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { LogService } from '@repo/backend-lib/services/log-service';
+import { apiLogConfig } from 'src/common/utils/api-logger';
 
 @Injectable()
 export class UserContactsService {
@@ -19,9 +20,9 @@ export class UserContactsService {
     // `data.user_id` is the contacted artist, not the owner of `contact_email`.
     await QueueHelper.createOrUpdateEmailPreferenceJob({
       email: data.contact_email,
-    });
+    }, apiLogConfig());
 
-    await QueueHelper.createUserContactJob(data);
+    await QueueHelper.createUserContactJob(data, apiLogConfig());
     return {
       id: 0,
       created_at: new Date(),

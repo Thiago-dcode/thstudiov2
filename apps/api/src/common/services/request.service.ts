@@ -3,9 +3,8 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { UserAuth } from '@repo/common-lib/types/auth';
 import { Pagination } from '@repo/common-lib/types/response';
 import { RequestLanguage, RequestLogContext, RequestStore } from '@repo/common-lib/types/request';
-import { LogConfig } from '@repo/backend-lib/services/log-service';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
-import { runWithLogContext } from '@repo/backend-lib/services/log-service';
+import { requestLogContextOf } from './request-storage';
 
 
 
@@ -15,19 +14,15 @@ export class RequestService {
   constructor(protected readonly storage: AsyncLocalStorage<RequestStore>) { }
 
   /**
-   * Called once per request in the middleware to establish an isolated store. The log context
-   * makes every logger in the request (with or without `logBinding()`) carry its id and context,
-   * and every job it enqueues carry the id onward.
+   * Called once per request in the middleware to establish an isolated store. Api loggers
+   * (`createApiLogger`) read its id and request context per line, and `apiLogConfig()` carries
+   * the id into every job the request enqueues.
    */
   async run(callback: (self: RequestService) => void): Promise<void> {
     const requestId = await generateUUID();
     this.storage.run(
       { requestId, user: null, language: null, user_agent: null, method: null, ip_address: null, path: null, pagination: null, unattributed_app_call: false, bearer_token: null },
-      () => {
-        runWithLogContext({ id: requestId, request: () => this.log }, () => {
-          callback(this)
-        });
-      },
+      () => callback(this),
     );
   }
 
@@ -39,36 +34,9 @@ export class RequestService {
     return this.store?.requestId ?? null;
   }
 
-  /**
-   * The request's log context, or `null` outside a request. Built field by field from an
-   * allow-list, never by spreading the store: it holds `bearer_token` and the user's token/email.
-   */
+  /** The HTTP request's log context, or `null` outside one (see `requestLogContextOf`). */
   get log(): RequestLogContext | null {
-    const store = this.store;
-    if (!store) return null;
-    const user = store.user ?? store.viewer ?? null;
-    return {
-      id: store.requestId,
-      method: store.method ?? null,
-      path: this.path,
-      ip_address: store.ip_address ?? null,
-      user_agent: store.user_agent ?? null,
-      user_id: user?.id ?? null,
-      user_role: user?.role?.name ?? null,
-      language: store.language ?? null,
-      unattributed_app_call: store.unattributed_app_call ?? false,
-    };
-  }
-
-  /**
-   * The config every request-bound logger spreads in. Both are functions so each line reads the
-   * current request, never one captured when the (shared) logger was built.
-   */
-  logBinding(): Pick<LogConfig, 'id' | 'request'> {
-    return {
-      id: () => this.requestId,
-      request: () => this.log,
-    };
+    return requestLogContextOf(this.store);
   }
 
   get method(): string | null {

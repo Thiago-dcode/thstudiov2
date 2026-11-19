@@ -377,7 +377,7 @@ describe('MediaProcessor.processMedia', () => {
 
             await processor.processMedia();
 
-            expect(QueueHelper.createPurgeArtistEdgeCacheJob).toHaveBeenCalledWith({ user_id: 2 });
+            expect(QueueHelper.createPurgeArtistEdgeCacheJob).toHaveBeenCalledWith({ user_id: 2 }, expect.objectContaining({ service: 'worker' }));
         });
 
         it('moderates a GIF on frames sampled across the animation, not its first frame', async () => {
@@ -391,6 +391,7 @@ describe('MediaProcessor.processMedia', () => {
                     `data:image/jpeg;base64,${Buffer.from('frame-b').toString('base64')}`,
                 ],
                 expect.anything(),
+                expect.objectContaining({ service: 'worker' }),
             );
         });
 

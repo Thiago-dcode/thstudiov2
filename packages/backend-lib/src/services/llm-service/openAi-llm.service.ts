@@ -2,10 +2,10 @@ import { LLMService, LLMCompletionRequest, LLMCompletionResponse, LLMMessage } f
 import { OpenAILLMConfig } from './types';
 import OpenAI from 'openai';
 import type { ResponseInputItem, ResponseInputMessageContentList } from 'openai/resources/responses/responses';
-import { FactoryLogService } from '../log-service/factory-log.service';
+import { logService } from '../../config/logging';
 
 /** One line per OpenAI call. Never prompts, images or output text: model, timing, tokens, ids. */
-const llmLog = FactoryLogService.createLogService('file', { channel: 'ai', name: 'llm-call' });
+const llmLog = logService.lib({ channel: 'ai', name: 'llm-call' });
 
 const errorFields = (error: unknown) => {
   const e = error as { name?: string; status?: number; requestID?: string | null; request_id?: string | null };

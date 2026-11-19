@@ -48,6 +48,7 @@ describe('UserService.storeProfileImage', () => {
     expect(aiService.moderateContent).toHaveBeenCalledWith(
       `data:image/webp;base64,${optimized.toString('base64')}`,
       { user_id: USER.id },
+      expect.objectContaining({ service: 'api' }),
     );
     expect(helpers.writeAsset).toHaveBeenCalledWith(optimized, path);
     expect(path).toMatch(new RegExp(`^users/${USER.public_id}/.+avatar.+\.webp$`));

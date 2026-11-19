@@ -180,6 +180,7 @@ All colors come from `packages/ui/src/styles/globals.css`. **Never hardcode hex 
 
 - **Hook**: `apps/web/src/modules/auth/hooks/useHandleAction.ts`
 - **Return**: `ActionReturn<T, K>` (`@repo/common-lib/types/response`)
+- **Logging**: server actions may log via `@/lib/logging/logger` (`webLogger`, `withLogTrace`); see the `logging` skill. `@repo/backend-lib` is server-side only: never import it, or a module that does, from a `"use client"` file.
 
 ```ts
 const { handleSubmit, isPending, errors } = useHandleAction({

@@ -6,7 +6,6 @@ import { CreateMediaUploadUrlRequest } from './requests/create-media-upload-url.
 import { StorageService } from '@repo/backend-lib/services/storage-service';
 import { UserService } from '../users/users.service';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
-import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { CreateMediaInput, CreateMediaUploadUrl, DeleteManyMediaError, DeleteManyMediaResult, Media, MediaIndexRequest, MediaWithUser, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
 import { EntitySeoMetadata, MediaSeoTranslation } from '@repo/common-lib/types/ai';
@@ -35,10 +34,11 @@ import type { LocationInput } from '@repo/common-lib/types/location';
 import { LocationService } from '../locations/location.service';
 import { TempUploadService } from 'src/common/services/temp-upload.service';
 import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
+import { apiLogConfig, createApiLogger } from 'src/common/utils/api-logger';
 
 @Injectable()
 export class MediaService {
-  private readonly logger = FactoryLogService.createLogService('file', {
+  private readonly logger = createApiLogger({
     channel: 'media',
   });
   constructor(
@@ -229,7 +229,7 @@ export class MediaService {
       user_id: media.user_id,
       entity_id: media.id,
       read_at: null,
-    });
+    }, apiLogConfig());
   }
 
   /**
@@ -386,7 +386,7 @@ export class MediaService {
       await QueueHelper.createProcessMediaJob({
         media: stored,
         generate_metadata,
-      });
+      }, apiLogConfig());
       log.info('Enqueued process-media job', {
         media_id: media.id,
         public_id: media.public_id,
@@ -603,9 +603,9 @@ export class MediaService {
       user_id: media.user_id,
       entity_id: media.id,
       read_at: null,
-    });
+    }, apiLogConfig());
 
-    await QueueHelper.createComputeUserMetricsJob(media.user_id);
+    await QueueHelper.createComputeUserMetricsJob(media.user_id, apiLogConfig());
     const stillHasMedia = await this.mediaRepository.exists({
       user_id: media.user_id,
     });
@@ -932,7 +932,7 @@ export class MediaService {
         media_id: id,
         user_id: userId,
         data,
-      });
+      }, apiLogConfig());
 
       this.logger.info(`Update media job enqueued: media [${id}]`, {
         media_id: id,
@@ -981,7 +981,7 @@ export class MediaService {
     await QueueHelper.createSetVideoThumbnailJob({
       media_id: id,
       thumbnail_time_seconds,
-    });
+    }, apiLogConfig());
     // The worker purges again once the new cover is stored; this one is coalesced with it when the
     // extraction finishes inside the debounce window.
     this.emitArtistPagesChanged(userId);

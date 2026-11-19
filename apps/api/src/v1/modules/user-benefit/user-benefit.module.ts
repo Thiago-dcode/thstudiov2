@@ -4,8 +4,8 @@ import { UserBenefitController } from './user-benefit.controller';
 import { UserBenefitRepository } from './user-benefit.repository';
 import { BenefitRepository } from '../benefits/benefit.repository';
 import { UserModule } from '../users/users.module';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { RequestService } from 'src/common/services/request.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [UserModule],
@@ -16,13 +16,11 @@ import { RequestService } from 'src/common/services/request.service';
     BenefitRepository,
     {
       provide: LogService,
-      useFactory: (requestService: RequestService) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'user-benefit',
-          ...requestService.logBinding(),
         });
       },
-      inject: [RequestService],
     },
   ],
   exports: [UserBenefitService],

@@ -14,8 +14,8 @@ import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { consoleLogger } from 'src/common/testing/console-logger';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { hash } from '@repo/common-lib/utils/hash';
 import { AuthService } from './auth.service';
@@ -57,7 +57,7 @@ const buildService = async () => {
       try { lines.push(JSON.parse(String(line))); } catch { stray.push(line); }
     });
   }
-  const logger = new ConsoleLogService({ channel: 'auth' });
+  const logger = consoleLogger({ channel: 'auth' });
   const module = await Test.createTestingModule({
     providers: [
       AuthService,
@@ -100,7 +100,6 @@ describe('AuthService audit lines', () => {
 
   beforeEach(async () => {
     jest.resetAllMocks();
-    configureLogProcess({ service: 'api' });
     for (const key of Object.keys(requestService)) delete requestService[key];
     Object.assign(requestService, { user_agent: 'UA', ip_address: '1.2.3.4', language: 'EN' });
     userRepository.updateById.mockImplementation(async (_id: number, data: object) => ({ id: 7, email: EMAIL, email_validated: true, ...data }));
@@ -111,7 +110,6 @@ describe('AuthService audit lines', () => {
   });
   afterEach(() => {
     jest.restoreAllMocks();
-    configureLogProcess({ service: '', onCritical: null });
   });
 
   const dbUser = (over: Record<string, unknown> = {}) => ({
@@ -130,19 +128,18 @@ describe('AuthService audit lines', () => {
     noSecrets();
   });
 
-  it('AC-26: a bad password gives {bad_password} with correlation user_id', async () => {
+  it('AC-26: a bad password gives {bad_password} with the user_id', async () => {
     userRepository.findOneByWithSecrets.mockResolvedValue(dbUser());
     await expect(service.login({ email: EMAIL, password: 'wrong-password' } as any)).rejects.toThrow();
     const [line] = audit('Login rejected');
-    expect(line.extraInfo).toEqual({ reason: 'bad_password' });
-    expect(line.correlation).toEqual({ user_id: 7 });
+    expect(line.extraInfo).toEqual({ user_id: 7, reason: 'bad_password' });
     noSecrets();
   });
 
   it('AC-26: a banned account gives {banned}', async () => {
     userRepository.findOneByWithSecrets.mockResolvedValue(dbUser({ banned: true, banned_reason: 'abuse' }));
     await expect(service.login({ email: EMAIL, password: PASSWORD } as any)).rejects.toThrow();
-    expect(audit('Login rejected')[0].extraInfo).toEqual({ reason: 'banned' });
+    expect(audit('Login rejected')[0].extraInfo).toEqual({ user_id: 7, reason: 'banned' });
   });
 
   it('AC-26: a trusted-device password login gives info "Login succeeded" {method:password}', async () => {
@@ -153,7 +150,7 @@ describe('AuthService audit lines', () => {
     const [line] = audit('Login succeeded');
     expect(line.level).toBe('INFO');
     expect(line.extraInfo).toMatchObject({ method: 'password', user_auth_device_id: 21, trusted_device: true });
-    expect(line.correlation.user_id).toBe(7);
+    expect(line.extraInfo.user_id).toBe(7);
     noSecrets();
   });
 
@@ -171,7 +168,7 @@ describe('AuthService audit lines', () => {
     userRepository.findOneByWithSecrets.mockResolvedValue(dbUser());
     devices.getOneOrCreate.mockResolvedValue({ id: 21, disabled: false, blocked_at: new Date() });
     await expect(service.login({ email: EMAIL, password: PASSWORD } as any)).rejects.toThrow();
-    expect(audit('Login rejected')[0].extraInfo).toEqual({ reason: 'device_blocked' });
+    expect(audit('Login rejected')[0].extraInfo).toEqual({ user_id: 7, reason: 'device_blocked' });
   });
 
   it('AC-26: a wrong 2FA code gives warn "2FA verification failed" {attempts:1}', async () => {
@@ -213,9 +210,9 @@ describe('AuthService audit lines', () => {
     await service.updatePassword({ code: RECOVERY_CODE, password: 'NEWPASSWORD456' } as any);
     const validated = audit('Password recovery code validated')[0];
     const reset = audit('Password reset completed')[0];
-    expect(validated.correlation.user_id).toBe(7);
-    expect(reset.extraInfo).toEqual({ sessions_revoked: 'all' });
-    expect(reset.correlation.user_id).toBe(7);
+    expect(validated.extraInfo.user_id).toBe(7);
+    expect(reset.extraInfo).toEqual({ user_id: 7, sessions_revoked: 'all' });
+    expect(reset.extraInfo.user_id).toBe(7);
     expect(JSON.stringify(lines)).not.toContain('NEWPASSWORD456');
     noSecrets();
   });
@@ -237,8 +234,8 @@ describe('AuthService audit lines', () => {
     sessions.update.mockResolvedValue({});
     await service.logout();
     const [line] = audit('Logged out');
-    expect(line.extraInfo).toEqual({ session_id: 99 });
-    expect(line.correlation.user_id).toBe(7);
+    expect(line.extraInfo).toEqual({ user_id: 7, session_id: 99 });
+    expect(line.extraInfo.user_id).toBe(7);
     noSecrets();
   });
 
@@ -251,7 +248,7 @@ describe('AuthService audit lines', () => {
     const reasons = audit('Session refresh rejected');
     expect(reasons.map((l) => l.extraInfo.reason)).toEqual(['no_user', 'device_untrusted']);
     expect('correlation' in reasons[0]).toBe(false);
-    expect(reasons[1].correlation.user_id).toBe(7);
+    expect(reasons[1].extraInfo.user_id).toBe(7);
     noSecrets();
   });
 

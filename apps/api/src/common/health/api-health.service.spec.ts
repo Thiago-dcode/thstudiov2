@@ -3,17 +3,26 @@ const mockPing = jest.fn();
 const mockQuery = jest.fn();
 let lockClient: { ping: jest.Mock } | null;
 
-jest.mock('@repo/backend-lib/services/log-service', () => {
-  // Patch the real class so backend-lib's internal imports see the mock too.
-  const actual = jest.requireActual('@repo/backend-lib/services/log-service');
-  Object.assign(actual.FactoryLogService, { createLogService: () => mockLog });
+jest.mock('@repo/backend-lib/config/logging', () => {
+  // Patch the real factories so backend-lib's internal loggers see the mock too.
+  const actual = jest.requireActual('@repo/backend-lib/config/logging');
+  const create = () => mockLog;
+  const factory = (service: string | null) => (overrides: Record<string, unknown> = {}) =>
+    (create as (buffer: unknown, cfg: any) => unknown)(undefined, { service, ...overrides });
+  // backend-lib's own import cycle (config/logging -> critical-alert-mail -> job-trace) re-enters
+  // this factory before the module has finished loading; patch once `logService` exists.
+  if (actual.logService) {
+    Object.assign(actual.logService, {
+      api: factory('api'), worker: factory('worker'), dbcli: factory('dbcli'), web: factory('web'), lib: factory(null),
+    });
+  }
   return actual;
 });
 jest.mock('@repo/database', () => ({ getClient: () => ({ query: mockQuery }) }));
 jest.mock('../utils/cron-lock', () => ({ getLockClient: async () => lockClient }));
 
 import { WorkerHost } from '@nestjs/bullmq';
-import { LogService } from '@repo/backend-lib/services/log-service';
+import { logBuffer } from '@repo/backend-lib/config/logging';
 import { ApiHealthService, HEALTH_CHECK_TIMEOUT_MS } from './api-health.service';
 
 class FakeHost extends WorkerHost {
@@ -51,7 +60,6 @@ describe('ApiHealthService', () => {
     mockPing.mockReset().mockResolvedValue('PONG');
     mockQuery.mockReset().mockResolvedValue({ rows: [] });
     lockClient = { ping: mockPing };
-    jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
   });
   afterEach(() => {
     jest.restoreAllMocks();
@@ -85,7 +93,6 @@ describe('ApiHealthService', () => {
     const [, extra, opts] = mockLog.error.mock.calls[0];
     expect(JSON.stringify(extra)).toContain('stripe-webhooks');
     expect(opts).toMatchObject({ operation: 'health-check' });
-    expect(LogService.flush).toHaveBeenCalled();
   });
 
   it('AC-2: no discovered consumers counts as failing', async () => {
@@ -130,11 +137,12 @@ describe('ApiHealthService', () => {
     expect(result.checks).toEqual({ redis: 'fail', database: 'fail', workers: 'ok' });
   });
 
-  it('AC-4: check never throws even if logging/flush fails', async () => {
+  it('AC-4: check never flushes', async () => {
     mockQuery.mockRejectedValue(new Error('x'));
-    jest.spyOn(LogService, 'flush').mockRejectedValue(new Error('flush down'));
+    const flush = jest.spyOn(logBuffer, 'flush');
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
     await expect(makeService([makeHost('mail')]).check()).resolves.toMatchObject({ healthy: false });
+    expect(flush).not.toHaveBeenCalled();
   });
 
   it('AC-9: pingRedis is true when Redis answers and false (not throwing) otherwise', async () => {

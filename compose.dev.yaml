@@ -96,7 +96,9 @@ services:
       REDIS_URL: redis://redis:6379
       API_PORT: 8080
     volumes:
-      # API file logs (FileLogService) — persist on the host for inspection.
+      # Log files: lines go to Redis (`logs:pending`) and the worker writes every service's
+      # files to storage/logs/<service>/. Mounted here too for the direct-write fallback
+      # (Redis down) and log retention, which prunes from the api.
       - ./storage/logs:/workspace/storage/logs
       # Local-only seed binaries (gitignored); used by `scripts/dbcli-dev.sh db:seed -n media|assets`
       - ./packages/database/src/seeds/media-images:/workspace/packages/database/src/seeds/media-images
@@ -154,6 +156,14 @@ services:
       # not localhost (which would resolve to the web container itself).
       API_URL: http://api:8080
       API_V1_URL: http://api:8080/api/v1
+      # Web log lines go to Redis like every service's; the worker writes storage/logs/web/.
+      # The folder is only used for the direct-write fallback when Redis is down.
+      LOG_STORAGE_DIR: /workspace/storage/logs
+      # The shared log buffer (`logs:pending`), and critical lines enqueue the admin alert mail
+      # here (the api's mail processor sends it).
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - ./storage/logs:/workspace/storage/logs
     expose:
       - "3000"
     deploy:
@@ -190,8 +200,9 @@ services:
       DB_PORT: 5432
       REDIS_URL: redis://redis:6379
       WORKER_PORT: 8081
-    # The worker logs to files like every other service; without this mount they are written
-    # inside the container and lost on recreate, which left a media failure undiagnosable.
+    # The worker is the only flusher: every 5 s it writes every service's lines from Redis
+    # to storage/logs/<service>/. Without this mount they are written inside the container and
+    # lost on recreate, which left a media failure undiagnosable.
     volumes:
       - ./storage/logs:/workspace/storage/logs
     # Bind the worker health port to localhost only - not exposed publicly.

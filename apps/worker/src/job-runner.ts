@@ -2,13 +2,16 @@ import {
     BACKUP_QUEUE,
     JOB_DATABASE_BACKUP,
     JOB_DELETE_REPLACED_MEDIA_OBJECT,
+    JOB_FLUSH_LOGS,
     JOB_PROCESS_MEDIA,
     JOB_REGENERATE_MEDIA_THUMBNAIL,
     JOB_SET_VIDEO_THUMBNAIL,
+    LOG_QUEUE,
     MEDIA_QUEUE,
     MEDIA_THUMBNAIL_QUEUE,
 } from '@repo/common-lib/constants/queues';
-import { runJobWithLogContext } from '@repo/backend-lib/utils';
+import { logBuffer, logConfig } from '@repo/backend-lib/config/logging';
+import { runJobWithLogs } from '@repo/backend-lib/utils';
 import type { Job } from 'bullmq';
 import { BackupProcessor } from './processors/backup.processor';
 import { MediaProcessor } from './processors/media.processor';
@@ -27,25 +30,31 @@ export const jobResolver: JobResolver = {
     [BACKUP_QUEUE]: {
         [JOB_DATABASE_BACKUP]: () => BackupProcessor.handle(),
     },
+    // The only flush of the shared log buffer, scheduled every 5 s (`scheduleLogFlush`).
+    [LOG_QUEUE]: {
+        [JOB_FLUSH_LOGS]: () => logBuffer.flush(),
+    },
 };
 
 /**
- * Runs one worker job inside its trace context (the id of whoever enqueued it, e.g. the upload
- * request), with the same start/completed/retry lines as api jobs. The permanent failure line
- * comes from the `failed` listener in `main.ts`.
+ * Runs one worker job with the same start/completed/retry lines as api jobs, written under the
+ * job's trace id (the id of whoever enqueued it, e.g. the upload request). The permanent failure
+ * line comes from the `failed` listener in `main.ts`. The log flush writes no lifecycle lines: one
+ * pair every 5 s would be pure noise.
  */
 export function runWorkerJob(queueName: string, job: Job): Promise<unknown> {
-    return runJobWithLogContext({ ...pickJob(job), queueName }, () => {
+    const lifecycle = queueName !== LOG_QUEUE;
+    return runJobWithLogs({ ...pickJob(job), queueName }, () => {
         const handler = jobResolver[queueName]?.[job.name];
         if (typeof handler !== 'function') {
             throw new Error(`Job name "${job.name}" not recognized for queue "${queueName}"`);
         }
         // Returned so BullMQ stores it as the job's return value (read by `dbcli db:backup`).
         return handler(job);
-    });
+    }, { lifecycle, log: logConfig.worker });
 }
 
-/** The fields the context needs; `queueName` is passed explicitly in case the job lacks it. */
+/** The fields the lifecycle lines need; `queueName` is passed explicitly in case the job lacks it. */
 const pickJob = (job: Job) => ({
     id: job.id,
     name: job.name,

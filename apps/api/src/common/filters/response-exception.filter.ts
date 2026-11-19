@@ -6,13 +6,9 @@ import {
   USER_AGENT_HEADER,
   USER_ID_HEADER,
 } from '@repo/common-lib/constants/headers';
-import {
-  FactoryLogService,
-  LogService,
-  maskEmailAddresses,
-  redactRoutePath,
-} from '@repo/backend-lib/services/log-service';
-import { API_ERROR_CHANNEL, logConfig } from '@repo/backend-lib/config/logging';
+import { maskEmailAddresses, redactRoutePath } from '@repo/backend-lib/services/log-service';
+import { API_ERROR_CHANNEL } from '@repo/backend-lib/config/logging';
+import { createApiLogger } from '../utils/api-logger';
 import { format } from 'date-fns/format';
 import { VALIDATION_ERROR_STATUS } from '../utils/constants';
 import { Error as ApiError, ErrorResponse } from '@repo/common-lib/types/response';
@@ -108,13 +104,10 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         path: request.path,
       };
       try {
-        // Log the error if LogService is available. The request binding gives this line the same
-        // `id`/`request` as the request's other lines and its `api.access` line. The channel goes in
-        // the config: the channel builder would mutate the instance.
-        const logService = FactoryLogService.createLogService(
-          'file',
-          { ...logConfig.api, ...this.requestService.logBinding(), channel: API_ERROR_CHANNEL },
-        );
+        // The api logger gives this line the same `id`/`request` as the request's other lines and
+        // its `api.access` line. The channel goes in the config: the channel builder would mutate
+        // the instance.
+        const logService = createApiLogger({ channel: API_ERROR_CHANNEL });
         // Nest's unknown-route 404 says `Cannot GET <originalUrl>`, query string included, and a
         // query can carry a one-time token. Any message can also quote a submitted address
         // ("Email ross@example.com is taken"). The client still gets the original message.
@@ -136,9 +129,6 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         // Every 5xx is CRITICAL, which sends the (throttled) admin alert mail.
         if (status < 500) logService.warn(logMessage, context, { status_code: status });
         else logService.critical(logMessage, context, { status_code: status });
-        void LogService.flush().catch((flushErr) =>
-          console.error('Failed to flush error logs:', flushErr),
-        );
       } catch (error) {
         console.error('Exception occurred:', error);
       }
@@ -182,18 +172,11 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         path: request?.path,
       };
       try {
-        // Log the error if LogService is available
-        const logService = FactoryLogService.createLogService(
-          'file',
-          { ...logConfig.api, ...this.requestService.logBinding(), channel: API_ERROR_CHANNEL },
-        );
+        const logService = createApiLogger({ channel: API_ERROR_CHANNEL });
         logService.critical(
           maskEmailAddresses(message),
           { ...error, message: maskEmailAddresses(message), path: this.loggedPath(request) },
           { status_code: 500 },
-        );
-        void LogService.flush().catch((flushErr) =>
-          console.error('Failed to flush error logs:', flushErr),
         );
       } catch (error) {
         console.error('Exception occurred:', error);

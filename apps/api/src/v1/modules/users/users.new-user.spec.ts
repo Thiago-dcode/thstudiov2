@@ -11,8 +11,9 @@ jest.mock('@repo/backend-lib/utils', () => ({
   },
 }));
 
-import { LogService, configureLogProcess, runWithLogContext } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { runWithTraceId } from 'src/common/services/request-storage';
+import { consoleLogger } from 'src/common/testing/console-logger';
 import { UserService } from './users.service';
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
 
@@ -26,7 +27,7 @@ const build = () => {
       try { lines.push(JSON.parse(String(line))); } catch { /* not a log line */ }
     });
   }
-  const logService = new ConsoleLogService({ channel: 'users' });
+  const logService = consoleLogger({ channel: 'users' });
   const nameSpy = jest.spyOn(logService, 'name');
   const userRepository = {
     updateById: jest.fn().mockResolvedValue({}),
@@ -59,17 +60,15 @@ describe('UserService.handleNewUserEvent logging', () => {
     mockStripe.customers.create.mockReset();
     const { QueueHelper } = jest.requireMock('@repo/backend-lib/utils');
     QueueHelper.createOrUpdateEmailPreferenceJob.mockReset().mockResolvedValue(undefined);
-    configureLogProcess({ service: 'api' });
   });
   afterEach(() => {
     jest.restoreAllMocks();
-    configureLogProcess({ service: '', onCritical: null });
   });
 
   it('AC-21: customers.create gets metadata with user_id and the trace id', async () => {
     mockStripe.customers.create.mockResolvedValue(customer);
     const { service } = build();
-    await runWithLogContext({ id: 'R' }, () => service.handleNewUserEvent(event as never));
+    await runWithTraceId('R', () => service.handleNewUserEvent(event as never));
     const params = mockStripe.customers.create.mock.calls[0][0];
     expect(params.metadata).toMatchObject({ user_id: '9', requestId: 'R' });
     expect(params.metadata.requestAt).toMatch(/^\d+$/);
@@ -78,9 +77,9 @@ describe('UserService.handleNewUserEvent logging', () => {
   it('AC-21: "Stripe customer created" has the customer id and no email, phone or address anywhere', async () => {
     mockStripe.customers.create.mockResolvedValue(customer);
     const { service, lines } = build();
-    await runWithLogContext({ id: 'R' }, () => service.handleNewUserEvent(event as never));
+    await runWithTraceId('R', () => service.handleNewUserEvent(event as never));
     const [created] = lines.filter((l) => l.message === 'Stripe customer created');
-    expect(created.correlation).toMatchObject({ user_id: 9, stripe_customer_id: 'cus_new' });
+    expect(created.extraInfo).toMatchObject({ user_id: 9, stripe_customer_id: 'cus_new' });
     expect(created.operation).toBe('new-user');
     expect(created.id).toBe('R');
     const dumped = JSON.stringify(lines);
@@ -100,7 +99,7 @@ describe('UserService.handleNewUserEvent logging', () => {
     expect(criticals).toHaveLength(1);
     expect(criticals[0].message).toBe('Stripe customer creation failed for new user');
     expect(criticals[0].extraInfo).toMatchObject({ step: 'stripe-customer', error_message: 'stripe unreachable' });
-    expect(criticals[0].correlation.user_id).toBe(9);
+    expect(criticals[0].extraInfo.user_id).toBe(9);
     expect(lines.filter((l) => l.message === 'New user onboarding failed')).toHaveLength(0);
   });
 

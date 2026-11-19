@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { RequestService } from 'src/common/services/request.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { PublicViewerService } from 'src/common/services/public-viewer.service';
 import { AuthHelper } from './auth-helper.service';
 import { UserSessionsModule } from '../user-sessions/user-sessions.module';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [UserSessionsModule],
@@ -14,13 +14,11 @@ import { UserSessionsModule } from '../user-sessions/user-sessions.module';
     JwtService,
     {
       provide: LogService,
-      useFactory: (requestService: RequestService) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'auth',
-          ...requestService.logBinding(),
         });
       },
-      inject: [RequestService],
     },
   ],
   exports: [AuthHelper, PublicViewerService, JwtService, LogService],

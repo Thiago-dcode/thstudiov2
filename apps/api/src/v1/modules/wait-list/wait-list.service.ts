@@ -14,6 +14,7 @@ import { BenefitRepository } from '../benefits/benefit.repository';
 import { UserAuthDevicesService } from '../user-auth-devices/user-auth-devices.service';
 import { IndexWaitListRequest } from './requests/index-wait-list.request';
 import { WaitListRepository } from './wait-list.repository';
+import { apiLogConfig } from 'src/common/utils/api-logger';
 
 @Injectable()
 export class WaitListService {
@@ -133,13 +134,13 @@ export class WaitListService {
 
       await QueueHelper.createOrUpdateEmailPreferenceJob({
         email: normalizedEmail,
-      });
+      }, apiLogConfig());
 
       try {
         await QueueHelper.createWaitListEntryJob({
           email: normalizedEmail,
           language,
-        });
+        }, apiLogConfig());
         this.logger.info(`Wait list create job enqueued: ${emailLog}`);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -182,7 +183,7 @@ export class WaitListService {
       await QueueHelper.createInviteWaitListBatchJob({
         count,
         validated_before: validatedBefore?.toISOString(),
-      });
+      }, apiLogConfig());
 
       return {
         count,
@@ -203,7 +204,7 @@ export class WaitListService {
    */
   private async enqueueValidatedEmail(waitListId: number) {
     try {
-      await QueueHelper.createWaitListValidatedEmailJob({ wait_list_id: waitListId });
+      await QueueHelper.createWaitListValidatedEmailJob({ wait_list_id: waitListId }, apiLogConfig());
       this.logger.info(`Wait list validated email job enqueued: entry ${waitListId}`);
     } catch (error) {
       this.logger.error(

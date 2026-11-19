@@ -6,6 +6,7 @@ import {
 import { EmailDriver } from "./email-drivers/email-driver";
 import { Content, EmailDriverOptions, Envelop } from "./types";
 import { enqueueJob } from "../../utils/job-trace";
+import type { LogConfig } from "../log-service/types";
 
 const DEFAULT_MAIL_JOB_OPTIONS: JobsOptions = {
     priority: 10,
@@ -60,9 +61,10 @@ export class MailService {
 
     /**
      * Queues the mailable for async delivery via BullMQ.
-     * Requires a Queue instance passed in the constructor.
+     * Requires a Queue instance passed in the constructor. `log` is the caller's log config: the
+     * job carries its trace id.
      */
-    public async sendAsync(mailable: Mailable, jobOptions?: JobsOptions): Promise<any> {
+    public async sendAsync(mailable: Mailable, jobOptions?: JobsOptions, log: Partial<LogConfig> = {}): Promise<any> {
         if (!this.queue) {
             throw new Error('MailService: a BullMQ Queue is required for sendAsync. Pass it in the constructor.');
         }
@@ -83,14 +85,16 @@ export class MailService {
                 jobId: `mail-${Date.now()}`,
                 ...jobOptions,
             },
+            log,
         );
     }
 
     /**
      * Queues a batch of mailables for async delivery via BullMQ.
-     * Requires a Queue instance passed in the constructor.
+     * Requires a Queue instance passed in the constructor. `log` is the caller's log config: the
+     * job carries its trace id.
      */
-    public async sendBatchAsync(mailables: Mailable[], jobOptions?: JobsOptions): Promise<any> {
+    public async sendBatchAsync(mailables: Mailable[], jobOptions?: JobsOptions, log: Partial<LogConfig> = {}): Promise<any> {
         if (!this.queue) {
             throw new Error('MailService: a BullMQ Queue is required for sendBatchAsync. Pass it in the constructor.');
         }
@@ -119,6 +123,7 @@ export class MailService {
                 jobId: `batch-mail-${Date.now()}`,
                 ...jobOptions,
             },
+            log,
         );
     }
 

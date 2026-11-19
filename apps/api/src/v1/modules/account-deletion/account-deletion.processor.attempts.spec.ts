@@ -1,8 +1,8 @@
 jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({ stripe: {}, stripeWebhookSecret: '' }));
 jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({ paypal: {} }));
 
-import { LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { consoleLogger } from 'src/common/testing/console-logger';
 import { JOB_DELETE_USER_ACCOUNT, JOB_SEND_ACCOUNT_DELETION_WARNING } from '@repo/common-lib/constants/queues';
 import { AccountDeletionProcessor } from './account-deletion.processor';
 
@@ -13,7 +13,7 @@ const build = (throwing: boolean) => {
       try { lines.push(JSON.parse(String(line))); } catch { /* not a log line */ }
     });
   }
-  const logger = new ConsoleLogService({ channel: 'account-deletion' });
+  const logger = consoleLogger({ channel: 'account-deletion' });
   const userRepository = {
     findById: jest.fn().mockImplementation(async () => {
       if (throwing) throw new Error('db down');
@@ -42,22 +42,19 @@ const jobOf = (name: string, attempt: number, max = 3): any => ({
 
 describe('AccountDeletionProcessor job failure alerting', () => {
   beforeEach(() => {
-    configureLogProcess({ service: 'api' });
-    jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
   });
   afterEach(() => {
     jest.restoreAllMocks();
-    configureLogProcess({ service: '', onCritical: null });
   });
 
-  it('AC-28: a failure on attempt 1/3 logs error {will_retry:true}, no critical, with the user in correlation', async () => {
+  it('AC-28: a failure on attempt 1/3 logs error {will_retry:true}, no critical, with the user in extraInfo', async () => {
     const { processor, lines } = build(true);
     await expect(processor.process(jobOf('unknown-job', 1))).rejects.toThrow();
     expect(lines.filter((l) => l.level === 'CRITICAL')).toHaveLength(0);
     const failure = lines.find((l) => l.message === 'Account deletion job failed');
     expect(failure.level).toBe('ERROR');
     expect(failure.extraInfo.will_retry).toBe(true);
-    expect(failure.correlation.user_id).toBe(7);
+    expect(failure.extraInfo.user_id).toBe(7);
   });
 
   it('AC-28: a failure on attempt 3/3 logs exactly one critical "Account deletion job failed permanently"', async () => {

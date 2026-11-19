@@ -43,7 +43,10 @@ export {
     readJobTrace,
     enqueueJob,
     enqueueJobs,
-    runJobWithLogContext,
+    runJobWithLogs,
+    jobLogConfig,
+    jobTraceId,
+    isFinalAttempt,
     logPermanentJobFailure,
     redactJobData,
 } from './job-trace';

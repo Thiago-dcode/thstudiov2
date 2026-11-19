@@ -2,8 +2,8 @@ import { s3PrivateStorageConfig } from '../../config/storage';
 import { StorageService } from '../storage-service/storage.service';
 import { FactoryStorageService } from '../storage-service/factory-storage.service';
 import Logger from '../../utils/console';
-import { FactoryLogService } from '../log-service/factory-log.service';
 import { LogService } from '../log-service/log.service';
+import { logService } from '../../config/logging';
 import { config } from '@repo/common-lib/config';
 import { INDEXNOW_CANONICAL_HOST } from '@repo/common-lib/utils/indexnow';
 import { execFile } from 'node:child_process';
@@ -16,9 +16,9 @@ const execFileAsync = promisify(execFile);
 
 const LOG = '[backup]';
 
-/** Structured audit trail in the `backup` log channel; console output stays on `Logger`. Call `flushAsync()` when done. */
+/** Structured audit trail in the `backup` log channel; console output stays on `Logger`. The worker writes it to disk. */
 const backupLog = (operation: 'backup' | 'cleanup' | 'restore'): LogService =>
-    FactoryLogService.createLogService('file', { channel: 'backup' }).name(operation).id(`${operation}-${Date.now()}`);
+    logService.lib({ channel: 'backup', name: operation, id: `${operation}-${Date.now()}` });
 /**
  * Local scratch space for pg_dump/pg_restore; a dump only lives here until it is uploaded. The OS temp dir,
  * not `storage/`: the containers run as the non-root `node` user and cannot create folders under /workspace.
@@ -69,12 +69,7 @@ const backupKeyFor = (date: Date) => `${BACKUP_PREFIX}/pg-backup-${formatDate(da
 const backupStorage = (): StorageService => FactoryStorageService.create(s3PrivateStorageConfig());
 
 export const backup = async (storageService?: StorageService): Promise<BackupResult> => {
-    const log = backupLog('backup');
-    try {
-        return await runBackup(log, storageService);
-    } finally {
-        await log.flushAsync();
-    }
+    return runBackup(backupLog('backup'), storageService);
 };
 
 const runBackup = async (log: LogService, storageService?: StorageService): Promise<BackupResult> => {
@@ -142,8 +137,6 @@ export const deleteExpiredBackup = async (storageService?: StorageService): Prom
     } catch (error) {
         log.error('Expired backup cleanup failed', { error: errorDetails(error) });
         throw error;
-    } finally {
-        await log.flushAsync();
     }
 };
 
@@ -223,12 +216,7 @@ export const restore = async ({
     allowProduction = false,
     storageService = backupStorage(),
 }: RestoreOptions): Promise<{ key: string }> => {
-    const log = backupLog('restore');
-    try {
-        return await runRestore(log, date, allowProduction, storageService);
-    } finally {
-        await log.flushAsync();
-    }
+    return runRestore(backupLog('restore'), date, allowProduction, storageService);
 };
 
 const runRestore = async (

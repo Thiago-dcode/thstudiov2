@@ -3,27 +3,21 @@ import { UserContactsService } from './user-contacts.service';
 import { UserContactsController } from './user-contacts.controller';
 import { UserContactsRepository } from './user-contacts.repository';
 import { UserSessionsModule } from '../user-sessions/user-sessions.module';
-import { BullModule, getQueueToken } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import {
-  USER_CONTACTS_QUEUE,
-  LOG_QUEUE,
-} from '@repo/common-lib/constants/queues';
+import { BullModule } from '@nestjs/bullmq';
+import { USER_CONTACTS_QUEUE } from '@repo/common-lib/constants/queues';
 import { UserContactProcessor } from './user-contact.processor';
 import { NewContactMail } from './mails/new-contact.mail';
 import { UserModule } from '../users/users.module';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [
     EmailPreferencesModule,
     UserSessionsModule,
     UserModule,
-    BullModule.registerQueue(
-      { name: USER_CONTACTS_QUEUE },
-      { name: LOG_QUEUE },
-    ),
+    BullModule.registerQueue({ name: USER_CONTACTS_QUEUE }),
   ],
   controllers: [UserContactsController],
   providers: [
@@ -33,12 +27,11 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
     NewContactMail,
     {
       provide: LogService,
-      useFactory: (logQueue: Queue) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'user-contacts',
-        }, logQueue);
+        });
       },
-      inject: [getQueueToken(LOG_QUEUE)],
     },
   ],
   // UserContactsRepository is exported for UserNotificationsModule, which reads contact previews

@@ -32,6 +32,7 @@ import { WaitListWelcomeMail } from './mails/wait-list-welcome.mail';
 import { WAIT_LIST_SHOWCASE_PATH } from './wait-list.constants';
 import { WaitListRepository } from './wait-list.repository';
 import type { WaitList } from '@repo/common-lib/types/wait-list';
+import { apiLogConfig } from 'src/common/utils/api-logger';
 
 type PreparedWaitListInvite = {
   entry: WaitList;
@@ -82,8 +83,6 @@ export class WaitListProcessor extends GlobalProcessor {
         error,
       );
       throw error;
-    } finally {
-      await this.logger.flushAsync();
     }
   }
 
@@ -163,6 +162,7 @@ export class WaitListProcessor extends GlobalProcessor {
         {
           jobId: `wait-list-validate-${waitList.id}`,
         },
+        apiLogConfig(),
       );
 
       await this.waitListRepository.updateById(waitList.id, {
@@ -221,6 +221,7 @@ export class WaitListProcessor extends GlobalProcessor {
       {
         jobId: `wait-list-validated-mail-${waitList.id}`,
       },
+      apiLogConfig(),
     );
 
     await this.waitListRepository.updateById(waitList.id, {
@@ -260,6 +261,7 @@ export class WaitListProcessor extends GlobalProcessor {
           // while the 1h resend throttle keeps repeat signups from flooding the admin inbox.
           jobId: `wait-list-admin-notify-${waitList.id}`,
         },
+        apiLogConfig(),
       );
 
       this.logger.info(`Wait list admin notification queued: ${emailLog}`, {
@@ -376,6 +378,8 @@ export class WaitListProcessor extends GlobalProcessor {
       try {
         const mailJob = await this.mailService.sendBatchAsync(
           preparedInvites.map((invite) => invite.mailable),
+          undefined,
+          apiLogConfig(),
         );
 
         if (!mailJob) {

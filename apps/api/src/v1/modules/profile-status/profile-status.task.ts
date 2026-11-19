@@ -1,7 +1,7 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { ProfileStatusService } from './profile-status.service';
 import { CRON_LOCK_TTL, runCronExclusive } from 'src/common/utils/cron-lock';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 /**
  * One-shot backfill on API boot: sync every user's profile_status flags from
@@ -14,7 +14,7 @@ import { CRON_LOCK_TTL, runCronExclusive } from 'src/common/utils/cron-lock';
 export class ProfileStatusTask implements OnApplicationBootstrap {
   private static hasRun = false;
 
-  private readonly logger = FactoryLogService.createLogService('file', {
+  private readonly logger = createApiLogger({
     channel: 'profile-status',
   });
 
@@ -36,8 +36,6 @@ export class ProfileStatusTask implements OnApplicationBootstrap {
           `profile_status backfill failed - ${error instanceof Error ? error.message : 'Unknown error'}`,
           error,
         );
-      } finally {
-        await LogService.flush();
       }
     });
   }

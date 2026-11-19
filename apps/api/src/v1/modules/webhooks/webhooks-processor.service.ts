@@ -7,16 +7,13 @@ import type { Invoice as StripeInvoice } from 'stripe-types/Invoices';
 import type { PaymentIntent as StripePaymentIntent } from 'stripe-types/PaymentIntents';
 import type { PaymentMethod as StripePaymentMethod } from 'stripe-types/PaymentMethods';
 import type { Subscription as StripeSubscription } from 'stripe-types/Subscriptions';
-import {
-  LogService,
-  addLogCorrelation,
-  currentJobAttempt,
-  setLogTraceId,
-} from '@repo/backend-lib/services/log-service';
-import { enqueueJob } from '@repo/backend-lib/utils';
-import type Stripe from 'stripe';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { enqueueJob, isFinalAttempt } from '@repo/backend-lib/utils';
+import { apiLogConfig } from 'src/common/utils/api-logger';
+import { runWithTraceId } from 'src/common/services/request-storage';
 import { StripeService } from 'src/common/services/stripe.service';
-import { stripeEventRefs } from './stripe-event-refs';
+import type Stripe from 'stripe';
+import { StripeEventRefIds, stripeEventRefs } from './stripe-event-refs';
 import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
 import { PlanPricesService } from '../plan-prices/plan-prices.service';
 import { UserService } from '../users/users.service';
@@ -37,6 +34,24 @@ import {
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { UserBenefitService } from '../user-benefit/user-benefit.service';
 
+type EventLog = {
+  info: (message: string, extra?: Record<string, unknown>) => void;
+  warn: (message: string, extra?: Record<string, unknown>) => void;
+  error: (message: string, extra?: Record<string, unknown>) => void;
+  critical: (message: string, extra?: Record<string, unknown>) => void;
+  /** The same lines with more ids (the user, once resolved). */
+  with: (more: StripeEventRefIds) => EventLog;
+};
+
+/** `logger` with the event's ids in every line's extraInfo. Per event: the logger is shared. */
+const withIds = (logger: LogService, ids: StripeEventRefIds): EventLog => ({
+  info: (message, extra) => void logger.info(message, { ...ids, ...extra }),
+  warn: (message, extra) => void logger.warn(message, { ...ids, ...extra }),
+  error: (message, extra) => void logger.error(message, { ...ids, ...extra }),
+  critical: (message, extra) => void logger.critical(message, { ...ids, ...extra }),
+  with: (more) => withIds(logger, { ...ids, ...more }),
+});
+
 @Processor(STRIPE_WEBHOOKS_QUEUE)
 export class WebhookProcessor extends GlobalProcessor {
   constructor(
@@ -54,44 +69,45 @@ export class WebhookProcessor extends GlobalProcessor {
   async process(job: Job<StripeEvent>): Promise<void> {
     const event = job.data;
 
-    try {
-      // Recomputed from the event (also covers jobs queued before the controller did it). Never
-      // name/id builders here: this logger is shared by every event, and an id set on it stuck to
-      // every later line.
-      const refs = stripeEventRefs(event as unknown as Stripe.Event);
-      addLogCorrelation(refs.correlation);
-      const traceId = StripeService.traceIdFromMetadata(refs.metadata, event?.created);
-      if (traceId) setLogTraceId(traceId);
 
-      switch (job.name) {
-        case JOB_STRIPE_WEBHOOK:
-          return await this.handleStripeEvent(event);
+    // Recomputed from the event: the request that caused it, when the object carries a fresh
+    // trace id (also covers jobs queued before the controller enqueued with it), else the job's.
+    // The event's ids go in every line's extraInfo. Never name/id builders here: this logger is
+    // shared by every event.
+    const refs = stripeEventRefs(event as unknown as Stripe.Event);
+    const log = withIds(this.logger, refs.ids);
+    const traceId = StripeService.traceIdFromMetadata(refs.metadata, event?.created);
+    const handle = () => this.handleStripeEvent(job, event, log);
 
-        default:
-          throw new Error(`Job name "${job.name}" not recognized`);
-      }
-    } finally {
-      await this.logger.flushAsync();
+    switch (job.name) {
+      case JOB_STRIPE_WEBHOOK:
+        return await (traceId ? runWithTraceId(traceId, handle) : handle());
+
+      default:
+        throw new Error(`Job name "${job.name}" not recognized`);
     }
   }
 
-  private async handleStripeEvent(event: StripeEvent): Promise<void> {
+  private async handleStripeEvent(job: Job<StripeEvent>, event: StripeEvent, log: EventLog): Promise<void> {
     try {
       switch (event.type) {
         case 'checkout.session.completed':
           await this.handleCheckoutSessionCompleted(
             event.data.object as StripeCheckout.Session,
+            log,
           );
           break;
         case 'payment_intent.succeeded':
           await this.handlePaymentIntentSucceeded(
             event.data.object as StripePaymentIntent,
+            log,
           );
           break;
 
         case 'payment_method.attached':
           await this.handlePaymentMethodAttached(
             event.data.object as StripePaymentMethod,
+            log,
           );
           break;
 
@@ -99,27 +115,30 @@ export class WebhookProcessor extends GlobalProcessor {
         case 'customer.subscription.updated':
           await this.handleSubscriptionUpdate(
             event.data.object as StripeSubscription,
+            log,
           );
           break;
 
         case 'customer.subscription.deleted':
           await this.handleSubscriptionDeleted(
             event.data.object as StripeSubscription,
+            log,
           );
           break;
 
         case 'invoice.paid':
-          await this.handleInvoicePaid(event.data.object as StripeInvoice);
+          await this.handleInvoicePaid(event.data.object as StripeInvoice, log);
           break;
 
         case 'invoice.payment_failed':
           await this.handleInvoicePaymentFailed(
             event.data.object as StripeInvoice,
+            log,
           );
           break;
 
         default:
-          this.logger.info('Stripe webhook event ignored', { reason: 'unhandled_type' });
+          log.info('Stripe webhook event ignored', { reason: 'unhandled_type' });
       }
     } catch (err) {
       const failure = {
@@ -128,10 +147,10 @@ export class WebhookProcessor extends GlobalProcessor {
         stack: err instanceof Error ? err.stack : undefined,
       };
       // BullMQ retries 5x; only the last failure needs a human.
-      if (currentJobAttempt()?.is_final) {
-        this.logger.critical('Stripe webhook processing failed permanently', { ...failure, will_retry: false });
+      if (isFinalAttempt(job)) {
+        log.critical('Stripe webhook processing failed permanently', { ...failure, will_retry: false });
       } else {
-        this.logger.error('Stripe webhook processing failed', { ...failure, will_retry: true });
+        log.error('Stripe webhook processing failed', { ...failure, will_retry: true });
       }
       throw err; // Re-throw so BullMQ can retry
     }
@@ -139,8 +158,9 @@ export class WebhookProcessor extends GlobalProcessor {
 
   private async handleCheckoutSessionCompleted(
     session: StripeCheckout.Session,
+    log: EventLog,
   ): Promise<void> {
-    this.logger.info('Stripe checkout session completed', {
+    log.info('Stripe checkout session completed', {
       mode: session.mode,
       status: session.status,
       payment_status: session.payment_status,
@@ -150,8 +170,9 @@ export class WebhookProcessor extends GlobalProcessor {
 
   private async handlePaymentIntentSucceeded(
     paymentIntent: StripePaymentIntent,
+    log: EventLog,
   ): Promise<void> {
-    this.logger.info('Stripe payment succeeded', {
+    log.info('Stripe payment succeeded', {
       amount: paymentIntent.amount,
       currency: paymentIntent.currency,
     });
@@ -160,14 +181,16 @@ export class WebhookProcessor extends GlobalProcessor {
 
   private async handlePaymentMethodAttached(
     paymentMethod: StripePaymentMethod,
+    log: EventLog,
   ): Promise<void> {
     // Never the card object: only the method type.
-    this.logger.info('Stripe payment method attached', { type: paymentMethod.type });
+    log.info('Stripe payment method attached', { type: paymentMethod.type });
     // TODO: Handle payment method attachment
   }
 
   private async handleSubscriptionUpdate(
     eventSubscription: StripeSubscription,
+    log: EventLog,
   ): Promise<void> {
     // Stripe delivers events out of order and retries them, so this event's snapshot can be
     // older than what we already applied: an `updated` arriving after the subscription was
@@ -180,7 +203,7 @@ export class WebhookProcessor extends GlobalProcessor {
       subscription.status !== eventSubscription.status ||
       subscription.cancel_at_period_end !== eventSubscription.cancel_at_period_end
     ) {
-      this.logger.info('Stripe event snapshot stale; applied live state', {
+      log.info('Stripe event snapshot stale; applied live state', {
         event_status: eventSubscription.status,
         live_status: subscription.status,
       });
@@ -200,16 +223,16 @@ export class WebhookProcessor extends GlobalProcessor {
       !subscription.cancel_at_period_end &&
       !subscription.cancel_at &&
       (!is_trialing || has_payment_method);
-    const user = await this.findUserByStripeCustomer(subscription.customer as string);
+    const user = await this.findUserByStripeCustomer(subscription.customer as string, log);
     if (!user) return;
-    addLogCorrelation({ user_id: user.id });
+    log = log.with({ user_id: user.id });
     const [planPrice, _internalSubscription] = await Promise.all([
       this.planPriceService.findOneByStripeId(itemData.price.id),
       this.planSubscriptionService.findActiveSubscription(user.id),
     ]);
     if (!planPrice) {
       // Retried; the final attempt alerts through the handler failure above.
-      this.logger.error('No plan price for Stripe price', { stripe_price_id: itemData.price.id });
+      log.error('No plan price for Stripe price', { stripe_price_id: itemData.price.id });
       throw new Error('No plan price for Stripe price');
     }
     let internalSubscription: PlanSubscription = _internalSubscription;
@@ -230,7 +253,7 @@ export class WebhookProcessor extends GlobalProcessor {
         },
         user.id,
       );
-      this.logger.info('Subscription synced from Stripe', {
+      log.info('Subscription synced from Stripe', {
         action: 'updated',
         plan_subscription_id: internalSubscription?.id ?? null,
         plan_price_id: planPrice.id,
@@ -244,7 +267,7 @@ export class WebhookProcessor extends GlobalProcessor {
       // No live internal subscription matches, and Stripe says this one is not live either
       // (cancelled, incomplete, unpaid): there is nothing to start.
       if (!is_active) {
-        this.logger.info('Stripe webhook event ignored', {
+        log.info('Stripe webhook event ignored', {
           reason: 'inactive_without_match',
           stripe_status: subscription.status,
         });
@@ -270,7 +293,7 @@ export class WebhookProcessor extends GlobalProcessor {
         plan_offer_id: null,
         prev_subscription_id: latestSub?.id ?? null,
       });
-      this.logger.info('Subscription synced from Stripe', {
+      log.info('Subscription synced from Stripe', {
         action: 'created',
         plan_subscription_id: internalSubscription?.id ?? null,
         prev_subscription_id: latestSub?.id ?? null,
@@ -287,13 +310,13 @@ export class WebhookProcessor extends GlobalProcessor {
           const benefitId = Number.parseInt(benefitIdRaw, 10);
           if (Number.isInteger(benefitId) && benefitId > 0) {
             await this.userBenefitService.redeem(user.id, benefitId);
-            this.logger.info('Benefit redeemed', { benefit_id: benefitId });
+            log.info('Benefit redeemed', { benefit_id: benefitId });
           } else {
-            this.logger.warn('Invalid benefit_id in subscription metadata', { benefit_id_raw: benefitIdRaw });
+            log.warn('Invalid benefit_id in subscription metadata', { benefit_id_raw: benefitIdRaw });
           }
         }
       } catch (error) {
-        this.logger.error('Benefit redeem failed', {
+        log.error('Benefit redeem failed', {
           benefit_id: benefitIdRaw,
           error_message: error instanceof Error ? error.message : String(error),
         });
@@ -320,7 +343,7 @@ export class WebhookProcessor extends GlobalProcessor {
           : Promise.resolve(),
       ]);
       if (duplicates.length > 0) {
-        this.logger.info('Duplicate Stripe subscriptions cancelled', {
+        log.info('Duplicate Stripe subscriptions cancelled', {
           count: duplicates.length,
           stripe_subscription_ids: duplicates.map((sub) => sub.id),
         });
@@ -346,7 +369,7 @@ export class WebhookProcessor extends GlobalProcessor {
         removeOnComplete: true,
         attempts: 3,
         backoff: { type: 'exponential', delay: 1000 },
-      })])
+      }, apiLogConfig())])
   }
 
   /**
@@ -354,12 +377,12 @@ export class WebhookProcessor extends GlobalProcessor {
    * account deletion cancels the subscription and deletes the customer, and Stripe's resulting
    * events can arrive after the user row is gone; that is expected, not a failure to retry.
    */
-  private async findUserByStripeCustomer(customerId: string) {
+  private async findUserByStripeCustomer(customerId: string, log: EventLog) {
     try {
       return await this.userService.findOneByStripeId(customerId);
     } catch (error) {
       if (error instanceof HttpException && error.getStatus() === HttpStatus.NOT_FOUND) {
-        this.logger.info('Stripe webhook event ignored', { reason: 'no_user_for_customer' });
+        log.info('Stripe webhook event ignored', { reason: 'no_user_for_customer' });
         return null;
       }
       throw error;
@@ -368,17 +391,18 @@ export class WebhookProcessor extends GlobalProcessor {
 
   private async handleSubscriptionDeleted(
     subscription: StripeSubscription,
+    log: EventLog,
   ): Promise<void> {
-    const user = await this.findUserByStripeCustomer(subscription.customer as string);
+    const user = await this.findUserByStripeCustomer(subscription.customer as string, log);
     if (!user) return;
-    addLogCorrelation({ user_id: user.id });
+    log = log.with({ user_id: user.id });
     const internalSubscription =
       await this.planSubscriptionService.findActiveSubscription(user.id);
 
     if (internalSubscription?.stripe_id === subscription.id) {
       const freeSubscription =
         await this.planSubscriptionService.setFreeSubscription(user.id);
-      this.logger.info('Subscription ended; free plan set', {
+      log.info('Subscription ended; free plan set', {
         ended_plan_subscription_id: internalSubscription.id,
         free_plan_subscription_id: (freeSubscription as { id?: number } | null)?.id ?? null,
       });
@@ -394,9 +418,9 @@ export class WebhookProcessor extends GlobalProcessor {
         removeOnComplete: true,
         attempts: 3,
         backoff: { type: 'exponential', delay: 1000 },
-      });
+      }, apiLogConfig());
     } else {
-      this.logger.info('Stripe webhook event ignored', { reason: 'not_current_subscription' });
+      log.info('Stripe webhook event ignored', { reason: 'not_current_subscription' });
     }
     await this.helpers.deleteManyCached([
       CACHE_KEY_ACTIVE_SUBSCRIPTION(user.id),
@@ -404,8 +428,8 @@ export class WebhookProcessor extends GlobalProcessor {
     ]);
   }
 
-  private async handleInvoicePaid(invoice: StripeInvoice): Promise<void> {
-    this.logger.info('Stripe invoice paid', {
+  private async handleInvoicePaid(invoice: StripeInvoice, log: EventLog): Promise<void> {
+    log.info('Stripe invoice paid', {
       amount_paid: invoice.amount_paid,
       currency: invoice.currency,
       billing_reason: invoice.billing_reason,
@@ -415,8 +439,9 @@ export class WebhookProcessor extends GlobalProcessor {
 
   private async handleInvoicePaymentFailed(
     invoice: StripeInvoice,
+    log: EventLog,
   ): Promise<void> {
-    this.logger.warn('Stripe invoice payment failed', {
+    log.warn('Stripe invoice payment failed', {
       amount_due: invoice.amount_due,
       currency: invoice.currency,
       attempt_count: invoice.attempt_count,

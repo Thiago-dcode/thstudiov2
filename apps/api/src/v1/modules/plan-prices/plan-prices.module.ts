@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { PlanPricesRepository } from './plan-prices.repository';
 import { PlanPricesService } from './plan-prices.service';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { RequestService } from 'src/common/services/request.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   providers: [
@@ -10,13 +10,11 @@ import { RequestService } from 'src/common/services/request.service';
     PlanPricesService,
     {
       provide: LogService,
-      useFactory: (requestService: RequestService) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'plan-prices',
-          ...requestService.logBinding(),
         });
       },
-      inject: [RequestService],
     },
   ],
   exports: [PlanPricesService],

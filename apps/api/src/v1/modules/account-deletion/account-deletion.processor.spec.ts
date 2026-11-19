@@ -17,7 +17,7 @@ describe('AccountDeletionProcessor', () => {
   const userService = { deleteAccount: jest.fn() };
   const mailService = { sendAsync: jest.fn() };
   const warningMail = { setData: jest.fn((data) => ({ data })) };
-  const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn(), flushAsync: jest.fn() };
+  const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn() };
 
   const user = {
     id: 7,

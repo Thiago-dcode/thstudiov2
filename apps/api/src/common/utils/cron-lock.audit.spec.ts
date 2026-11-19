@@ -13,10 +13,19 @@ jest.mock('redis', () => ({
   }),
 }));
 jest.mock('@repo/common-lib/config/utils', () => ({ getConfigValue: () => ({ url: 'redis://test' }) }));
-jest.mock('@repo/backend-lib/services/log-service', () => {
-  // Patch the real class so backend-lib's internal imports see the mock too.
-  const actual = jest.requireActual('@repo/backend-lib/services/log-service');
-  Object.assign(actual.FactoryLogService, { createLogService: () => mockCronLog });
+jest.mock('@repo/backend-lib/config/logging', () => {
+  // Patch the real factories so backend-lib's internal loggers see the mock too.
+  const actual = jest.requireActual('@repo/backend-lib/config/logging');
+  const create = () => mockCronLog;
+  const factory = (service: string | null) => (overrides: Record<string, unknown> = {}) =>
+    (create as (buffer: unknown, cfg: any) => unknown)(undefined, { service, ...overrides });
+  // backend-lib's own import cycle (config/logging -> critical-alert-mail -> job-trace) re-enters
+  // this factory before the module has finished loading; patch once `logService` exists.
+  if (actual.logService) {
+    Object.assign(actual.logService, {
+      api: factory('api'), worker: factory('worker'), dbcli: factory('dbcli'), web: factory('web'), lib: factory(null),
+    });
+  }
   return actual;
 });
 
@@ -27,7 +36,6 @@ describe('runCronExclusive { audit }', () => {
   beforeEach(() => {
     store.clear();
     Object.values(mockCronLog).forEach((fn) => fn.mockReset());
-    jest.spyOn(LogService, 'flush').mockResolvedValue(undefined);
   });
   afterEach(() => jest.restoreAllMocks());
 

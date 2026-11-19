@@ -1,11 +1,14 @@
 import { OnWorkerEvent, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { LOG_QUEUE } from '@repo/common-lib/constants/queues';
+import { randomUUID } from 'node:crypto';
 import {
   logPermanentJobFailure,
+  readJobTrace,
   redactJobData,
-  runJobWithLogContext,
+  runJobWithLogs,
 } from '@repo/backend-lib/utils';
+import { runWithTraceId } from 'src/common/services/request-storage';
+import { apiLogConfig } from 'src/common/utils/api-logger';
 
 /** Kept for the specs that import it from here; the implementation lives in backend-lib. */
 export { redactJobData };
@@ -13,15 +16,15 @@ export { redactJobData };
 export abstract class GlobalProcessor extends WorkerHost {
   constructor() {
     super();
-    // Every api job runs inside its trace context (the id of whoever enqueued it) with
-    // start/completed/retry lines. Nest's explorer binds `instance.process` after construction,
-    // so it picks up this wrapper. The log-flush queue itself gets the context but no lines.
+    // Every api job runs in its own request store whose trace id is the enqueuer's (or a fresh
+    // one), so the DI loggers and the jobs it enqueues share it, with start/completed/retry
+    // lines. Nest's explorer binds `instance.process` after construction, so it picks this up.
     if (typeof this.process !== 'function') return;
     const original = this.process.bind(this) as (job: Job, token?: string) => Promise<unknown>;
     this.process = (job: Job, token?: string) =>
-      runJobWithLogContext(job, () => original(job, token), {
-        lifecycle: job?.queueName !== LOG_QUEUE,
-      });
+      runWithTraceId(readJobTrace(job)?.id ?? randomUUID(), () =>
+        runJobWithLogs(job, () => original(job, token), { log: apiLogConfig() }),
+      );
   }
 
   @OnWorkerEvent('failed')
@@ -30,7 +33,7 @@ export abstract class GlobalProcessor extends WorkerHost {
     error: Error,
     prev: string,
   ): Promise<void> {
-    // Final attempt or UnrecoverableError: one `failed-job` line, inside the job's trace.
-    await logPermanentJobFailure(job, error, prev);
+    // Final attempt or UnrecoverableError: one `failed-job` line, with the job's trace id.
+    await logPermanentJobFailure(job, error, prev, apiLogConfig());
   }
 }

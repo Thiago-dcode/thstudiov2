@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
-import { FactoryLogService } from "@repo/backend-lib/services/log-service";
 import { MAX_HIGHLIGHT_SERVICES } from "@repo/common-lib/constants/highlights";
 import type { HighlightCount } from "@repo/common-lib/types/general";
 import { Helpers } from "src/common/services/helpers.service";
@@ -23,12 +22,13 @@ import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from "@repo/common-lib/constants/events";
 import { ArtistPublicPagesChangedEvent } from "../edge-cache/events/artist-public-pages-changed.event";
+import { apiLogConfig, createApiLogger } from 'src/common/utils/api-logger';
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
 @Injectable()
 export class ServiceService {
-  private readonly logger = FactoryLogService.createLogService('file', {
+  private readonly logger = createApiLogger({
     channel: 'services',
   });
 
@@ -132,7 +132,7 @@ export class ServiceService {
       const thumbnailUrl = await this.helpers.getAsset(thumbnailPath);
       const { moderation } = await this.aiService.moderateContent(thumbnailUrl, {
         user_id: request.user_id,
-      });
+      }, apiLogConfig());
 
       if (!moderation.is_allowed) {
         await this.helpers.deleteAsset(thumbnailPath);
@@ -162,7 +162,7 @@ export class ServiceService {
       this.highlightCountCacheKey(request.user_id),
     ]);
 
-    await QueueHelper.createComputeUserMetricsJob(request.user_id);
+    await QueueHelper.createComputeUserMetricsJob(request.user_id, apiLogConfig());
     await QueueHelper.createGenerateSingleEntityMetadataJob(
       {
         entity: 'service',
@@ -170,6 +170,7 @@ export class ServiceService {
         user_id: service.user_id,
       },
       { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
+      apiLogConfig(),
     );
     this.eventEmitter.emit(
       ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
@@ -225,7 +226,7 @@ export class ServiceService {
       const thumbnailUrl = await this.helpers.getAsset(thumbnailPath);
       const { moderation } = await this.aiService.moderateContent(thumbnailUrl, {
         user_id: service.user_id,
-      });
+      }, apiLogConfig());
 
       if (!moderation.is_allowed) {
         await this.helpers.deleteAsset(thumbnailPath);

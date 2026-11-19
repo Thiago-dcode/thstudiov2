@@ -1,23 +1,22 @@
 import { Processor } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { UserStorageRequestRepository } from './user-storage-request.repository';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { CreateUserStorageRequestInput } from '@repo/common-lib/types/user-storage-request';
 import {
   STORAGE_REQUESTS_QUEUE,
   JOB_CREATE_STORAGE_REQUEST,
 } from '@repo/common-lib/constants/queues';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Processor(STORAGE_REQUESTS_QUEUE)
 export class StorageRequestProcessor extends GlobalProcessor {
-  private readonly logger = FactoryLogService.createLogService('file', {
+  private readonly logger = createApiLogger({
     channel: 'user-storage-requests',
   });
 
   constructor(
     private readonly userStorageRequestRepository: UserStorageRequestRepository,
-    private readonly appLogService: LogService,
   ) {
     super();
   }
@@ -25,16 +24,13 @@ export class StorageRequestProcessor extends GlobalProcessor {
   // ==================== JOB PROCESSOR ====================
 
   async process(job: Job): Promise<any> {
-    try {
-      switch (job.name) {
-        case JOB_CREATE_STORAGE_REQUEST:
-          return await this.createStorageRequest(job.data);
 
-        default:
-          throw new Error(`Job name "${job.name}" not recognized`);
-      }
-    } finally {
-      await this.appLogService.flushAsync();
+    switch (job.name) {
+      case JOB_CREATE_STORAGE_REQUEST:
+        return await this.createStorageRequest(job.data);
+
+      default:
+        throw new Error(`Job name "${job.name}" not recognized`);
     }
   }
 

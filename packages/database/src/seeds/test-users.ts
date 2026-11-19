@@ -13,7 +13,6 @@
  */
 
 import { hash } from '@repo/common-lib/utils/hash';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { Query } from '../lib/facades';
 
 /** Representative coordinates + address text for geo filters (withinRadius / orderByDistance). */
@@ -231,5 +230,4 @@ export const main = async () => {
     }
   }
 
-  await LogService.flush();
 };

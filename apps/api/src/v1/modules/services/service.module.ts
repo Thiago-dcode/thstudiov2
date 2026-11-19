@@ -4,8 +4,8 @@ import { ServiceService } from './service.service';
 import { ServiceRepository } from './service.repository';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { AiModule } from '../ai/ai.module';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { RequestService } from 'src/common/services/request.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   controllers: [ServiceController],
@@ -14,13 +14,11 @@ import { RequestService } from 'src/common/services/request.service';
     ServiceRepository,
     {
       provide: LogService,
-      useFactory: (requestService: RequestService) => {
-        return FactoryLogService.createLogService('file', {
+      useFactory: () => {
+        return createApiLogger({
           channel: 'services',
-          ...requestService.logBinding(),
         });
       },
-      inject: [RequestService],
     },
   ],
   imports: [UserExtraDataModule, AiModule],
