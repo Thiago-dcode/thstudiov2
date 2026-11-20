@@ -58,7 +58,7 @@ afterEach(() => jest.restoreAllMocks());
 describe('LogService config', () => {
   it('writes service, replica, channel and operation from config, in key order; format is not written', async () => {
     const parsed = JSON.parse(await capture({ service: 'api', channel: 'users', name: 'new-user', id: 'i', request: ctx() }));
-    expect(Object.keys(parsed)).toEqual(['timestamp', 'service', 'replica', 'channel', 'operation', 'level', 'id', 'message', 'request', 'extraInfo']);
+    expect(Object.keys(parsed)).toEqual(['timestamp', 'level', 'id', 'service', 'message', 'method', 'replica', 'channel', 'operation', 'request', 'extraInfo']);
     expect(parsed).toMatchObject({ service: 'api', replica: os.hostname().slice(0, 64), channel: 'users', operation: 'new-user', level: 'INFO', id: 'i' });
     expect(parsed.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
   });
