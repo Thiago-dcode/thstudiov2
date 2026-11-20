@@ -13,20 +13,20 @@
 #        LETSENCRYPT_EMAIL=you@example.com
 #
 # 3. Bring the stack up (HTTP only) so the ACME challenge can be served:
-#        docker compose -f compose.dev.yaml up -d nginx web api
+#        docker compose --project-directory . -f infrastructure/docker/compose.dev.yaml up -d nginx web api
 #
 # 4. Obtain the certificate (certbot runs under the `ssl` profile):
-#        docker compose -f compose.dev.yaml --profile ssl run --rm certbot
+#        docker compose --project-directory . -f infrastructure/docker/compose.dev.yaml --profile ssl run --rm certbot
 #
 # 5. Copy this file into conf.d, replacing the http-only server, and replace
 #    every __DOMAIN__ with your real domain:
 #        cp nginx/ssl.conf.template nginx/conf.d/default.conf
 #    (keep the acme-challenge + redirect server below, drop the old plain
 #     `location /` + `location /api/` 80 server, then reload)
-#        docker compose -f compose.dev.yaml exec nginx nginx -s reload
+#        docker compose --project-directory . -f infrastructure/docker/compose.dev.yaml exec nginx nginx -s reload
 #
 # 6. Auto-renew (cron on the droplet, twice daily is recommended):
-#        ./scripts/renew-certs.sh dev   (see its header for the cron line)
+#        ./infrastructure/scripts/renew-certs.sh dev   (see its header for the cron line)
 # ===========================================================================
 
 map $http_upgrade $connection_upgrade {

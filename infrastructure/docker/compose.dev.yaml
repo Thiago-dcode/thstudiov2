@@ -25,7 +25,7 @@ services:
         condition: service_healthy
     healthcheck:
       # /healthz, not /: the default server now returns 444 for unknown hosts so the
-      # origin doesn't confirm liveness to scanners. See dev.nginx/conf.d/default.conf.
+      # origin doesn't confirm liveness to scanners. See infrastructure/nginx/dev/conf.d/default.conf.
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/healthz >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 10s
@@ -39,8 +39,8 @@ services:
     image: certbot/certbot
     container_name: a11studio-dev-certbot
     # Run on demand only (first issuance and renewal are the same command):
-    #   docker compose -f compose.dev.yaml --profile ssl run --rm certbot
-    # scripts/renew-certs.sh wraps it and reloads nginx; run that from cron.
+    #   docker compose --project-directory . -f infrastructure/docker/compose.dev.yaml --profile ssl run --rm certbot
+    # infrastructure/scripts/renew-certs.sh wraps it and reloads nginx; run that from cron.
     profiles:
       - ssl
     volumes:
@@ -50,8 +50,8 @@ services:
     # ${LETSENCRYPT_EMAIL} unquoted into a shell string, so a .env value containing
     # `;` or backticks executed arbitrary commands in a container holding the certs.
     #
-    # One lineage, `dev.a11studio.com`, covering every hostname dev.nginx serves. The
-    # names are fixed here because dev.nginx hardcodes the matching
+    # One lineage, `dev.a11studio.com`, covering every hostname infrastructure/nginx/dev serves. The
+    # names are fixed here because infrastructure/nginx/dev hardcodes the matching
     # /etc/letsencrypt/live/dev.a11studio.com/ paths; the two must change together.
     # --keep-until-expiring makes a re-run a no-op until the cert is within 30 days of
     # expiry, so the same command doubles as renewal. --expand lets a re-run add a name.
@@ -100,7 +100,7 @@ services:
       # files to storage/logs/<service>/. Mounted here too for the direct-write fallback
       # (Redis down) and log retention, which prunes from the api.
       - ./storage/logs:/workspace/storage/logs
-      # Local-only seed binaries (gitignored); used by `scripts/dbcli-dev.sh db:seed -n media|assets`
+      # Local-only seed binaries (gitignored); used by `infrastructure/scripts/dbcli-dev.sh db:seed -n media|assets`
       - ./packages/database/src/seeds/media-images:/workspace/packages/database/src/seeds/media-images
       - ./packages/database/src/seeds/assets:/workspace/packages/database/src/seeds/assets
     expose:
@@ -172,7 +172,7 @@ services:
       api:
         condition: service_healthy
     healthcheck:
-      # See compose.prod.yaml: probing `/` made every healthcheck render the full
+      # See infrastructure/docker/compose.prod.yaml: probing `/` made every healthcheck render the full
       # landing page (four API calls), which is what flooded the throttler.
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/robots.txt').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))\""]
       interval: 30s

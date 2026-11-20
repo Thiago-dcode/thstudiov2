@@ -12,13 +12,13 @@ export const CANONICAL_HOST = "a11studio.com";
  * Whether this deployment is allowed to be crawled and indexed.
  *
  * Fail-closed on purpose. `NODE_ENV` alone is not a usable signal: every environment runs with
- * `NODE_ENV=production` because `next start` requires it (see `compose.dev.yaml`), so the dev
+ * `NODE_ENV=production` because `next start` requires it (see `infrastructure/docker/compose.dev.yaml`), so the dev
  * deployment would otherwise consider itself indexable and serve `Allow: /` plus indexable
  * metadata for a near-identical copy of production. Requiring `APP_URL` to be the canonical origin
  * means dev.a11studio.com, localhost, previews, and a missing or unparseable `APP_URL` all resolve
  * to `false` without anyone having to remember to set a flag.
  *
- * The nginx-level blocks in `dev.nginx/` are the second layer, not the first.
+ * The nginx-level blocks in `infrastructure/nginx/dev/` are the second layer, not the first.
  */
 export function isIndexableEnv(): boolean {
   if (process.env.NODE_ENV?.toLowerCase() !== "production") return false;

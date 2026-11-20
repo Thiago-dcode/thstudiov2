@@ -1,0 +1,14 @@
+[Unit]
+Description=TH Studio prod stack
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/a11studio
+ExecStart=/usr/bin/docker compose --project-directory /opt/a11studio -f infrastructure/docker/compose.prod.yaml up -d --remove-orphans
+ExecStop=/usr/bin/docker compose --project-directory /opt/a11studio -f infrastructure/docker/compose.prod.yaml down
+
+[Install]
+WantedBy=multi-user.target
