@@ -160,15 +160,18 @@ export class LogService {
         const entry: LogEntry = {
             // ISO 8601 UTC with ms: Loki parses it as RFC3339 and keeps same-second order.
             timestamp: timestamp.toISOString(),
+
+            level: level.toUpperCase() as Uppercase<LogLevel>,
+            id,
             // `service: null` (backend-lib's own loggers) writes under the running app's.
             service: config.service ?? getLogProcessService() ?? UNKNOWN_SERVICE,
+            message,
+            method: request?.method ? parseInt(request.method) : undefined,
             format: this.getFormat(),
             replica: os.hostname().slice(0, REPLICA_MAX_LENGTH),
             channel: config.channel ?? DEFAULT_CHANNEL,
             operation: fields?.operation || config.name || null,
-            level: level.toUpperCase() as Uppercase<LogLevel>,
-            id,
-            message,
+
         };
         if (typeof fields?.status_code === 'number') entry.status_code = fields.status_code;
         if (request) entry.request = redactLogOptions(request);

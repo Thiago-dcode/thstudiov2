@@ -4,7 +4,7 @@ import type { LOG_CHANNELS } from "./helpers/channels";
 /** One of `LOG_CHANNELS` (`helpers/channels.ts`): a closed set, so it is safe as a Loki label. */
 export type LogChannel = (typeof LOG_CHANNELS)[number];
 
-export type LogFormat = 'json' | 'string';
+export type LogFormat = 'json' | 'logfmt';
 export const DEFAULT_LOG_FORMAT: LogFormat = 'json';
 export type LogServiceType = 'web' | 'api' | 'dbcli' | 'worker';
 export type LogOptions = { [key: string]: any };
@@ -63,15 +63,16 @@ export type LogLineFields = {
  */
 export type LogEntry = {
     timestamp: string;
+    level: Uppercase<LogLevel>;
     service: string;
-    replica: string;
     channel: LogChannel;
     operation: string | null;
     format: LogFormat;
-    level: Uppercase<LogLevel>;
     id: string | null;
     message: string;
+    method?:number,
     status_code?: number;
+    replica: string;
     request?: RequestLogContext;
     extraInfo?: unknown;
 };

@@ -16,7 +16,7 @@ export class ConsoleLogDriver extends LogDriver {
     async process(entry: LogEntry): Promise<void> {
         const level = entry.level.toLowerCase() as LogLevel;
         const line = this.formatLogEntry(entry);
-        // Colour escape codes would corrupt JSON lines, so only colour the string format.
+        // Colour escape codes would corrupt JSON lines, so only colour the logfmt format.
         print(level, entry.format === 'json' ? line : LEVEL_COLOURS[level](line));
     }
 }
