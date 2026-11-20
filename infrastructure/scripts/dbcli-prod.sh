@@ -3,15 +3,15 @@
 # dbcli-prod.sh — run the @repo/database CLI against the PRODUCTION database
 #
 # Usage (on the prod droplet):
-#   ./scripts/dbcli-prod.sh migrate
-#   ./scripts/dbcli-prod.sh rollback --all
-#   ./scripts/dbcli-prod.sh db:seed
-#   ./scripts/dbcli-prod.sh generate-user-thumbnails --user=123 --dry-run
-#   ./scripts/dbcli-prod.sh generate-media-thumbnail --media-id=456 --dry-run
-#   ./scripts/dbcli-prod.sh db:backup    # dump to S3 now (runs in the worker), waits for it
-#   ./scripts/dbcli-prod.sh restore 2026-10-22 --allow-production   # runs in the worker container
-#   ./scripts/dbcli-prod.sh restore latest --allow-production       # most recent backup
-#   ./scripts/dbcli-prod.sh shell        # interactive shell in a running api container
+#   ./infrastructure/scripts/dbcli-prod.sh migrate
+#   ./infrastructure/scripts/dbcli-prod.sh rollback --all
+#   ./infrastructure/scripts/dbcli-prod.sh db:seed
+#   ./infrastructure/scripts/dbcli-prod.sh generate-user-thumbnails --user=123 --dry-run
+#   ./infrastructure/scripts/dbcli-prod.sh generate-media-thumbnail --media-id=456 --dry-run
+#   ./infrastructure/scripts/dbcli-prod.sh db:backup    # dump to S3 now (runs in the worker), waits for it
+#   ./infrastructure/scripts/dbcli-prod.sh restore 2026-10-22 --allow-production   # runs in the worker container
+#   ./infrastructure/scripts/dbcli-prod.sh restore latest --allow-production       # most recent backup
+#   ./infrastructure/scripts/dbcli-prod.sh shell        # interactive shell in a running api container
 #
 # Differs from dbcli-dev.sh in three ways that matter on prod:
 #   1. compose.prod.yaml, not compose.dev.yaml.
@@ -33,9 +33,9 @@ warn()  { echo -e "${YELLOW}[dbcli]${NC} $*"; }
 error() { echo -e "${RED}[dbcli]${NC} $*" >&2; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-COMPOSE_FILE="$REPO_ROOT/compose.prod.yaml"
-COMPOSE=(docker compose -f "$COMPOSE_FILE")
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+COMPOSE_FILE="$REPO_ROOT/infrastructure/docker/compose.prod.yaml"
+COMPOSE=(docker compose --project-directory "$REPO_ROOT" -f "$COMPOSE_FILE")
 
 if [[ ! -f "$REPO_ROOT/.env" ]]; then
   error ".env not found at $REPO_ROOT/.env — aborting."

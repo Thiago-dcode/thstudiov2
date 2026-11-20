@@ -11,7 +11,7 @@ import { isDisciplineLandingKey } from "@/modules/landings/discipline-landings";
 
 /**
  * Edge (Cloudflare) TTL for anonymous public HTML. Browsers never see it: `proxy.ts` sends it as
- * the internal `x-edge-cache-control` header, and `pro.nginx` turns that into `CDN-Cache-Control`
+ * the internal `x-edge-cache-control` header, and `infrastructure/nginx/pro` turns that into `CDN-Cache-Control`
  * only for a 200 `text/html` response without Set-Cookie. Next's own
  * `Cache-Control: private, no-store` stays on the response for browsers.
  *

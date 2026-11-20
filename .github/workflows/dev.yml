@@ -118,7 +118,7 @@ jobs:
       - name: SSH deploy
         uses: Thiago-dcode/gh-actions/.github/actions/ssh-deploy@738138213ed2142b61418c3e06c10a4e51ddaa0b # v2
         with:
-          deploy-script: ${{ secrets.SSH_DEPLOY_DIR }}/scripts/deploy-app.sh
+          deploy-script: ${{ secrets.SSH_DEPLOY_DIR }}/infrastructure/scripts/deploy-app.sh
           deploy-args: dev
           ssh-host: ${{ secrets.SSH_HOST }}
           ssh-user: ${{ secrets.SSH_USER }}

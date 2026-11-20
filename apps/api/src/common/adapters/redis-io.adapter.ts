@@ -7,7 +7,7 @@ import { ServerOptions } from 'socket.io';
 /**
  * Socket.IO adapter backed by a Redis pub/sub backplane.
  *
- * Why this exists: the API runs `replicas: 2` (compose.prod.yaml) and a WebSocket is a
+ * Why this exists: the API runs `replicas: 2` (infrastructure/docker/compose.prod.yaml) and a WebSocket is a
  * long-lived connection held in the memory of exactly ONE replica. Socket.IO's default
  * in-memory adapter therefore only knows about that replica's own sockets.
  *

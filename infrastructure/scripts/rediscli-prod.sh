@@ -3,12 +3,12 @@
 # rediscli-prod.sh — talk to the PRODUCTION redis container
 #
 # Usage (on the prod droplet):
-#   ./scripts/rediscli-prod.sh                    # interactive redis-cli
-#   ./scripts/rediscli-prod.sh dbsize             # any redis command, passed through
-#   ./scripts/rediscli-prod.sh keys 'bull:*'
-#   ./scripts/rediscli-prod.sh queues             # summarise BullMQ queue keys
-#   ./scripts/rediscli-prod.sh flush-queues       # delete bull:* only  (destructive)
-#   ./scripts/rediscli-prod.sh flush              # FLUSHALL            (destructive)
+#   ./infrastructure/scripts/rediscli-prod.sh                    # interactive redis-cli
+#   ./infrastructure/scripts/rediscli-prod.sh dbsize             # any redis command, passed through
+#   ./infrastructure/scripts/rediscli-prod.sh keys 'bull:*'
+#   ./infrastructure/scripts/rediscli-prod.sh queues             # summarise BullMQ queue keys
+#   ./infrastructure/scripts/rediscli-prod.sh flush-queues       # delete bull:* only  (destructive)
+#   ./infrastructure/scripts/rediscli-prod.sh flush              # FLUSHALL            (destructive)
 #
 # Destructive subcommands print what will be lost and require typing 'continue'.
 # Set REDISCLI_YES=1 to skip the prompt in automation.
@@ -27,16 +27,16 @@ error()   { echo -e "${RED}[redis]${NC} $*" >&2; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # A11STUDIO_DIR lets a copy installed outside the repo (e.g. /usr/local/bin) find
-# the deployment; from inside scripts/ the parent directory is already correct.
-REPO_ROOT="${A11STUDIO_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-COMPOSE_FILE="$REPO_ROOT/compose.prod.yaml"
-COMPOSE=(docker compose -f "$COMPOSE_FILE")
+# the deployment; from inside infrastructure/scripts/ the parent directory is already correct.
+REPO_ROOT="${A11STUDIO_DIR:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+COMPOSE_FILE="$REPO_ROOT/infrastructure/docker/compose.prod.yaml"
+COMPOSE=(docker compose --project-directory "$REPO_ROOT" -f "$COMPOSE_FILE")
 
 [[ -f "$COMPOSE_FILE" ]] || { error "compose file not found: $COMPOSE_FILE"; exit 1; }
 cd "$REPO_ROOT"
 
 if ! "${COMPOSE[@]}" ps --status running --services 2>/dev/null | grep -qx redis; then
-  error "The redis service is not running. Start it with: docker compose -f compose.prod.yaml up -d redis"
+  error "The redis service is not running. Start it with: docker compose --project-directory . -f infrastructure/docker/compose.prod.yaml up -d redis"
   exit 1
 fi
 

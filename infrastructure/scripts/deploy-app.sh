@@ -3,7 +3,7 @@
 # deploy-app.sh — TH Studio deployment script for the dev and prod servers
 #
 # Usage:
-#   ./scripts/deploy-app.sh <dev|prod> [--skip-pull] [--skip-migrate]
+#   ./infrastructure/scripts/deploy-app.sh <dev|prod> [--skip-pull] [--skip-migrate]
 #
 # Environment:
 #   GHCR_USER, GHCR_TOKEN   Required unless --skip-pull. The server's docker logs in to
@@ -45,25 +45,25 @@ esac
 case "$TARGET" in
   dev)
     BRANCH=develop
-    COMPOSE_FILE_NAME=compose.dev.yaml
-    NGINX_SRC=dev.nginx
+    COMPOSE_FILE_NAME=infrastructure/docker/compose.dev.yaml
+    NGINX_SRC=infrastructure/nginx/dev
     IMAGE_TAG_DEFAULT=develop
-    RENEW_CERTS_CMD="./scripts/renew-certs.sh dev"
+    RENEW_CERTS_CMD="./infrastructure/scripts/renew-certs.sh dev"
     ;;
   prod)
     BRANCH=main
-    COMPOSE_FILE_NAME=compose.prod.yaml
-    NGINX_SRC=pro.nginx
+    COMPOSE_FILE_NAME=infrastructure/docker/compose.prod.yaml
+    NGINX_SRC=infrastructure/nginx/pro
     IMAGE_TAG_DEFAULT=main
-    RENEW_CERTS_CMD="./scripts/renew-certs.sh"
+    RENEW_CERTS_CMD="./infrastructure/scripts/renew-certs.sh"
     ;;
 esac
 
 # ── Resolve script / repo root ────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 COMPOSE_FILE="$REPO_ROOT/$COMPOSE_FILE_NAME"
-COMPOSE="docker compose -f $COMPOSE_FILE"
+COMPOSE="docker compose --project-directory $REPO_ROOT -f $COMPOSE_FILE"
 
 # ── Parse flags ───────────────────────────────────────────────────────────────
 SKIP_PULL=false

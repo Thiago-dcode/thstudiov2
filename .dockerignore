@@ -29,8 +29,7 @@ storage
 .claude
 .agents
 .opencode
-dev.nginx
-pro.nginx
+infrastructure
 nginx
 npm-debug.log*
 pnpm-debug.log*
