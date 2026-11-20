@@ -126,10 +126,17 @@ describe('LogService config', () => {
     expect(line).not.toContain('hunter2');
   });
 
-  it('string format puts [METHOD] after the id and is coloured; json is not', async () => {
-    const line = await capture({ channel: 'api', format: 'string', id: 'req-1', request: ctx() });
+  it('logfmt format writes key=value pairs, flattens nested objects and is coloured; json is not', async () => {
+    const line = await capture({ channel: 'api', format: 'logfmt', id: 'req-1', request: ctx() });
     expect(line).toMatch(ANSI);
-    expect(line.replace(ANSI, '')).toMatch(/\[api\] - INFO -\[req-1\]\[GET\] hello - \{"a":1\}\n$/);
+    const plain = line.replace(ANSI, '');
+    expect(plain).toMatch(/^timestamp=\S+ level=INFO /);
+    expect(plain).toContain(' channel=api ');
+    expect(plain).toContain(' id=req-1 ');
+    expect(plain).toContain(' message=hello ');
+    expect(plain).toContain(' request.method=GET');
+    expect(plain).toMatch(/ extraInfo\.a=1\n$/);
+    expect(plain).not.toContain('format=');
     expect(await capture({ channel: 'api' })).not.toMatch(ANSI);
   });
 });
