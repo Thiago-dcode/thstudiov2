@@ -27,6 +27,7 @@ on:
       - infrastructure/docker/compose.prod.yaml
       - infrastructure/scripts/**
       - infrastructure/nginx/pro/**
+      - infrastructure/alloy/**
     # .github/ is deliberately not listed: editing a workflow or action never starts a deploy.
     # After changing one, run the workflow by hand if you want it exercised.
   # Manual "Run workflow" button / `gh workflow run prod.yml --ref main`. The prod environment

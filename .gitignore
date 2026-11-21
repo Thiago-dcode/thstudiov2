@@ -73,6 +73,7 @@ dist
 
 # Debug
 logs
+storage/alloy/
 storage/logs/*
 !storage/logs/.gitkeep
 storage/backups/
