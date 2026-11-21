@@ -204,9 +204,10 @@ program
 program
   .command('migrate')
   .description('Migrate the database')
-  .action(audited('migrate', () => {
-    // Use positional argument or option, with positional taking precedence
-    migrate();
+  .action(audited('migrate', async () => {
+    // Await it: `parseAsync(...).then(process.exit)` below ends the process as soon as the
+    // action resolves, so a floating `migrate()` was killed right after "Db connected".
+    await migrate();
   }));
 
 program
@@ -361,7 +362,7 @@ program
   .command('create:stripe-customers')
   .description('Create Stripe customers for active users who do not have one')
   .action(audited('create:stripe-customers', async () => {
-    createStripeCustomers();
+    await createStripeCustomers();
   }));
 
 program

@@ -21,6 +21,11 @@ services:
     # localhost is web itself. The browser keeps NEXT_PUBLIC_API_URL (localhost on your machine).
     environment:
       - API_V1_URL=http://api:8080/api/v1
+      # Web log lines go to Redis; the worker writes storage/logs/web/. This folder is only the
+      # direct-write fallback when Redis is down (same as compose.dev/prod).
+      - LOG_STORAGE_DIR=/workspace/storage/logs
+    volumes:
+      - ./storage/logs:/workspace/storage/logs
     ports:
       - "127.0.0.1:${WEB_HOST_PORT:-3000}:3000"
     networks:
@@ -80,6 +85,11 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_URL=redis://redis:6379
+    # The worker is the only flusher: every 5 s it writes every service's lines from Redis to
+    # storage/logs/<service>/. Without this mount the files stay inside the container and Alloy
+    # (which tails ./storage/logs) never sees them.
+    volumes:
+      - ./storage/logs:/workspace/storage/logs
     networks:
       - backend
     depends_on:
@@ -126,11 +136,39 @@ services:
     networks:
       - backend
 
+  # Ships storage/logs/<service>/*.log to the Loki in the sibling `observability` repo
+  # (must be running: `docker compose up -d` there). Config is shared with dev/prod.
+  #   docker compose --project-directory . -f infrastructure/docker/compose.local.yaml up alloy
+  alloy:
+    image: grafana/alloy:v1.22.0
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    environment:
+      - ALLOY_ENV=local
+      # Loki is reached by name over the shared observability network (see below).
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+    volumes:
+      - ./infrastructure/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - ./storage/logs:/var/log/a11studio:ro
+      - ./storage/alloy:/var/lib/alloy/data
+    ports:
+      # Alloy's debug UI, loopback only.
+      - "127.0.0.1:12345:12345"
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - observability
+
 networks:
   # web reaches api here; web is never attached to backend
   frontend:
   # api, worker, postgres and redis only
   backend:
+  # Created by the `observability` repo's compose (project observability, network loki).
+  observability:
+    external: true
+    name: observability_loki
+
 
 volumes:
   postgres_data:

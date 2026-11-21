@@ -294,6 +294,31 @@ services:
     networks:
       - a11studio-dev
 
+  # Ships storage/logs/<service>/*.log to Loki (config: infrastructure/alloy/config.alloy, shared
+  # with local and prod). Opt-in: it only starts with the `observability` profile, so a deploy
+  # never depends on Loki being reachable. To enable, set LOKI_URL in .env (a private address,
+  # never a public Loki port) and COMPOSE_PROFILES=observability, or pass --profile observability.
+  alloy:
+    image: grafana/alloy:v1.22.0
+    container_name: a11studio-dev-alloy
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    profiles:
+      - observability
+    command: run --server.http.listen-addr=127.0.0.1:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    environment:
+      ALLOY_ENV: dev
+      LOKI_URL: ${LOKI_URL:-}
+    volumes:
+      - ./infrastructure/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      # Read-only: the worker is the only writer of these files.
+      - ./storage/logs:/var/log/a11studio:ro
+      # Read positions (how far each file was shipped) survive recreates.
+      - alloy_data:/var/lib/alloy/data
+    networks:
+      - a11studio-dev
+
   pgadmin:
     image: dpage/pgadmin4
     container_name: a11studio-dev-pgadmin
@@ -322,6 +347,7 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  alloy_data:
   pgadmin_data:
   certbot_certs:
   certbot_www:
