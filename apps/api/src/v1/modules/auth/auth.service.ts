@@ -19,6 +19,7 @@ import { ConfigService } from '@nestjs/config';
 import { BaseUser, BaseUserWithSecrets, CreateUserInput } from '@repo/common-lib/types/user';
 import { UserAuthDevicesService } from '../user-auth-devices/user-auth-devices.service';
 import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 import { randomInt } from 'crypto';
 import { addMinutes } from 'date-fns/addMinutes';
 import { UserAuthDevice } from '@repo/common-lib/types/user-session';
@@ -51,7 +52,7 @@ import { RoleService } from '../roles/roles.service';
 import { InvitationLinkService } from '../invitation-links/invitation-link.service';
 import { UserBenefitService } from '../user-benefit/user-benefit.service';
 import { WaitListService } from '../wait-list/wait-list.service';
-import { LogService, maskEmailAddresses } from '@repo/backend-lib/services/log-service';
+import { maskEmailAddresses } from '@repo/backend-lib/services/log-service';
 import { InvitationLink } from '@repo/common-lib/types/invitation-link';
 import { WaitList } from '@repo/common-lib/types/wait-list';
 import { TWOFA_LOCK_TTL_MS, TWOFA_LOCK_WAIT_MS, withUserLock } from 'src/common/utils/user-lock';
@@ -61,6 +62,8 @@ import { UserOauthProvidersService } from '../user-oauth-providers/user-oauth-pr
 import { EnumType } from '@repo/common-lib/constants/enums';
 @Injectable()
 export class AuthService {
+  private readonly logService: ApiLogger;
+
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
@@ -77,12 +80,13 @@ export class AuthService {
     private readonly invitationLinkService: InvitationLinkService,
     private readonly userBenefitService: UserBenefitService,
     private readonly waitListService: WaitListService,
-    private readonly logService: LogService,
     private readonly googleOauth2Service: GoogleOauth2Service,
     private readonly userOauthProvidersService: UserOauthProvidersService,
-  ) { }
+  ) {
+    this.logService = this.requestService.log('auth');
+  }
   /**
-   * Auth audit on the shared DI logger: per-call operation and subject user, never `.name()`.
+   * Auth audit on the request-bound logger: per-call operation and subject user, never `.name()`.
    * Never the email, password, code or token; an unknown account gets no user id at all.
    */
   private audit(
@@ -92,7 +96,7 @@ export class AuthService {
     extraInfo?: Record<string, unknown>,
     userId?: number,
   ) {
-    this.logService[level](message, userId ? { user_id: userId, ...extraInfo } : extraInfo, { operation });
+    this.logService[level](message, { ...(userId ? { user_id: userId } : {}), ...extraInfo, operation });
   }
 
   private rejectRegistration(reason: string, invitationLinkId?: number) {
@@ -685,7 +689,7 @@ export class AuthService {
       ...(benefit_id ? { benefit_id } : {}),
     };
     const fields = { operation: 'register' };
-    this.logService.info('Account creation started', context, fields);
+    this.logService.info('Account creation started', { ...context, ...fields });
 
     let step = 'role';
     let user: BaseUser;
@@ -717,7 +721,7 @@ export class AuthService {
       throw this.accountCreationError(error, step, context);
     }
 
-    this.logService.info('User row created', { user_id: user.id, ...context, step: 'create-user' }, fields);
+    this.logService.info('User row created', { user_id: user.id, ...context, step: 'create-user', ...fields });
 
     // The account exists from here on: these steps never undo it nor fail the sign-up.
     if (waitList) {
@@ -726,31 +730,29 @@ export class AuthService {
           status: 'REGISTERED',
           redeemed_at: new Date(),
         });
-        this.logService.info('Wait-list entry redeemed', { user_id: user.id, step: 'wait-list', wait_list_id: waitList.id }, fields);
+        this.logService.info('Wait-list entry redeemed', { user_id: user.id, step: 'wait-list', wait_list_id: waitList.id, ...fields });
       } catch (error) {
         // Left `INVITED`: the entry still looks open and still holds its email.
         this.logService.critical(
           'Account created but wait-list entry not redeemed',
-          { user_id: user.id, ...context, step: 'wait-list', ...this.errorInfo(error) },
-          fields,
+          { user_id: user.id, ...context, step: 'wait-list', ...this.errorInfo(error), ...fields },
         );
       }
     }
     if (benefit_id) {
       try {
         await this.userBenefitService.create(user.id, benefit_id);
-        this.logService.info('Benefit granted', { user_id: user.id, step: 'benefit', benefit_id }, fields);
+        this.logService.info('Benefit granted', { user_id: user.id, step: 'benefit', benefit_id, ...fields });
       } catch (error) {
         // `users.benefit_id` is set but no `user_benefits` row: the user does not get it.
         this.logService.critical(
           'Account created but invitation benefit not granted',
-          { user_id: user.id, ...context, step: 'benefit', ...this.errorInfo(error) },
-          fields,
+          { user_id: user.id, ...context, step: 'benefit', ...this.errorInfo(error), ...fields },
         );
       }
     }
 
-    this.logService.success('User account created', { user_id: user.id, ...context }, fields);
+    this.logService.success('User account created', { user_id: user.id, ...context, ...fields });
     return user;
   }
 
@@ -761,15 +763,13 @@ export class AuthService {
       await this.invitationLinkService.releaseUse(invitationLink.id);
       this.logService.info(
         'Invitation use released',
-        { step, invitation_link_id: invitationLink.id },
-        { operation: 'register' },
+        { step, invitation_link_id: invitationLink.id, operation: 'register' },
       );
     } catch (error) {
       // Swallowed so the creation error stays the one thrown; the link is now one use short.
       this.logService.critical(
         'Invitation use not released after failed account creation',
-        { step, invitation_link_id: invitationLink.id, ...this.errorInfo(error) },
-        { operation: 'register' },
+        { step, invitation_link_id: invitationLink.id, ...this.errorInfo(error), operation: 'register' },
       );
     }
   }
@@ -781,20 +781,20 @@ export class AuthService {
 
     // Two sign-ups raced past the request validation with the same email or username.
     if (error instanceof DbUniqueViolationException) {
-      this.logService.critical('Account creation failed', { ...failure, reason: 'duplicate' }, fields);
+      this.logService.critical('Account creation failed', { ...failure, reason: 'duplicate', ...fields });
       return new ConflictException('Email or username is already in use');
     }
     // No such role: every sign-up fails until it is seeded back. Not the client's fault.
     if (step === 'role') {
-      this.logService.critical('Account creation failed unexpectedly', failure, fields);
+      this.logService.critical('Account creation failed unexpectedly', { ...failure, ...fields });
       return new InternalServerErrorException('Something went wrong creating your account');
     }
     // A known failure (e.g. no free username after the retries): already shaped for the client.
     if (error instanceof HttpException && error.getStatus() < 500) {
-      this.logService.critical('Account creation failed', failure, fields);
+      this.logService.critical('Account creation failed', { ...failure, ...fields });
       return error;
     }
-    this.logService.critical('Account creation failed unexpectedly', failure, fields);
+    this.logService.critical('Account creation failed unexpectedly', { ...failure, ...fields });
     return new InternalServerErrorException('Something went wrong creating your account');
   }
 
@@ -1024,8 +1024,8 @@ export class AuthService {
           linked_account: !!linkedAccount,
           trusted,
           signed_up: !alreadyExist,
+          operation: alreadyExist ? 'login' : 'register',
         },
-        { operation: alreadyExist ? 'login' : 'register' },
       );
       throw new InternalServerErrorException(`Could not sign you in with ${provider}, try another method`);
     }

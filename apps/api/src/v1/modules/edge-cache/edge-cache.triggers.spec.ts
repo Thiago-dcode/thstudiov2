@@ -25,6 +25,14 @@ import { PortfolioService } from '../portfolios/portfolio.service';
 import { ServiceService } from '../services/service.service';
 import { ArtistPublicPagesChangedEvent } from './events/artist-public-pages-changed.event';
 
+/** RequestService mock: the caller, a silent logger and the real trace-carrier shape. */
+const requestServiceFor = (user: Record<string, unknown>) =>
+  ({
+    user,
+    log: () => new Proxy({}, { get: () => jest.fn() }),
+    traceCarrier: () => ({ service: 'api' }),
+  }) as never;
+
 /**
  * The write paths that change what an artist's public pages render emit
  * `ARTIST_PUBLIC_PAGES_CHANGED_EVENT` with the owner's id, after the write (AC-13, AC-16).
@@ -92,7 +100,7 @@ describe('edge purge triggers', () => {
       };
       const service = new CollectionService(
         repository as never,
-        { user: { id: OWNER } } as never,
+        requestServiceFor({ id: OWNER }),
         { enforceEntityLimit: jest.fn() } as never,
         helpers() as never,
         {} as never,
@@ -140,7 +148,7 @@ describe('edge purge triggers', () => {
       };
       const service = new PortfolioService(
         repository as never,
-        { user: { id: OWNER } } as never,
+        requestServiceFor({ id: OWNER }),
         {} as never,
         emitter as never,
         helpers() as never,
@@ -169,7 +177,7 @@ describe('edge purge triggers', () => {
       };
       const service = new ServiceService(
         repository as never,
-        { user: { id: OWNER } } as never,
+        requestServiceFor({ id: OWNER }),
         {} as never,
         helpers() as never,
         {} as never,
@@ -194,7 +202,7 @@ describe('edge purge triggers', () => {
         repository as never,
         helpers() as never,
         {} as never,
-        { user: { id: OWNER } } as never,
+        requestServiceFor({ id: OWNER }),
         emitter as never,
       );
 
@@ -214,7 +222,7 @@ describe('edge purge triggers', () => {
       };
       const service = new AddressService(
         repository as never,
-        { user: { id: OWNER } } as never,
+        requestServiceFor({ id: OWNER }),
         emitter as never,
       );
       return { service, emitter };
@@ -245,7 +253,7 @@ describe('edge purge triggers', () => {
       const service = new MediaService(
         repository as never,
         {} as never,
-        { user: { id: OWNER, public_id: 'owner' } } as never,
+        requestServiceFor({ id: OWNER, public_id: 'owner' }),
         { deleteDirectory: jest.fn().mockResolvedValue(true) } as never,
         helpers() as never,
         emitter as never,

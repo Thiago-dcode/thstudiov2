@@ -15,7 +15,7 @@ import {
   JOB_COMPUTE_USER_METRICS,
 } from '@repo/common-lib/constants/queues';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
-import { createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger } from 'src/common/services/request.service';
 
 /** Everything {@link MediaHelper.storageBytes} needs, and nothing else, per media row. */
 type MediaStorageRow = Pick<
@@ -25,10 +25,6 @@ type MediaStorageRow = Pick<
 
 @Processor(USER_METRICS_QUEUE)
 export class UserExtraDataProcessor extends GlobalProcessor {
-  private readonly logger = createApiLogger({
-    channel: 'user-extra-data',
-  });
-
   constructor(
     private readonly userExtraDataRepository: UserExtraDataRepository,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -48,7 +44,7 @@ export class UserExtraDataProcessor extends GlobalProcessor {
   }
 
   private async computeUserMetrics(userId: number) {
-    const log = this.logger.name('metrics');
+    const log = apiLogger('user-extra-data', { operation: 'metrics' });
     try {
       log.info(`Starting metrics update for user ${userId}`);
 

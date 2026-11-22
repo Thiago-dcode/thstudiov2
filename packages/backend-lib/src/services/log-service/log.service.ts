@@ -1,24 +1,22 @@
-import os from "node:os";
-import { RequestLogContext } from "@repo/common-lib/types/request";
+
 import {
-    DEFAULT_LOG_FORMAT,
-    LoggerConfig,
-    LogEntry,
-    LogChannel,
-    LogFormat,
+
     LogLevel,
-    LogLineFields,
+
     LogOptions,
-    LogServiceType,
     Resolvable,
+    LogContext,
+
+    LogObjectEntry,
+    LogEntryBase,
+    LogConfig,
+
 } from "./types";
 import { redactLogOptions } from "./helpers/redact";
 import { LogBuffer } from "./buffers/log.buffer";
-import { getLogProcessService } from "./helpers/process-service";
 
-const DEFAULT_CHANNEL: LogChannel = 'system';
 const UNKNOWN_SERVICE = 'unknown';
-const REPLICA_MAX_LENGTH = 64;
+
 
 /** The function form called, the value form as is. A throwing function gives `null`: the line is never lost. */
 function resolve<T>(value: Resolvable<T | null> | undefined, key: string): T | null {
@@ -31,41 +29,38 @@ function resolve<T>(value: Resolvable<T | null> | undefined, key: string): T | n
     }
 }
 
-export class LogService {
+export class LogService<T extends LogObjectEntry, E extends LogEntryBase> {
 
-    protected readonly config: LoggerConfig;
-    protected readonly logBuffer: LogBuffer;
+    protected readonly config: LogConfig<T>;
+    protected readonly logBuffer: LogBuffer<E>;
 
     constructor(
-        config: LoggerConfig,
-        logBuffer: LogBuffer
+        config: LogConfig<T>,
+        logBuffer: LogBuffer<E>,
+        protected readonly entryBuilder: (logContext: LogContext, globalContext?: T) => E = (logContext, globalContext) => {
+
+            const { logOptions, timestamp, ...rest } = logContext;
+            const entry = {
+                timestamp: timestamp.toISOString(),
+                ...rest
+            } as E;
+
+            if (logOptions) {
+
+                entry.options = redactLogOptions(logOptions);
+            }
+            if (globalContext) {
+
+                entry.globalContext = redactLogOptions(globalContext);
+
+            }
+            return entry;
+        }
     ) {
-        // Own the config: callers pass the shared `logConfig.*` objects, and the setters and
-        // builders below mutate `this.config`.
+        // Immutable: a shallow copy, so a caller mutating its own config object later cannot
+        // change a logger that is already built (and shared).
         this.config = { ...config };
         this.logBuffer = logBuffer;
-    }
-
-    /** Mutates this instance: never call it on a shared or DI logger, set the channel in config. */
-    public channel(channel: LogChannel) {
-        this.config.channel = channel;
-        return this;
-    }
-
-    /** Mutates this instance: never call it on a shared or DI logger. */
-    public service(service: LogServiceType) {
-        this.config.service = service;
-        return this;
-    }
-
-    /** Sets the line's `operation`. Mutates this instance: on a shared logger pass `{ operation }` per call. */
-    public name(name: string) {
-        this.config.name = name;
-        return this;
-    }
-
-    set id(id: Resolvable<string | null>) {
-        this.config.id = id;
     }
 
     /** The trace id, with the function form resolved. */
@@ -73,57 +68,83 @@ export class LogService {
         return resolve(this.config.id, 'id');
     }
 
-    set request(request: Resolvable<RequestLogContext | null>) {
-        this.config.request = request;
+    /** The request, read from the config function on every line. A throwing function gives `undefined`: the line is never lost. */
+    getGlobalContext(logContext: LogContext): T | undefined {
+        try {
+            return this.config.globalContext?.(logContext);
+        } catch (error) {
+            console.error('LogService: resolving `globalContext` failed', error);
+            return undefined;
+        }
     }
 
-    /** The request, with the function form resolved. */
-    get request(): RequestLogContext | null {
-        return resolve(this.config.request, 'request');
+    public info(message: string, options?: LogOptions): this {
+        return this.log('info', message, options);
     }
 
-    public info(message: string, options?: LogOptions, fields?: LogLineFields): this {
-        return this.log('info', message, options, fields);
+    public error(message: string, options?: LogOptions): this {
+        return this.log('error', message, options);
     }
 
-    public error(message: string, options?: LogOptions, fields?: LogLineFields): this {
-        return this.log('error', message, options, fields);
+    public warn(message: string, options?: LogOptions): this {
+        return this.log('warn', message, options);
     }
 
-    public warn(message: string, options?: LogOptions, fields?: LogLineFields): this {
-        return this.log('warn', message, options, fields);
+    public debug(message: string, options?: LogOptions): this {
+        return this.log('debug', message, options);
     }
 
-    public debug(message: string, options?: LogOptions, fields?: LogLineFields): this {
-        return this.log('debug', message, options, fields);
+    public success(message: string, options?: LogOptions): this {
+        return this.log('success', message, options);
     }
 
-    public success(message: string, options?: LogOptions, fields?: LogLineFields): this {
-        return this.log('success', message, options, fields);
-    }
-
-    public critical(message: string, options?: LogOptions, fields?: LogLineFields): this {
-        return this.log('critical', message, options, fields);
+    public critical(message: string, options?: LogOptions): this {
+        return this.log('critical', message, options);
     }
 
     /**
      * Builds the line now (timestamp, config, `id`/`request` read in the caller's request), queues
      * it in the buffer, and fires the callback right away: a callback never waits for a flush.
      */
-    protected log(level: LogLevel, message: string, options?: LogOptions, fields?: LogLineFields): this {
-        const entry = this.buildLogEntry(level, message, options, fields, new Date());
-        this.logBuffer.add(entry);
-        this.runCallback(entry);
+    protected log(level: LogLevel, message: string, options?: LogOptions): this {
+
+        const logContext: LogContext = {
+            timestamp: new Date(),
+            level,
+            message,
+            format: this.config.format ?? 'json',
+            service: resolve(this.config.service, 'service') ?? UNKNOWN_SERVICE,
+            id: this.id,
+            logOptions: this.withDefaults(options),
+
+        }
+
+        // Read once: the entry and the callback must see the same request.
+        const globalContext = this.getGlobalContext(logContext);
+        const entry = this.entryBuilder(logContext, globalContext);
+
+        this.logBuffer.add(logContext, entry);
+        this.runCallback(logContext, globalContext);
         return this;
     }
 
+    /** The config's `defaultOptions` under the call's options. An Error is flattened so it can merge. */
+    private withDefaults(options?: LogOptions): LogOptions | undefined {
+        const defaults = this.config.defaultOptions;
+        if (!defaults) return options;
+        if (options instanceof Error) {
+            return { ...defaults, name: options.name, message: options.message, stack: options.stack };
+        }
+        return { ...defaults, ...options };
+    }
+
     /** Not awaited by anyone. Tracked so `settle()` can wait for it before exit. */
-    private runCallback(entry: LogEntry): void {
+    private runCallback(logContext: LogContext, globalContext: T | undefined): void {
         const callback = this.config.callback;
         if (!callback) return;
         const run = (async () => {
             try {
-                await callback(entry);
+                await callback(logContext, globalContext as T);
             } catch (error) {
                 // Never log through a LogService here: a failing callback that logged could loop.
                 console.error('LogService: log callback failed', error);
@@ -132,50 +153,5 @@ export class LogService {
         this.logBuffer.track(run);
     }
 
-    protected getFormat(): LogFormat {
-        return this.config.format ?? DEFAULT_LOG_FORMAT;
-    }
 
-    protected buildLogEntry(
-        level: LogLevel,
-        message: string,
-        options: LogOptions | undefined,
-        fields: LogLineFields | undefined,
-        timestamp: Date,
-    ): LogEntry {
-        let extraInfo: unknown = undefined;
-        if (options) {
-            // Error instances stringify to "{}" (their fields are non-enumerable); extract them
-            // explicitly so stacks are preserved in the log instead of being silently dropped.
-            const serializable = options instanceof Error
-                ? { name: options.name, message: options.message, stack: options.stack }
-                : options;
-            // Callers hand us raw request bodies; redact here so no call site can leak a secret.
-            extraInfo = redactLogOptions(serializable);
-        }
-        const config = this.config;
-        const id = this.id;
-        const request = this.request;
-        // Built in the JSON key order. Absent optional keys are left out, never `null`.
-        const entry: LogEntry = {
-            // ISO 8601 UTC with ms: Loki parses it as RFC3339 and keeps same-second order.
-            timestamp: timestamp.toISOString(),
-
-            level: level.toUpperCase() as Uppercase<LogLevel>,
-            id,
-            // `service: null` (backend-lib's own loggers) writes under the running app's.
-            service: config.service ?? getLogProcessService() ?? UNKNOWN_SERVICE,
-            message,
-            method: request?.method ? parseInt(request.method) : undefined,
-            format: this.getFormat(),
-            replica: os.hostname().slice(0, REPLICA_MAX_LENGTH),
-            channel: config.channel ?? DEFAULT_CHANNEL,
-            operation: fields?.operation || config.name || null,
-
-        };
-        if (typeof fields?.status_code === 'number') entry.status_code = fields.status_code;
-        if (request) entry.request = redactLogOptions(request);
-        if (extraInfo !== undefined) entry.extraInfo = extraInfo;
-        return entry;
-    }
 }

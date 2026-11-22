@@ -1,6 +1,5 @@
 import { Processor } from '@nestjs/bullmq';
 import { MailService } from '@repo/backend-lib/services/mail-service';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { isFinalAttempt } from '@repo/backend-lib/utils';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import {
@@ -19,21 +18,25 @@ import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { AccountDeletionWarningMail } from '../users/mails/account-deletion-warning.mail';
 import { UserRepository } from '../users/users.repository';
 import { UserService } from '../users/users.service';
-import { apiLogConfig } from 'src/common/utils/api-logger';
+import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 /** URL prefix per user language — the web uses `localePrefix: "as-needed"` (EN has none). */
 const LOCALE_PREFIX: Record<string, string> = { EN: '', ES: '/es', PT: '/pt' };
 
 @Processor(ACCOUNT_DELETION_QUEUE)
 export class AccountDeletionProcessor extends GlobalProcessor {
+  private readonly logger: ApiLogger;
+
   constructor(
     private readonly userRepository: UserRepository,
     private readonly userService: UserService,
     private readonly mailService: MailService,
     private readonly accountDeletionWarningMail: AccountDeletionWarningMail,
-    private readonly logger: LogService,
+    private readonly requestService: RequestService,
   ) {
     super();
+    this.logger = this.requestService.log('account-deletion');
   }
 
   async process(job: Job<AccountDeletionJobInput>): Promise<unknown> {
@@ -74,7 +77,7 @@ export class AccountDeletionProcessor extends GlobalProcessor {
 
   /** Every early return is logged: "why didn't it warn" is the usual question. */
   private skip<T extends { reason: string }>(userId: number, result: T): T {
-    this.logger.info('Account deletion step skipped', { user_id: userId, step: 'warning', reason: result.reason }, { operation: 'warning' });
+    this.logger.info('Account deletion step skipped', { user_id: userId, step: 'warning', reason: result.reason, operation: 'warning' });
     return result;
   }
 
@@ -101,12 +104,12 @@ export class AccountDeletionProcessor extends GlobalProcessor {
         lang,
       ),
       { jobId: `account-deletion-warning-mail-${userId}-${requestedAt.getTime()}` },
-      apiLogConfig(),
+      this.requestService.traceCarrier(),
     );
     // Stamped after queuing the mail: a crash in between re-sends at most once on retry, whereas
     // stamping first could lose the warning entirely.
     await this.userRepository.markDeletionWarningSent(userId);
-    this.logger.info('Account deletion warning queued', { user_id: userId }, { operation: 'warning' });
+    this.logger.info('Account deletion warning queued', { user_id: userId, operation: 'warning' });
     return { sent: true };
   }
 }

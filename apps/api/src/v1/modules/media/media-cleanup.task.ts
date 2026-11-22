@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import {
   AI_MEDIA_QUEUE,
@@ -10,6 +9,7 @@ import {
 } from '@repo/common-lib/constants/queues';
 import type { Queue } from 'bullmq';
 import { CRON_LOCK_TTL, runCronExclusive } from 'src/common/utils/cron-lock';
+import { RequestService } from 'src/common/services/request.service';
 import { MediaRepository } from './media.repository';
 import { MediaService } from './media.service';
 
@@ -51,7 +51,7 @@ export class MediaCleanupTask {
   constructor(
     private readonly mediaRepository: MediaRepository,
     private readonly mediaService: MediaService,
-    private readonly logger: LogService,
+    private readonly requestService: RequestService,
   ) { }
 
   @Cron(CronExpression.EVERY_HOUR, { name: 'stale-media-cleanup', timeZone: 'UTC' })
@@ -61,8 +61,8 @@ export class MediaCleanupTask {
       try {
         await this.removeStaleMedia(queues);
       } catch (error) {
-        this.logger
-          .name('stale-media-cleanup')
+        this.requestService
+          .log('media', { operation: 'stale-media-cleanup' })
           .error(
             `Stale media cleanup failed - ${error instanceof Error ? error.message : 'Unknown error'}`,
             error,
@@ -74,7 +74,7 @@ export class MediaCleanupTask {
   }
 
   private async removeStaleMedia(queues: Map<string, Queue>) {
-    const log = this.logger.name('stale-media-cleanup');
+    const log = this.requestService.log('media', { operation: 'stale-media-cleanup' });
     const candidates = await this.mediaRepository.findStaleProcessing(
       MediaCleanupTask.STALE_AFTER_HOURS,
       MediaCleanupTask.MAX_PER_RUN,

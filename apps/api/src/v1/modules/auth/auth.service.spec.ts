@@ -33,7 +33,6 @@ import { RoleService } from '../roles/roles.service';
 import { InvitationLinkService } from '../invitation-links/invitation-link.service';
 import { UserBenefitService } from '../user-benefit/user-benefit.service';
 import { WaitListService } from '../wait-list/wait-list.service';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { ConflictException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { DbUniqueViolationException } from '@repo/database/exceptions';
 import { UsernameHistoryRepository } from '../username-history/username-history.repository';
@@ -89,7 +88,13 @@ describe('AuthService', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
     for (const key of Object.keys(requestService)) delete requestService[key];
-    Object.assign(requestService, { user_agent: 'UA', ip_address: '1.2.3.4', language: 'EN' });
+    Object.assign(requestService, {
+      user_agent: 'UA',
+      ip_address: '1.2.3.4',
+      language: 'EN',
+      log: () => logService,
+      traceCarrier: () => ({ service: 'api' }),
+    });
     userRepository.create.mockResolvedValue(user);
     userRepository.updateById.mockImplementation(async (_id, data) => ({ ...user, ...data }));
     invitationLinkService.validateCode.mockResolvedValue(invitationLink);
@@ -120,7 +125,6 @@ describe('AuthService', () => {
         { provide: InvitationLinkService, useValue: invitationLinkService },
         { provide: UserBenefitService, useValue: { create: jest.fn() } },
         { provide: WaitListService, useValue: waitListService },
-        { provide: LogService, useValue: logService },
         { provide: UsernameHistoryRepository, useValue: usernameHistoryRepository },
       ],
     }).compile();
@@ -185,8 +189,7 @@ describe('AuthService', () => {
           expect(userRepository.create).not.toHaveBeenCalled();
           expect(logService.warn).toHaveBeenCalledWith(
             'Registration rejected',
-            expect.objectContaining({ reason: 'invitation_email_mismatch', invitation_link_id: invitationLink.id }),
-            expect.objectContaining({ operation: 'register' }),
+            expect.objectContaining({ reason: 'invitation_email_mismatch', invitation_link_id: invitationLink.id, operation: 'register' }),
           );
         },
       );
@@ -218,8 +221,7 @@ describe('AuthService', () => {
       expect(invitationLinkService.releaseUse).toHaveBeenCalledWith(invitationLink.id);
       expect(logService.critical).toHaveBeenCalledWith(
         'Account creation failed unexpectedly',
-        expect.objectContaining({ step: 'create-user', error_name: 'Error' }),
-        expect.objectContaining({ operation: 'register' }),
+        expect.objectContaining({ step: 'create-user', error_name: 'Error', operation: 'register' }),
       );
     });
 
@@ -231,8 +233,7 @@ describe('AuthService', () => {
       // Kept `critical` on purpose: a duplicate past the request validation is worth a look.
       expect(logService.critical).toHaveBeenCalledWith(
         'Account creation failed',
-        expect.objectContaining({ reason: 'duplicate' }),
-        expect.objectContaining({ operation: 'register' }),
+        expect.objectContaining({ reason: 'duplicate', operation: 'register' }),
       );
     });
 
@@ -243,8 +244,7 @@ describe('AuthService', () => {
       expect(invitationLinkService.releaseUse).not.toHaveBeenCalled();
       expect(logService.critical).toHaveBeenCalledWith(
         'Account created but wait-list entry not redeemed',
-        expect.objectContaining({ step: 'wait-list', user_id: user.id }),
-        { operation: 'register' },
+        expect.objectContaining({ step: 'wait-list', user_id: user.id, operation: 'register' }),
       );
     });
 
@@ -728,8 +728,7 @@ describe('AuthService', () => {
       await expect(service.handleOauth2Callback(callback)).rejects.toMatchObject({ status: 401, message: 'oauth_exchange_failed' });
       expect(logService.warn).toHaveBeenCalledWith(
         'Login rejected',
-        expect.objectContaining({ reason: 'provider_exchange_failed', error_name: 'GaxiosError', provider_error: 'invalid_grant' }),
-        expect.objectContaining({ operation: 'login' }),
+        expect.objectContaining({ reason: 'provider_exchange_failed', error_name: 'GaxiosError', provider_error: 'invalid_grant', operation: 'login' }),
       );
       expect(logService.critical).not.toHaveBeenCalled();
       expect(userOauthProvidersService.findByProviderUserId).not.toHaveBeenCalled();

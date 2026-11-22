@@ -6,7 +6,6 @@ jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({
 jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({ paypal: {} }));
 
 import type { Queue } from 'bullmq';
-import type { LogService } from '@repo/backend-lib/services/log-service';
 import { WebhookProcessor } from './webhooks-processor.service';
 import type { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
 import type { PlanPricesService } from '../plan-prices/plan-prices.service';
@@ -26,7 +25,7 @@ const stripeSubscription = (status: string) => ({
 });
 
 const build = () => {
-  const logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn(), channel: () => logger };
+  const logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const planSubscriptionService = {
     findActiveSubscription: jest.fn().mockResolvedValue(null),
     findLatestSubscription: jest.fn().mockResolvedValue(null),
@@ -39,7 +38,7 @@ const build = () => {
     { findOneByStripeId: jest.fn().mockResolvedValue({ id: 7, stripe_customer_id: 'cus_1' }) } as unknown as UserService,
     {} as UserBenefitService,
     { deleteCached: jest.fn(), deleteManyCached: jest.fn() } as unknown as Helpers,
-    logger as unknown as LogService,
+    { log: () => logger, traceCarrier: () => ({ service: 'api' }) } as never,
     { add: jest.fn() } as unknown as Queue,
   );
   const log = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn(), with: () => log };

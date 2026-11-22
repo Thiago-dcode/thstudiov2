@@ -1,6 +1,5 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { MEDIA_UPDATE_QUEUE } from '@repo/common-lib/constants/queues';
 import { UserModule } from '../users/users.module';
 import { AuthCoreModule } from '../auth/auth-core.module';
@@ -10,7 +9,6 @@ import { MediaController } from './media.controller';
 import { MediaProcessor } from './media.processor';
 import { MediaRepository } from './media.repository';
 import { MediaService } from './media.service';
-import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   controllers: [MediaController],
@@ -19,14 +17,6 @@ import { createApiLogger } from 'src/common/utils/api-logger';
     MediaRepository,
     MediaProcessor,
     MediaCleanupTask,
-    {
-      provide: LogService,
-      useFactory: () => {
-        return createApiLogger({
-          channel: 'media',
-        });
-      },
-    },
   ],
   // No AiModule / UserExtraDataModule: moderation and the storage-quota check both belonged to
   // the multipart `POST /media`, which compressed uploads inline. They now run in the worker,

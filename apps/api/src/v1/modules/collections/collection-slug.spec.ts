@@ -57,7 +57,7 @@ describe('CollectionService slug derivation', () => {
       providers: [
         CollectionService,
         { provide: CollectionRepository, useValue: collectionRepository },
-        { provide: RequestService, useValue: { user: { id: USER_ID } } },
+        { provide: RequestService, useValue: { user: { id: USER_ID }, traceCarrier: () => ({ service: 'api' }) } },
         {
           provide: UserExtraDataService,
           useValue: { enforceUserLimits: jest.fn(), enforceEntityLimit: jest.fn() },

@@ -4,6 +4,7 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NextFunction, Request, Response } from 'express';
 import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 import { safeEqual } from 'src/common/utils/safe-equal';
 import { ENUMS } from '@repo/common-lib/constants/enums';
 import { EnumType } from '@repo/common-lib/constants/enums';
@@ -19,8 +20,7 @@ import {
   IP_ADDRESS_HEADER,
   APP_TOKEN_HEADER,
 } from '@repo/common-lib/constants/headers';
-import { LogService, redactRoutePath } from '@repo/backend-lib/services/log-service';
-import { createApiLogger } from 'src/common/utils/api-logger';
+import { redactRoutePath } from '@repo/backend-lib/services/log-service';
 const AVAILABLE_LANGUAGES = ENUMS.LANGUAGE_CODE;
 
 export const ACCESS_LOG_CHANNEL = 'api.access' as const;
@@ -33,17 +33,14 @@ export const ACCESS_LOG_SKIP_PATHS: ReadonlySet<string> = new Set(['/', '/health
 
 @Injectable()
 export class RequestMiddleware implements NestMiddleware {
-  /**
-   * Its own instance, not the DI `LogService`: builder calls mutate config, and the shared one
-   * is used by every request at once.
-   */
-  private readonly accessLog: LogService;
+  /** One logger for the middleware's lifetime: its id and request context are read per line. */
+  private readonly accessLog: ApiLogger;
 
   constructor(
     private readonly requestService: RequestService,
     private readonly configService: ConfigService,
   ) {
-    this.accessLog = createApiLogger({ channel: ACCESS_LOG_CHANNEL });
+    this.accessLog = this.requestService.log(ACCESS_LOG_CHANNEL);
   }
 
   async use(req: Request, res: Response, next: NextFunction) {
@@ -63,7 +60,7 @@ export class RequestMiddleware implements NestMiddleware {
         );
       req.headers[REQUEST_START_TIME] = Date.now().toString();
       // `close` listeners don't reliably run in the request's AsyncLocalStorage context; binding
-      // keeps `requestService.log` pointing at this request (including the user AuthGuard sets).
+      // keeps `requestService.logContext` pointing at this request (including the user AuthGuard sets).
       res.once(
         'close',
         AsyncResource.bind(() => this.logCompletion(req, res, path, startedAt)),
@@ -147,9 +144,9 @@ export class RequestMiddleware implements NestMiddleware {
         duration_ms: Math.round(performance.now() - startedAt),
         aborted,
       };
-      if (status_code >= 500) this.accessLog.error(message, extraInfo, { status_code });
-      else if (status_code >= 400 || aborted) this.accessLog.warn(message, extraInfo, { status_code });
-      else this.accessLog.info(message, extraInfo, { status_code });
+      if (status_code >= 500) this.accessLog.error(message, extraInfo);
+      else if (status_code >= 400 || aborted) this.accessLog.warn(message, extraInfo);
+      else this.accessLog.info(message, extraInfo);
     } catch (error) {
       console.error('Failed to write access log:', error);
     }

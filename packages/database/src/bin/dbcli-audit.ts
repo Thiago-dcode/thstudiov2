@@ -1,23 +1,31 @@
 import { randomUUID } from 'node:crypto';
-import { LogConfig } from '@repo/backend-lib/services/log-service';
-import { logBuffer, logConfig, logService } from '@repo/backend-lib/config/logging';
+import type { LogTraceCarrier } from '@repo/backend-lib/utils';
+import { logBuffer, logService } from '@repo/backend-lib/config/logging';
 
 /**
- * The trace id of the running command, set once per `audited` run. A dbcli process runs one
- * command, so module state is safe here (unlike in a server, where it would leak across requests).
+ * The running command: its trace id (the line's `id`) and name (the line's `request`), set once
+ * per `audited` run. A dbcli process runs one command, so module state is safe here (unlike in a
+ * server, where it would leak across requests).
  */
-let runId: string | null = null;
+let run: { id: string; command: string } | null = null;
+
+const runContext = () => (run ? { command: run.command } : undefined);
 
 /**
- * The dbcli log config with the run's trace id. Pass it to every `QueueHelper` call, so the jobs
- * a command enqueues (`db:backup`, `seo:requeue-user`) carry the id into the worker.
+ * The dbcli trace carrier, read when a line is written (the run starts after this is built).
+ * Pass it to every `QueueHelper` call, so the jobs a command enqueues (`db:backup`,
+ * `seo:requeue-user`) carry the run id into the worker.
  */
-export function dbcliLogConfig(): LogConfig {
-    return { ...logConfig.dbcli, id: () => runId };
+export function dbcliTraceCarrier(): LogTraceCarrier {
+    return { service: 'dbcli', id: () => run?.id ?? null, globalContext: runContext };
 }
 
 /** Audit trail for state-changing dbcli commands in `dbcli/<date>.log` (written by the worker). */
-const dbcliLog = logService.dbcli({ id: () => runId });
+const dbcliLog = logService.dbcli({
+    id: () => run?.id ?? null,
+    globalContext: runContext,
+    defaultOptions: { channel: 'system' },
+});
 
 /** Only these arguments are logged (snake_case). Never passwords or connection strings. */
 const LOGGED_ARGS = new Set([
@@ -69,13 +77,13 @@ export function audited<A extends unknown[]>(
     positionalNames: string[] = [],
 ): (...args: A) => Promise<void> {
     return async (...args: A) => {
-        runId = randomUUID();
+        run = { id: randomUUID(), command };
         const startedAt = Date.now();
-        dbcliLog.info('dbcli command started', loggedArgs(positionalNames, args), { operation: command });
+        dbcliLog.info('dbcli command started', { ...loggedArgs(positionalNames, args), operation: command });
         await logBuffer.settle();
         try {
             await action(...args);
-            dbcliLog.info('dbcli command finished', { duration_ms: Date.now() - startedAt }, { operation: command });
+            dbcliLog.info('dbcli command finished', { duration_ms: Date.now() - startedAt, operation: command });
         } catch (error) {
             dbcliLog.error(
                 'dbcli command failed',
@@ -83,8 +91,8 @@ export function audited<A extends unknown[]>(
                     duration_ms: Date.now() - startedAt,
                     error_name: error instanceof Error ? error.name : typeof error,
                     error_message: error instanceof Error ? error.message : String(error),
+                    operation: command,
                 },
-                { operation: command },
             );
             throw error;
         } finally {

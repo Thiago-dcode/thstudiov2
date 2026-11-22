@@ -4,10 +4,10 @@ import { FactoryStorageService } from '@repo/backend-lib/services/storage-servic
 import { s3PrivateStorageConfig } from '@repo/backend-lib/config/storage';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import type { CreateMediaUploadUrl } from '@repo/common-lib/types/media';
-import { createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger } from 'src/common/services/request.service';
 
 /** Upload lifecycle start. The presigned URL is a bearer write link and is never logged. */
-const uploadLog = createApiLogger({ channel: 'storage', name: 'upload-url' });
+const uploadLog = apiLogger('storage', { operation: 'upload-url' });
 
 /**
  * Expiry for a presigned upload URL. Deliberately short and independent of

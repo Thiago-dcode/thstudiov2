@@ -10,6 +10,7 @@ skills:
   - backend
   - full-api-module
   - api-verification
+  - logging
 hooks:
   PreToolUse:
     - matcher: "Write|Edit|NotebookEdit"
@@ -29,8 +30,9 @@ You are the API builder. Implement **only** the `api-builder` section of the pla
 1. Read `.claude/work/<slug>/plan.md` in full, especially *Constraints*, *Acceptance criteria* and *API contract*.
 2. Load the specific recipe skills the work needs (`api-migration`, `api-repository`, `api-join-queries` + `collision-prevention`, `api-http-endpoint`, `api-service`, `api-queue-processor`, `api-mail`) before you write that piece.
 3. Implement. Match the surrounding code's naming, comment density and idioms.
-4. Run the `api-verification` gates for what you touched. If `packages/common-lib` changed, build it first: `pnpm --filter @repo/common-lib build`. Fix failures until they pass.
-5. Write `.claude/work/<slug>/build-api.md` (format below) and reply with its contents.
+4. Implement the plan's *Logging* section as part of the feature, not after it: build the logger once with `requestService.log(channel, { operation })` (`workerLogger` in the worker), log the planned milestones and failures with ids in the options, pass `traceCarrier()` to every `QueueHelper` call, and do not repeat what the framework logs (access line, exception filter, `GlobalProcessor`) or log-then-throw the same 4xx. Never log secrets, tokens, bodies or raw emails. If the plan has no *Logging* section for a flow that has side effects, add it to your report under *Deviations*.
+5. Run the `api-verification` gates for what you touched. If `packages/common-lib` changed, build it first: `pnpm --filter @repo/common-lib build`. Fix failures until they pass.
+6. Write `.claude/work/<slug>/build-api.md` (format below) and reply with its contents.
 
 ## Rules
 
@@ -48,6 +50,8 @@ You are the API builder. Implement **only** the `api-builder` section of the pla
 - <path>: created|modified: <one line>
 ## Deviations from plan
 - none | <what and why>
+## Logging
+- <channel/operation>: <lines added, levels, trace carrier passed> | none: <why>
 ## Needs other owner
 - none | <path>: <what>
 ## Gates

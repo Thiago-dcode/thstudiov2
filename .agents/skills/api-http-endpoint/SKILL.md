@@ -17,6 +17,10 @@ Never generate full CRUD by default. If methods were not listed, ask: `Which met
 
 If the module or service is missing, add only what this endpoint needs (see related skills).
 
+## Logging
+
+The request is already logged (`api.access` per request, `api.error` for failures): the controller adds no log lines. Flow milestones belong in the service (see `.agents/skills/logging/SKILL.md`). Don't `log` then `throw` an `HttpException` in a guard or controller.
+
 ## After implementing
 
 If this is a middle change (not a typo fix), follow `.agents/skills/api-verification/SKILL.md`.

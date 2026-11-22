@@ -1,399 +1,56 @@
 ---
 name: marketing-seo-ux
-description: Marketing positioning, SEO optimization (technical + on-page + structured data), and UI/UX best practices. Use when building landing pages, optimizing for search engines (including AI search), improving user experience, designing for better conversions, fixing meta tags, adding structured data, configuring sitemaps, or any search engine optimization task.
+description: >-
+  SEO, metadata, sitemap, structured data and conversion rules for TH Studio's public pages
+  (apps/web). Use when building or changing a public page, landing page, metadata, OG/share
+  images, canonical or hreflang, sitemap, robots, noindex, redirects, JSON-LD, or copy meant
+  to rank or convert.
 ---
 
-# Marketing, SEO & UI/UX
+# Marketing, SEO & UX (public pages)
 
-## Core Philosophy
-In 2026, SEO and UX are inseparable. Optimizing for the user is the most effective way to optimize for search engines and AI models. Focus on **perceived performance**, **cognitive ease**, and **task completion**.
+SEO and UX are the same job: fast, clear pages that complete the user's task. Visual rules live in `frontend`, accessibility in `accessibility`. Generic JSON-LD shapes and the launch checklist are in `references/structured-data-and-checklist.md`.
 
----
+## Project SEO layer (use it, don't reinvent)
 
-## Marketing & Positioning
+All in `apps/web/src/lib/seo/`:
 
-- **Value Proposition**: Clearly state what problem you solve and for whom within the first 3 seconds (above the fold).
-- **Trust Signals**: Use consistent typography, adequate spacing, and high-quality visuals.
-- **Social Proof**: Strategically place testimonials, case studies, and partner logos.
-- **Call to Action (CTA)**: Use high-contrast, action-oriented buttons (e.g., "Start Free Trial" instead of "Submit").
+| Need | Use |
+|---|---|
+| Page metadata (title, description, canonical, hreflang, OG) | `buildSeoMetadata` (dynamic) / `buildStaticPageMetadata` (static); `languageAlternates(path)`, `localizedUrl(locale, path)` |
+| Private / signed-in pages | `buildPrivatePageMetadata` (noindex) |
+| Share image | `ogImage(src, alt)` → always via the **`/og-image.jpg`** route (1200×630 JPEG). Raw CDN images broke WhatsApp previews. |
+| Structured data | `json-ld.tsx` |
+| Sitemaps | `sitemap-source.ts` (sharded, `SITEMAP_REVALIDATE` 3600 s) with `app/sitemap.ts`, `app/sitemap_index.xml/route.ts` |
+| Indexable environment | `isIndexableEnv()` (`indexability.ts`) |
 
-**Examples:**
-- Good H1: "Streamline Your Team's Workflow with AI-Powered Task Management"
-- Bad H1: "Welcome to TaskMaster Pro" (vague, no keywords)
-- Good CTA: "Get Started for Free — No Credit Card Required"
-- Bad CTA: "Click Here"
+## Invariants (break these and rankings or privacy suffer)
 
----
+1. **Dev and preview must never be indexable.** `NODE_ENV` can't tell environments apart; gate robots, sitemap and meta robots on `isIndexableEnv()` (canonical host `a11studio.com`, fail-closed).
+2. **One public-visibility predicate per entity**, shared by the sitemap and the page's noindex decision, so a URL is listed if and only if it is indexable. Add or change a predicate in both at once.
+3. **Missing or hidden content returns a real 404** (`notFound()`), never a 200 shell. **Never put `loading.tsx` above public routes**: streaming a fallback makes soft 404s. (`atelier/` is private, so it may have one.)
+4. **Directory gate**: `/artists` and `/portfolios` stay hidden (404 and no entry points: nav, sitemap, links) until `isDirectoryOpen()` (`lib/directory-visibility.ts`) says so.
+5. **URL changes need redirects.** A renamed username or slug 301s from the old URL (`redirectToCurrentUsername`); never orphan an indexed URL.
+6. **Product scope is photographers.** Don't add other-discipline landing pages until there are enough real artists.
+7. Signed-out public HTML is cached at the edge; per-user content must not render into it (it is purged on change).
 
-## UI/UX Best Practices
+## Metadata and on-page rules
 
-- **Typography**: 16px–18px base font size, 1.5–1.75 line height for readability.
-- **Accessibility (a11y)**: Maintain high color contrast (WCAG AA/AAA). Ensure all interactive elements have labels and keyboard support.
-- **Mobile First**: Design for touch interactions first. Buttons must be at least 44×44px.
-- **Friction Reduction**: Minimize form fields. Avoid intrusive interstitials or layouts that shift unexpectedly (CLS).
-- **Behavioral Signals**: Minimize "pogo-sticking" by providing immediate value and clear navigation.
+- Unique `title` (50–60 chars, primary keyword first, brand last) and `description` (150–160 chars, with a reason to click) per page; one `<h1>` with the primary keyword; no skipped heading levels.
+- Canonical on every page, hreflang for each supported locale (`en`, `es`, `pt`) plus `x-default`.
+- Descriptive, lowercase, hyphenated slugs; no `?id=` URLs.
+- Images: `next/image`, descriptive `alt`, WebP/AVIF, `priority` only on the LCP image. Links use descriptive anchor text, never "click here".
+- JSON-LD: escape with `JSON.stringify(data).replace(/</g, "\\u003c")`. Mark up only what the page shows. Validate with Google's Rich Results Test.
+- Core Web Vitals: LCP < 2.5 s, CLS < 0.1, INP < 200 ms.
 
----
+## Marketing and conversion
 
-## SEO Fundamentals
+- State what the product does and for whom above the fold (an artist-facing value proposition in one line).
+- One primary CTA per view, action-specific ("Join the waitlist", not "Submit"). Accent colour is rationed (see `frontend`).
+- Put social proof (real artists and work) near conversion points. Short, confident, editorial copy with no jargon.
+- Write copy in all three locales through the i18n messages, never hard-coded.
+- For AI search: clear semantic HTML, a logical heading hierarchy, and accurate structured data.
 
-Search ranking factors (approximate influence):
+## Where the status lives
 
-| Factor | Influence | Covered Here |
-|--------|-----------|--------------|
-| Content quality & relevance | ~40% | Partial (structure) |
-| Backlinks & authority | ~25% | ✗ |
-| Technical SEO | ~15% | ✓ |
-| Page experience (Core Web Vitals) | ~10% | Partial |
-| On-page SEO | ~10% | ✓ |
-
----
-
-## Technical SEO
-
-### Next.js Metadata API
-
-Use the built-in Metadata API for automatic SEO asset generation:
-
-```tsx
-// app/layout.tsx
-import { Metadata } from "next";
-
-export const metadata: Metadata = {
-  metadataBase: new URL("https://your-site.com"),
-  title: {
-    default: "Your Site Name",
-    template: "%s | Your Site Name",
-  },
-  description: "Your site description",
-};
-```
-
-**Key Next.js SEO files:**
-- `sitemap.ts` — serves `/sitemap.xml`
-- `robots.ts` — serves `/robots.txt`
-- `manifest.ts` — serves `/manifest.webmanifest`
-
-**Metadata best practices:**
-- Always set `metadataBase` for proper URL resolution
-- Use `title.template` in root layout for consistent branding
-- Define unique `title` and `description` for each page
-- Set canonical URLs using `alternates.canonical`
-- Use `generateMetadata` for dynamic routes
-
-### Dynamic Sitemaps
-
-```ts     
-// app/sitemap.ts
-import { MetadataRoute } from "next";
-
-export default function sitemap(): MetadataRoute.Sitemap {
-  return [
-    { url: "https://example.com/", lastModified: new Date(), changeFrequency: "daily", priority: 1.0 },
-    { url: "https://example.com/products", lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
-  ];
-}
-```
-
-**Sitemap best practices:**
-- Max 50,000 URLs or 50MB per sitemap
-- Include only canonical, indexable URLs
-- Update `lastModified` when content changes
-- Submit to Google Search Console
-
-### Robots.txt
-
-```ts
-// app/robots.ts
-import { MetadataRoute } from "next";
-
-export default function robots(): MetadataRoute.Robots {
-  return {
-    rules: { userAgent: "*", allow: "/", disallow: ["/admin/", "/api/", "/private/"] },
-    sitemap: "https://example.com/sitemap.xml",
-  };
-}
-```
-
-### Crawlability & Canonical URLs
-
-```html
-<!-- Prevent duplicate content -->
-<link rel="canonical" href="https://example.com/current-page">
-
-<!-- Meta robots -->
-<meta name="robots" content="index, follow">
-<meta name="robots" content="noindex, nofollow"> <!-- for private pages -->
-<meta name="robots" content="max-snippet:150, max-image-preview:large">
-```
-
-### URL Structure
-
-```
-✅ https://example.com/products/blue-widget
-✅ https://example.com/blog/how-to-use-widgets
-
-❌ https://example.com/p?id=12345
-❌ https://example.com/products/item/category/blue-widget-2024-sale
-```
-
-**URL guidelines:** hyphens not underscores · lowercase · under 75 characters · include target keywords · HTTPS always
-
-### Security Headers (SEO trust signals)
-
-```
-Strict-Transport-Security: max-age=31536000; includeSubDomains
-X-Content-Type-Options: nosniff
-X-Frame-Options: DENY
-```
-
----
-
-## On-Page SEO
-
-### Title Tags
-
-```html
-<!-- ❌ --> <title>Page</title>
-<!-- ✅ --> <title>Blue Widgets for Sale | Premium Quality | Example Store</title>
-```
-
-Guidelines: 50–60 characters · primary keyword near start · unique per page · brand name at end (except homepage)
-
-### Meta Descriptions
-
-```html
-<!-- ✅ -->
-<meta name="description" content="Shop premium blue widgets with free shipping. 30-day returns. Rated 4.9/5 by 10,000+ customers. Order today and save 20%.">
-```
-
-Guidelines: 150–160 characters · include primary keyword · compelling CTA · unique per page
-
-### Heading Structure
-
-```html
-<!-- ✅ Proper hierarchy -->
-<h1>Blue Widgets - Premium Quality</h1>
-  <h2>Product Features</h2>
-    <h3>Durability</h3>
-    <h3>Design</h3>
-  <h2>Customer Reviews</h2>
-  <h2>Pricing</h2>
-```
-
-Single `<h1>` per page · logical hierarchy (don't skip levels) · include keywords naturally
-
-### Image SEO
-
-```html
-<!-- ✅ -->
-<img src="blue-widget-product-photo.webp"
-     alt="Blue widget with chrome finish, side view showing control panel"
-     width="800" height="600" loading="lazy">
-```
-
-Guidelines: descriptive filenames · meaningful alt text · WebP/AVIF format · lazy load below-fold images · `priority` on LCP images via `next/image`
-
-### Internal Linking
-
-```html
-<!-- ❌ --> <a href="/products">Click here</a>
-<!-- ✅ --> <a href="/products/blue-widgets">Browse our blue widget collection</a>
-```
-
-Use descriptive anchor text with keywords · use breadcrumbs for hierarchy · fix broken links promptly
-
----
-
-## Structured Data (JSON-LD)
-
-Always escape to prevent XSS: `JSON.stringify(data).replace(/</g, "\\u003c")`
-
-Validate at [Google Rich Results Test](https://search.google.com/test/rich-results) and [Schema.org Validator](https://validator.schema.org/).
-
-### Organization
-
-```html
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "Example Company",
-  "url": "https://example.com",
-  "logo": "https://example.com/logo.png",
-  "sameAs": ["https://twitter.com/example", "https://linkedin.com/company/example"],
-  "contactPoint": { "@type": "ContactPoint", "telephone": "+1-555-123-4567", "contactType": "customer service" }
-}
-</script>
-```
-
-### Article
-
-```html
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Article",
-  "headline": "How to Choose the Right Widget",
-  "description": "Complete guide to selecting widgets for your needs.",
-  "image": "https://example.com/article-image.jpg",
-  "author": { "@type": "Person", "name": "Jane Smith", "url": "https://example.com/authors/jane-smith" },
-  "publisher": { "@type": "Organization", "name": "Example Blog", "logo": { "@type": "ImageObject", "url": "https://example.com/logo.png" } },
-  "datePublished": "2024-01-15",
-  "dateModified": "2024-01-20"
-}
-</script>
-```
-
-Set `og:type` to `"article"` · include `article:published_time`, `article:author`, `article:tags`
-
-### Product
-
-```html
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Product",
-  "name": "Blue Widget Pro",
-  "image": "https://example.com/blue-widget.jpg",
-  "description": "Premium blue widget with advanced features.",
-  "brand": { "@type": "Brand", "name": "WidgetCo" },
-  "offers": { "@type": "Offer", "price": "49.99", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://example.com/products/blue-widget" },
-  "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "reviewCount": "1250" }
-}
-</script>
-```
-
-### FAQ
-
-```html
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    { "@type": "Question", "name": "What colors are available?", "acceptedAnswer": { "@type": "Answer", "text": "Our widgets come in blue, red, and green." } },
-    { "@type": "Question", "name": "What is the warranty?", "acceptedAnswer": { "@type": "Answer", "text": "All widgets include a 2-year warranty." } }
-  ]
-}
-</script>
-```
-
-### Breadcrumbs
-
-```html
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://example.com" },
-    { "@type": "ListItem", "position": 2, "name": "Products", "item": "https://example.com/products" },
-    { "@type": "ListItem", "position": 3, "name": "Blue Widgets", "item": "https://example.com/products/blue-widgets" }
-  ]
-}
-</script>
-```
-
----
-
-## Mobile SEO
-
-```html
-<!-- ✅ Responsive viewport -->
-<meta name="viewport" content="width=device-width, initial-scale=1">
-```
-
-```css
-/* ✅ Adequate tap target */
-.mobile-friendly-link {
-  padding: 12px;
-  font-size: 16px;
-  min-height: 48px;
-  min-width: 48px;
-}
-
-/* ✅ Readable without zooming */
-body {
-  font-size: 16px;
-  line-height: 1.5;
-}
-```
-
----
-
-## International SEO
-
-```html
-<!-- Hreflang for multi-language sites -->
-<link rel="alternate" hreflang="en" href="https://example.com/page">
-<link rel="alternate" hreflang="es" href="https://example.com/es/page">
-<link rel="alternate" hreflang="x-default" href="https://example.com/page">
-
-<!-- Language declaration -->
-<html lang="en">
-```
-
----
-
-## AI Search Optimization
-
-- Use structured data (Schema.org) so Google AI Overview, ChatGPT, and Perplexity can understand your content.
-- Organize content into topic clusters with pillar pages and supporting articles.
-- Use semantic HTML with a logical heading hierarchy.
-- Prioritize Core Web Vitals: LCP and CLS are key signals.
-
----
-
-## Implementation Checklist
-
-### Critical
-- [ ] HTTPS enabled
-- [ ] `robots.txt` allows crawling
-- [ ] No `noindex` on important pages
-- [ ] Title tags present and unique
-- [ ] Single `<h1>` per page with primary keyword
-
-### High Priority
-- [ ] Meta descriptions present and compelling
-- [ ] Sitemap generated and submitted
-- [ ] Canonical URLs set on every page
-- [ ] Open Graph and Twitter cards configured
-- [ ] Mobile-responsive layout verified
-- [ ] Core Web Vitals passing (LCP, CLS)
-
-### Medium Priority
-- [ ] Structured data implemented for key entities
-- [ ] Internal linking strategy in place
-- [ ] All images have descriptive `alt` text
-- [ ] Descriptive URL slugs (no `?id=` parameters)
-- [ ] Breadcrumb navigation present
-- [ ] Schema markup validated
-
-### Ongoing
-- [ ] Fix crawl errors in Google Search Console
-- [ ] Update sitemap when content changes
-- [ ] Monitor ranking changes
-- [ ] Check for broken links
-
----
-
-## Tools
-
-| Tool | Use |
-|------|-----|
-| Google Search Console | Monitor indexing, fix crawl issues |
-| Google PageSpeed Insights | Performance + Core Web Vitals |
-| Rich Results Test | Validate structured data |
-| Lighthouse | Full SEO + performance audit |
-| Screaming Frog | Crawl analysis |
-| Facebook Sharing Debugger | Test Open Graph previews |
-| LinkedIn Post Inspector | Test social card previews |
-
----
-
-## References
-
-- [Google Search Central](https://developers.google.com/search)
-- [Schema.org](https://schema.org/)
-- [Next.js Metadata API](https://nextjs.org/docs/app/building-your-application/optimizing/metadata)
+`docs/seo/CLAUDE.md` (shipped snapshot and open code tasks) and `docs/seo/YOU.md` (tasks for the owner). Move finished items into "Shipped".

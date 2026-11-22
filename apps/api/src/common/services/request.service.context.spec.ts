@@ -7,7 +7,7 @@ describe('RequestService log context', () => {
 
   it('AC-7: inside run, an api logger carries the request id and request object; outside, neither', async () => {
     const service = new RequestService(requestStorage);
-    const logger = consoleLogger({ channel: 'users' });
+    const logger = consoleLogger({ defaultOptions: { channel: 'users' } });
     const lines: any[] = [];
     jest.spyOn(console, 'log').mockImplementation((line: unknown) => { lines.push(JSON.parse(String(line))); });
     let requestId: string | null = null;
@@ -19,7 +19,7 @@ describe('RequestService log context', () => {
     logger.info('outside');
     expect(lines[0].id).toBe(requestId);
     expect(lines[0].request).toMatchObject({ id: requestId, method: 'POST' });
-    expect(lines[1].id).toBeNull();
+    expect(lines[1].id).toBe(''); // buildLogEntry writes '' when there is no trace id
     expect('request' in lines[1]).toBe(false);
   });
 
@@ -28,13 +28,13 @@ describe('RequestService log context', () => {
     await service.run(() => {
       expect(currentRequestId()).toBe(service.requestId);
       service.method = 'DELETE';
-      expect(service.log!.method).toBe('DELETE');
+      expect(service.logContext!.method).toBe('DELETE');
     });
   });
 
   it('AC-7: concurrent requests keep their own ids on one shared logger', async () => {
     const service = new RequestService(requestStorage);
-    const logger = consoleLogger({ channel: 'users' });
+    const logger = consoleLogger({ defaultOptions: { channel: 'users' } });
     const lines: any[] = [];
     jest.spyOn(console, 'log').mockImplementation((line: unknown) => { lines.push(JSON.parse(String(line))); });
     const seen: Record<string, string | null> = {};
@@ -48,5 +48,20 @@ describe('RequestService log context', () => {
     await new Promise((r) => setTimeout(r, 40));
     for (const line of lines) expect(line.id).toBe(seen[line.message]);
     expect(seen.slow).not.toBe(seen.fast);
+  });
+
+  it('routes warn, error and critical lines to console.warn / console.error, others to console.log', () => {
+    const logger = consoleLogger({ defaultOptions: { channel: 'users' } });
+    const out = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const err = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    logger.info('i');
+    logger.warn('w');
+    logger.error('e');
+    logger.critical('c');
+    expect(out).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(err).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(String(warn.mock.calls[0][0]))).toMatchObject({ level: 'WARN', message: 'w' });
   });
 });

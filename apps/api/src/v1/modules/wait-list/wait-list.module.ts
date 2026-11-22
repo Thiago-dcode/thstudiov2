@@ -1,6 +1,5 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { WAIT_LIST_QUEUE } from '@repo/common-lib/constants/queues';
 import { BenefitsModule } from '../benefits/benefits.module';
 import { InvitationLinkModule } from '../invitation-links/invitation-link.module';
@@ -18,7 +17,6 @@ import { WaitListService } from './wait-list.service';
 import { WaitListTask } from './wait-list.task';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 import { UserAuthDevicesModule } from '../user-auth-devices/user-auth-devices.module';
-import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [
@@ -41,14 +39,6 @@ import { createApiLogger } from 'src/common/utils/api-logger';
     WaitListFollowUpMail,
     WaitListAdminNotificationMail,
     WaitListTask,
-    {
-      provide: LogService,
-      useFactory: () => {
-        return createApiLogger({
-          channel: 'wait-list',
-        });
-      },
-    },
   ],
   exports: [WaitListService],
 })

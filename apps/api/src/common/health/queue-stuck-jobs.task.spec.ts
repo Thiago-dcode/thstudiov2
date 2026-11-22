@@ -289,9 +289,9 @@ describe('QueueStuckJobsTask', () => {
     const { task } = build({ prioritized: [{ id: 'evt-1', timestamp: NOW - 3 * MIN, data: { customer: 'a@b.com' } }] });
     await task.run();
     expect(mockLog.critical).toHaveBeenCalledTimes(1);
-    const [message, extra, opts] = mockLog.critical.mock.calls[0];
+    const [message, extra] = mockLog.critical.mock.calls[0];
     expect(message).toBe('Queue "stripe-webhooks" has stuck jobs (a11studio.com)');
-    expect(opts).toMatchObject({ operation: 'stuck-jobs' });
+    expect(extra).toMatchObject({ operation: 'stuck-jobs' });
     expect(extra).toMatchObject({
       queue: 'stripe-webhooks',
       oldest_pending_age_s: 180,
@@ -421,9 +421,9 @@ describe('QueueStuckJobsTask', () => {
     await task.run();
 
     expect(mockLog.critical).toHaveBeenCalledTimes(1);
-    const [message, extra, opts] = mockLog.critical.mock.calls[0];
+    const [message, extra] = mockLog.critical.mock.calls[0];
     expect(message).toBe('Queue "stripe-webhooks" has new failed jobs (a11studio.com)');
-    expect(opts).toMatchObject({ operation: 'failed-jobs' });
+    expect(extra).toMatchObject({ operation: 'failed-jobs' });
     expect(extra.count).toBe(1);
     expect(extra.jobs[0]).toMatchObject({ id: 'f1', name: 'checkout.session.completed' });
     const serialized = JSON.stringify(allLogCalls());

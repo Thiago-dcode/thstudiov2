@@ -4,8 +4,20 @@ import { UserAuth } from '@repo/common-lib/types/auth';
 import { Pagination } from '@repo/common-lib/types/response';
 import { RequestLanguage, RequestLogContext, RequestStore } from '@repo/common-lib/types/request';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
-import { requestLogContextOf } from './request-storage';
+import { requestLogContextOf, requestStorage } from './request-storage';
+import { logService } from '@repo/backend-lib/config/logging';
+import type { LogConfig } from '@repo/backend-lib/services/log-service';
+import type { LogChannel } from '@repo/common-lib/types/log';
 
+/** The api's logger: a `LogService` over the process buffer with the api's entry shape. */
+export type ApiLogger = ReturnType<typeof logService.api>;
+
+export type RequestLogOptions = {
+  /** Default `operation` of every line of this logger; a call's own `operation` wins. */
+  operation?: string;
+  /** A fixed trace id (a Stripe event, say) instead of the current request's. */
+  traceId?: string | null;
+};
 
 
 @Injectable()
@@ -14,9 +26,9 @@ export class RequestService {
   constructor(protected readonly storage: AsyncLocalStorage<RequestStore>) { }
 
   /**
-   * Called once per request in the middleware to establish an isolated store. Api loggers
-   * (`createApiLogger`) read its id and request context per line, and `apiLogConfig()` carries
-   * the id into every job the request enqueues.
+   * Called once per request in the middleware to establish an isolated store. Loggers from
+   * `log()` read its id and request context per line, and `traceCarrier()` carries the id into
+   * every job the request enqueues.
    */
   async run(callback: (self: RequestService) => void): Promise<void> {
     const requestId = await generateUUID();
@@ -30,12 +42,40 @@ export class RequestService {
     return this.storage.getStore();
   }
 
+  /**
+   * A new, immutable api logger bound to this request: the id and the HTTP context are functions,
+   * so every line reads the store as it is then (the HTTP context after the middleware filled it
+   * in). Outside HTTP (a job, a cron run) there is no request context. Build it once (constructor,
+   * field, or a per-flow local), never per line.
+   */
+  log(channel: LogChannel, { operation, traceId }: RequestLogOptions = {}): ApiLogger {
+    return logService.api({
+      id: traceId !== undefined ? traceId : () => this.requestId,
+      globalContext: () => this.logContext ?? undefined,
+      // The channel is this project's concept, not the LogService's: it is just a default option.
+      defaultOptions: operation ? { channel, operation } : { channel },
+    });
+  }
+
+  /**
+   * The trace carrier for `QueueHelper.*` / `enqueueJob(s)` / `runJobWithLogs({ log })` /
+   * `logPermanentJobFailure`, so a job carries the trace id onward. Never `defaultOptions`, and
+   * never an explicit `callback: undefined` (it would override the factory's critical mail).
+   */
+  traceCarrier(traceId?: string | null): Partial<LogConfig> {
+    return {
+      service: 'api',
+      id: traceId !== undefined ? traceId : () => this.requestId,
+      globalContext: () => this.logContext ?? undefined,
+    };
+  }
+
   get requestId(): string | null {
     return this.store?.requestId ?? null;
   }
 
   /** The HTTP request's log context, or `null` outside one (see `requestLogContextOf`). */
-  get log(): RequestLogContext | null {
+  get logContext(): RequestLogContext | null {
     return requestLogContextOf(this.store);
   }
 
@@ -113,4 +153,16 @@ export class RequestService {
   set pagination(pagination: Pagination | null) {
     if (this.store) this.store.pagination = pagination;
   }
+}
+
+/**
+ * Non-DI twins of `RequestService.log` / `traceCarrier` over the process `requestStorage`: for
+ * `main.ts`, cron locks, module-level constants and static fields, where there is no injection.
+ */
+export function apiLogger(channel: LogChannel, options?: RequestLogOptions): ApiLogger {
+  return new RequestService(requestStorage).log(channel, options);
+}
+
+export function apiTraceCarrier(traceId?: string | null): Partial<LogConfig> {
+  return new RequestService(requestStorage).traceCarrier(traceId);
 }

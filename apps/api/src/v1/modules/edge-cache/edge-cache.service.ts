@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { UnrecoverableError } from 'bullmq';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import { EDGE_PURGE_LOCALE_PREFIXES } from '@repo/common-lib/constants/edge-cache';
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import { canonicalProductionOrigin } from 'src/common/utils/canonical-origin';
 import { ArtistPublicPagesChangedEvent } from './events/artist-public-pages-changed.event';
-import { apiLogConfig } from 'src/common/utils/api-logger';
+import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 /** Cloudflare's per-request cap on purge-by-prefix. */
 export const MAX_PREFIXES_PER_REQUEST = 100;
@@ -31,7 +31,11 @@ type CloudflareResponse = { success?: boolean; errors?: { code?: number }[] };
  */
 @Injectable()
 export class EdgeCacheService {
-  constructor(private readonly logger: LogService) {}
+  private readonly logger: ApiLogger;
+
+  constructor(private readonly requestService: RequestService) {
+    this.logger = this.requestService.log('edge-cache');
+  }
 
   /**
    * Never throws: a purge is an optimisation (the edge TTL is the fallback), so a Redis outage
@@ -43,13 +47,12 @@ export class EdgeCacheService {
       await QueueHelper.createPurgeArtistEdgeCacheJob({
         user_id: event.userId,
         ...(event.usernames?.length ? { usernames: event.usernames } : {}),
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
     } catch (error) {
-      this.logger
-        .name('enqueue')
-        .error(
-          `Could not enqueue the edge purge of user [${event.userId}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
-        );
+      this.logger.error(
+        `Could not enqueue the edge purge of user [${event.userId}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { operation: 'enqueue' },
+      );
     }
   }
 

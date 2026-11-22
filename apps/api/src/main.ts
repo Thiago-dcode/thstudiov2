@@ -8,7 +8,7 @@ import { spawn } from 'child_process';
 import { API_ERROR_CHANNEL, logBuffer, setLogProcessService } from '@repo/backend-lib/config/logging';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
 import { ApiHealthService } from './common/health/api-health.service';
-import { createApiLogger } from './common/utils/api-logger';
+import { apiLogger } from './common/services/request.service';
 
 // Before anything logs: every line of this process, backend-lib's own included, goes under `api/`.
 // The service is read per line, so loggers built at import time pick it up too.
@@ -17,10 +17,10 @@ setLogProcessService('api');
 /** Upper bound for settling the log buffer on shutdown, so a stuck push can't hold the exit. */
 const SETTLE_LOGS_TIMEOUT_MS = 5000;
 
-const bootstrapLogger = createApiLogger({ channel: 'api.bootstrap' });
+const bootstrapLogger = apiLogger('api.bootstrap');
 
 /** Fatal process errors only — same channel as HTTP errors in ResponseExceptionFilter. */
-const fatalErrorLogger = createApiLogger({ channel: API_ERROR_CHANNEL });
+const fatalErrorLogger = apiLogger(API_ERROR_CHANNEL);
 
 function serializeError(error: unknown) {
   if (error instanceof Error) {
@@ -30,12 +30,12 @@ function serializeError(error: unknown) {
 }
 
 process.on('uncaughtException', (error: Error) => {
-  fatalErrorLogger.name('uncaught-exception').critical('💥 Uncaught Exception:', serializeError(error));
+  fatalErrorLogger.critical('💥 Uncaught Exception:', { operation: 'uncaught-exception', ...serializeError(error) });
   console.error('💥 Uncaught Exception:', error);
 });
 
 process.on('unhandledRejection', (reason: unknown) => {
-  fatalErrorLogger.name('unhandled-rejection').critical('💥 Unhandled Rejection:', serializeError(reason));
+  fatalErrorLogger.critical('💥 Unhandled Rejection:', { operation: 'unhandled-rejection', ...serializeError(reason) });
   console.error('💥 Unhandled Rejection:', reason);
 });
 

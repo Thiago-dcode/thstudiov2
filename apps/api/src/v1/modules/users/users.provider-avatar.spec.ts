@@ -31,10 +31,9 @@ const build = ({ currentAvatar = null as string | null, setResult = true, modera
   const service = new UserService(
     userRepository as never,
     eventEmitter as never,
-    logService as never,
     {} as never, // mailService
     helpers as never,
-    {} as never, // requestService
+    { log: () => logService, traceCarrier: () => ({ service: 'api' }) } as never, // requestService
     {} as never, // notifyNewUserMail
     aiService as never,
     {} as never, // profileStatusService
@@ -75,7 +74,7 @@ describe('UserService.importProviderAvatar', () => {
       UPDATE_PROFILE_STATUS_EVENT,
       expect.objectContaining({ userId: USER.id, fields: { has_avatar_field: true } }),
     );
-    expect(logService.success).toHaveBeenCalledWith('Provider avatar imported', { user_id: 3, provider: 'google' }, expect.anything());
+    expect(logService.success).toHaveBeenCalledWith('Provider avatar imported', { user_id: 3, provider: 'google', operation: 'profile-image' });
   });
 
   it('does nothing when the user already has an avatar', async () => {
@@ -105,8 +104,7 @@ describe('UserService.importProviderAvatar', () => {
     expect(helpers.optimizeImage).not.toHaveBeenCalled();
     expect(logService.error).toHaveBeenCalledWith(
       'Provider avatar import failed',
-      expect.objectContaining({ error_message: 'Avatar download too large' }),
-      expect.objectContaining({ operation: 'profile-image' }),
+      expect.objectContaining({ error_message: 'Avatar download too large', operation: 'profile-image' }),
     );
     expect(logService.critical).not.toHaveBeenCalled();
   });
@@ -134,7 +132,6 @@ describe('UserService.importProviderAvatar', () => {
     expect(logService.error).toHaveBeenCalledWith(
       'Provider avatar import failed',
       expect.objectContaining({ error_message: 'Avatar download answered 404' }),
-      expect.anything(),
     );
   });
 
@@ -154,7 +151,7 @@ describe('UserService.importProviderAvatar', () => {
     await expect(run()).resolves.toBeUndefined();
     expect(helpers.writeAsset).not.toHaveBeenCalled();
     expect(userRepository.setAvatarIfEmpty).not.toHaveBeenCalled();
-    expect(logService.warn).toHaveBeenCalledWith('Profile image rejected', expect.objectContaining({ reason: 'moderation' }), expect.anything());
+    expect(logService.warn).toHaveBeenCalledWith('Profile image rejected', expect.objectContaining({ reason: 'moderation' }));
     expect(logService.error).not.toHaveBeenCalled();
   });
 

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import {
   ACCOUNT_DELETION_GRACE_DAYS,
@@ -8,7 +7,8 @@ import {
 } from '@repo/common-lib/constants/limits';
 import { CRON_LOCK_TTL, runCronExclusive } from 'src/common/utils/cron-lock';
 import { UserRepository } from '../users/users.repository';
-import { apiLogConfig } from 'src/common/utils/api-logger';
+import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 /**
  * Daily self-service account deletion run:
@@ -23,10 +23,14 @@ export class AccountDeletionTask {
   /** Blast-radius guard; anything over the cap is picked up by the next run. */
   private static readonly MAX_PER_RUN = 200;
 
+  private readonly logger: ApiLogger;
+
   constructor(
     private readonly userRepository: UserRepository,
-    private readonly logger: LogService,
-  ) { }
+    private readonly requestService: RequestService,
+  ) {
+    this.logger = this.requestService.log('account-deletion');
+  }
 
   @Cron('0 3 * * *', { name: 'account-deletion', timeZone: 'UTC' })
   async handleAccountDeletion() {
@@ -45,7 +49,7 @@ export class AccountDeletionTask {
       AccountDeletionTask.MAX_PER_RUN,
     );
     for (const { id } of due) {
-      await QueueHelper.createAccountDeletionWarningJob({ user_id: id }, apiLogConfig());
+      await QueueHelper.createAccountDeletionWarningJob({ user_id: id }, this.requestService.traceCarrier());
     }
     this.logger.info('Account deletion warnings queued', { count: due.length });
   }
@@ -56,7 +60,7 @@ export class AccountDeletionTask {
       AccountDeletionTask.MAX_PER_RUN,
     );
     for (const { id } of due) {
-      await QueueHelper.createDeleteUserAccountJob({ user_id: id }, apiLogConfig());
+      await QueueHelper.createDeleteUserAccountJob({ user_id: id }, this.requestService.traceCarrier());
     }
     this.logger.info('Account deletions queued', { count: due.length });
   }

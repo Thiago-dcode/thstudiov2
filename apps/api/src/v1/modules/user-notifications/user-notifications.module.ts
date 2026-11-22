@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { USER_NOTIFICATIONS_QUEUE } from '@repo/common-lib/constants/queues';
 import { UserNotificationsController } from './user-notifications.controller';
 import { UserNotificationsProcessor } from './user-notifications.processor';
@@ -10,7 +9,6 @@ import { UserNotificationsGateway } from './user-notifications.gateway';
 import { AuthCoreModule } from '../auth/auth-core.module';
 import { MediaModule } from '../media/media.module';
 import { UserContactsModule } from '../user-contacts/user-contacts.module';
-import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [
@@ -26,14 +24,6 @@ import { createApiLogger } from 'src/common/utils/api-logger';
     UserNotificationsService,
     UserNotificationsProcessor,
     UserNotificationsGateway,
-    {
-      provide: LogService,
-      useFactory: () => {
-        return createApiLogger({
-          channel: 'user-notifications',
-        });
-      },
-    },
   ],
   exports: [UserNotificationsService],
 })

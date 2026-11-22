@@ -90,9 +90,9 @@ describe('ApiHealthService', () => {
     expect(result.checks).toEqual({ redis: 'ok', database: 'ok', workers: 'fail' });
     expect(JSON.stringify(result)).not.toContain('stripe-webhooks');
     expect(mockLog.error).toHaveBeenCalledTimes(1);
-    const [, extra, opts] = mockLog.error.mock.calls[0];
+    const [, extra] = mockLog.error.mock.calls[0];
     expect(JSON.stringify(extra)).toContain('stripe-webhooks');
-    expect(opts).toMatchObject({ operation: 'health-check' });
+    expect(extra).toMatchObject({ operation: 'health-check' });
   });
 
   it('AC-2: no discovered consumers counts as failing', async () => {

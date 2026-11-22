@@ -1,7 +1,7 @@
 import { WorkerHost } from '@nestjs/bullmq';
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { DiscoveryService } from '@nestjs/core';
-import { createApiLogger } from '../utils/api-logger';
+import { apiLogger } from '../services/request.service';
 import { withTimeout } from '@repo/backend-lib/utils';
 import { getClient } from '@repo/database';
 import { getLockClient } from '../utils/cron-lock';
@@ -28,7 +28,7 @@ export type ApiHealthResult = { healthy: boolean; checks: ApiHealthChecks };
  */
 @Injectable()
 export class ApiHealthService implements OnApplicationBootstrap {
-  private readonly logger = createApiLogger({ channel: 'health' });
+  private readonly logger = apiLogger('health');
   private consumers: WorkerHost[] = [];
 
   constructor(private readonly discovery: DiscoveryService) {}
@@ -98,7 +98,7 @@ export class ApiHealthService implements OnApplicationBootstrap {
     const checks: ApiHealthChecks = { redis, database, workers };
     const healthy = Object.values(checks).every((check) => check === 'ok');
     if (!healthy) {
-      this.logger.error('API health check failed', { checks, failures }, { operation: 'health-check' });
+      this.logger.error('API health check failed', { checks, failures, operation: 'health-check' });
     }
     return { healthy, checks };
   }

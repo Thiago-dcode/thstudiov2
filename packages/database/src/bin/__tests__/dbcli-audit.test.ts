@@ -3,8 +3,8 @@ jest.mock('@repo/common-lib/config', () => ({ config: () => ({ redis: { url: 're
 import fs from 'node:fs';
 import path from 'node:path';
 import { logBuffer } from '@repo/backend-lib/config/logging';
-import type { LogEntry } from '@repo/backend-lib/services/log-service';
-import { audited, dbcliLogConfig } from '../dbcli-audit';
+import type { LogEntry } from '@repo/backend-lib/config/logging';
+import { audited, dbcliTraceCarrier } from '../dbcli-audit';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -17,7 +17,7 @@ describe('audited (dbcli)', () => {
   beforeEach(() => {
     added = [];
     events = [];
-    jest.spyOn(logBuffer, 'add').mockImplementation((entry) => {
+    jest.spyOn(logBuffer, 'add').mockImplementation((_logContext, entry) => {
       added.push(entry);
       events.push(`add:${entry.message}`);
     });
@@ -40,18 +40,47 @@ describe('audited (dbcli)', () => {
     expect(flush).not.toHaveBeenCalled();
   });
 
-  it('AC-22: every line of one run shares one fresh UUID, written under service dbcli, and dbcliLogConfig() reads it', async () => {
-    let seenByConfig: unknown;
+  it('AC-22: every line of one run shares one fresh UUID, written under service dbcli, and dbcliTraceCarrier() reads it', async () => {
+    let seenByCarrier: unknown;
     await audited('demo', async () => {
-      seenByConfig = (dbcliLogConfig().id as () => unknown)();
+      seenByCarrier = (dbcliTraceCarrier().id as () => unknown)();
     })();
     const ids = added.map((e) => e.id);
     expect(ids).toHaveLength(2);
     expect(ids[0]).toMatch(UUID);
     expect(new Set(ids).size).toBe(1);
-    expect(seenByConfig).toBe(ids[0]);
+    expect(seenByCarrier).toBe(ids[0]);
     for (const e of added) expect(e).toMatchObject({ service: 'dbcli' });
-    expect(dbcliLogConfig()).toMatchObject({ service: 'dbcli' });
+  });
+
+  it('AC-26: every line of a run is channel system, operation = command, request = { command }', async () => {
+    await expect(
+      audited('db:x', async () => {
+        throw new Error('boom');
+      })(),
+    ).rejects.toThrow('boom');
+    expect(added.map((e) => e.message)).toEqual(['dbcli command started', 'dbcli command failed']);
+    for (const e of added) {
+      expect(e).toMatchObject({ service: 'dbcli', channel: 'system', operation: 'db:x', request: { command: 'db:x' } });
+      expect(e.extraInfo ?? {}).not.toHaveProperty('operation');
+    }
+  });
+
+  it('AC-26: dbcliTraceCarrier() has exactly service, id and globalContext, read when a line is written', async () => {
+    const carrier = dbcliTraceCarrier();
+    expect(Object.keys(carrier).sort()).toEqual(['globalContext', 'id', 'service']);
+    expect(carrier.service).toBe('dbcli');
+    const read = () => ({
+      id: (carrier.id as () => string | null)(),
+      context: carrier.globalContext?.({} as never),
+    });
+    let inside: ReturnType<typeof read> | undefined;
+    await audited('db:x', async () => {
+      inside = read();
+    })();
+    expect(inside?.id).toMatch(UUID);
+    expect(inside?.context).toEqual({ command: 'db:x' });
+    expect(inside?.id).toBe(added[0].id);
   });
 
   it('AC-22: a second run gets a different id', async () => {

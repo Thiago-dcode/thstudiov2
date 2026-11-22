@@ -7,8 +7,6 @@ import { UserModule } from '../users/users.module';
 import { PlanPricesModule } from '../plan-prices/plan-prices.module';
 import { UserBenefitModule } from '../user-benefit/user-benefit.module';
 import { PLAN_SUBSCRIPTIONS_QUEUE, STRIPE_WEBHOOKS_QUEUE } from '@repo/common-lib/constants/queues';
-import { LogService } from '@repo/backend-lib/services/log-service';
-import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [
@@ -24,15 +22,6 @@ import { createApiLogger } from 'src/common/utils/api-logger';
   controllers: [WebhooksController],
   providers: [
     WebhookProcessor,
-    {
-      provide: LogService,
-      useFactory: () => {
-        return createApiLogger({
-          channel: 'webhooks',
-          name: 'stripe-webhook',
-        });
-      },
-    },
   ],
 })
 export class WebhooksModule {}

@@ -8,6 +8,7 @@ color: purple
 skills:
   - tech-stack
   - architecture
+  - logging
 hooks:
   PreToolUse:
     - matcher: "Write|Edit|NotebookEdit"
@@ -36,6 +37,7 @@ You are the planner. You turn a request into a spec that other agents implement 
 - Acceptance criteria must be observable and testable: "GET /v1/x returns 404 for a hidden profile", not "handles errors well".
 - Each file has exactly one owner. `packages/common-lib`, `packages/database`, `packages/backend-lib`, `apps/api` and `apps/worker` belong to **api-builder**. `apps/web`, `packages/ui` and `packages/frontend-lib` belong to **web-builder**. A hook enforces this.
 - If common-lib types change, the order is `api-builder → web-builder`. Otherwise they run in parallel.
+- **Plan the logs.** Every flow with a side effect or a risk (auth, payments/Stripe, webhooks, uploads/S3, deletes, moderation, emails, queues, crons, server actions that call the api) gets a *Logging* section: the `channel` (from `LOG_CHANNELS`, or a new one to add in common-lib), the `operation`, the milestones to log (started, each side-effect step, success or failure naming the `step`), the level of each failure (`warn` user-caused, `error` known and handled, `critical` only per the `logging` skill), the ids for `extraInfo`, and how the trace `id` crosses boundaries (web `withLogTrace` → api request → `traceCarrier()` into the queue → worker). Name what the framework already logs (access line, exception filter, job start/completed/failure) so builders don't duplicate it. Add at least one AC for logs on a risky flow ("a failed X writes one `<operation>` line at `error` with `step` and `user_id`, and no secret"). A pure read or UI change may state "no new logs".
 - Note in *Risks* any existing invariant the change could break (visibility predicates, server/client component boundaries, per-request state in FetchApi, and so on).
 
 ## Template
@@ -64,6 +66,12 @@ Types: packages/common-lib/src/types/<x>.ts
 ### web-builder            (omit if none)
 - <path> (create|modify): <what>
 Order: parallel | api-builder → web-builder
+
+## Logging              (required for any flow with a side effect or risk; else "none: <why>")
+- channel: <LOG_CHANNELS value> · operation: <kebab-case flow>
+- lines: <message · level · extraInfo ids> per milestone and failure
+- trace: <how the id crosses web → api → queue → worker, or "request only">
+- not logged here: <already covered by access line / exception filter / GlobalProcessor>
 
 ## Test plan
 - <spec file path>: covers AC-1, AC-3

@@ -1,7 +1,7 @@
 import type Stripe from 'stripe';
 import { logService } from '../../../config/logging';
 
-const stripeLog = logService.lib({ channel: 'stripe', name: 'api-call' });
+const stripeLog = logService.lib({ defaultOptions: { channel: 'stripe', operation: 'api-call' } });
 
 /**
  * One line per Stripe API call: outcome, duration and Stripe's `req_…` id, which is also the

@@ -4,10 +4,12 @@ const mockConfigs: Record<string, Record<string, unknown>> = {};
 jest.mock('@repo/backend-lib/config/logging', () => {
   // Patch the real factories so backend-lib's internal loggers see the mock too.
   const actual = jest.requireActual('@repo/backend-lib/config/logging');
-  const create = (_t: unknown, cfg: { channel: string }) => {
-      mockConfigs[cfg.channel] = cfg;
-      mockLoggers[cfg.channel] ??= { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn(), name: jest.fn() };
-      return mockLoggers[cfg.channel];
+  // The api loggers carry the channel as a default option; backend-lib's job loggers still pass it top-level.
+  const create = (_t: unknown, cfg: { channel?: string; defaultOptions?: { channel?: string } }) => {
+      const channel = (cfg.defaultOptions?.channel ?? cfg.channel) as string;
+      mockConfigs[channel] = cfg;
+      mockLoggers[channel] ??= { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn(), name: jest.fn() };
+      return mockLoggers[channel];
     };
   const factory = (service: string | null) => (overrides: Record<string, unknown> = {}) =>
     (create as (buffer: unknown, cfg: any) => unknown)(undefined, { service, ...overrides });
@@ -24,7 +26,7 @@ jest.mock('@repo/backend-lib/config/logging', () => {
 import { currentRequestId } from 'src/common/services/request-storage';
 import { GlobalProcessor } from './global.processor';
 
-/** The trace id the processor's DI loggers would read (`apiLogConfig().id`). */
+/** The trace id the processor's DI loggers would read (`apiTraceCarrier().id`). */
 const resolveId = (cfg: Record<string, unknown>) =>
   typeof cfg.id === 'function' ? (cfg.id as () => string | null)() : cfg.id;
 

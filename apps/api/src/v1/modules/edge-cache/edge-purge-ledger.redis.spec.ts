@@ -1,4 +1,5 @@
 /* eslint-disable turbo/no-undeclared-env-vars -- test-only variables, never read by a build or the app */
+import { consoleRequestService } from 'src/common/testing/console-logger';
 import { Job, Queue, Worker } from 'bullmq';
 import { createClient } from 'redis';
 import { JOB_PURGE_ARTIST_EDGE_CACHE } from '@repo/common-lib/constants/queues';
@@ -106,7 +107,7 @@ describeRedis('EdgePurgeLedger + BullMQ rate limit (real Redis)', () => {
       warn: jest.fn(),
       error: jest.fn(),
     };
-    const service = new EdgeCacheService(logger as never);
+    const service = new EdgeCacheService(consoleRequestService(logger as never));
     jest
       .spyOn(service, 'purgeTarget')
       .mockReturnValue({ host: 'a11studio.com', zoneId: 'zone', token: 'token' });
@@ -115,7 +116,7 @@ describeRedis('EdgePurgeLedger + BullMQ rate limit (real Redis)', () => {
       service,
       { findByIdCompact: async () => ({ id: 7, username: 'ana' }) } as never,
       { findReservedByUser: async () => [] } as never,
-      logger as never,
+      consoleRequestService(logger as never),
       ledger,
       queue,
     );

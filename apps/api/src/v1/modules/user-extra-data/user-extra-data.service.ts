@@ -10,13 +10,11 @@ import { PlansService } from '../plans/plans.service';
 import { UserStorageRequestService } from '../user-storage-requests/user-storage-request.service';
 import { UpdateOrCreateUserExtraDataInput } from '@repo/common-lib/types/user-extra-data';
 import { UserLimits } from '@repo/common-lib/utils/user-limits';
-import { createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger } from 'src/common/services/request.service';
 
 @Injectable()
 export class UserExtraDataService {
-  private readonly logger = createApiLogger({
-    channel: 'user-extra-data',
-  });
+  private readonly logger = apiLogger('user-extra-data');
 
   constructor(
     private readonly userExtraDataRepository: UserExtraDataRepository,
@@ -232,10 +230,9 @@ export class UserExtraDataService {
     const extraData = await this.userExtraDataRepository.findOrCreateByUserId(
       event.userId,
     );
-    this.logger
-      .name('new-user')
-      .info(`${SET_INITIAL_USER_EXTRA_DATA_EVENT} user [${event.userId}] extra data`, {
-        extraData,
-      });
+    this.logger.info(`${SET_INITIAL_USER_EXTRA_DATA_EVENT} user [${event.userId}] extra data`, {
+      extraData,
+      operation: 'new-user',
+    });
   }
 }

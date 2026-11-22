@@ -9,8 +9,6 @@ import { FactoryViewService } from '@repo/backend-lib/services/view-service';
 import { displayHost, viewPath } from 'src/common/utils';
 import { VIEW_ENGINE } from 'src/common/utils/constants';
 import { CacheModule } from '@nestjs/cache-manager';
-import { LogService } from '@repo/backend-lib/services/log-service';
-import { createApiLogger } from 'src/common/utils/api-logger';
 import { StorageService } from '@repo/backend-lib/services/storage-service';
 import { FactoryStorageService } from '@repo/backend-lib/services/storage-service';
 import { compressConfig, s3StorageConfig } from '@repo/backend-lib/config/storage';
@@ -32,7 +30,6 @@ import { requestStorage } from './request-storage';
     RequestService,
     ViewService,
     MailService,
-    LogService,
     StorageService,
     CompressService,
     Helpers,
@@ -95,10 +92,6 @@ import { requestStorage } from './request-storage';
         );
       },
       inject: [getQueueToken(MAIL_QUEUE)],
-    },
-    {
-      provide: LogService,
-      useFactory: () => createApiLogger(),
     },
   ],
   imports: [

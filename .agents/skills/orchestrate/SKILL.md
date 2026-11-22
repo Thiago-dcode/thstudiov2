@@ -25,7 +25,7 @@ Pick a short kebab-case `<slug>` for the task. Each agent prompt only needs the 
 
 **0. Confirm the tier.** The tier table in `AGENTS.md` decides. *Direct* and *Reviewed* tasks don't use this pipeline. If the task turns out to be *Reviewed*, stop here and follow that row instead. The user doesn't invoke agents; you decide, and you tell them the tier in one line.
 
-**1. Plan.** Spawn `planner` with the request, the slug, and the **Constraints** it can't discover itself: the relevant user preferences from your memory (e.g. preserve server/client boundaries, Zod helper style, public-visibility predicates, photographer focus) and anything the user said in chat. If it returns *Blocking questions*, ask the user (AskUserQuestion), append the answers to `plan.md`, and continue. For large or risky plans, show the user the AC list and work split and get a go-ahead before building.
+**1. Plan.** Spawn `planner` with the request, the slug, and the **Constraints** it can't discover itself: the relevant user preferences from your memory (e.g. preserve server/client boundaries, Zod helper style, public-visibility predicates, photographer focus) and anything the user said in chat. Remind it that flows with side effects need a *Logging* section (the `logging` skill). If it returns *Blocking questions*, ask the user (AskUserQuestion), append the answers to `plan.md`, and continue. For large or risky plans, show the user the AC list and work split and get a go-ahead before building.
 
 **2. Build.** Spawn `api-builder` and/or `web-builder` with: slug, "read `.claude/work/<slug>/plan.md`, implement your section". Follow the plan's order: send both spawns in **one message** when it says parallel; run api first when common-lib changes. Keep each builder's agent ID; you will resume it in step 5. If a builder reports *Needs other owner*, route that item to the owner. If a builder reports a contract problem, fix `plan.md` (re-run the planner if it's substantial) before going on.
 
@@ -50,5 +50,6 @@ Pick a short kebab-case `<slug>` for the task. Each agent prompt only needs the 
 
 - One owner per file, enforced by `.claude/hooks/guard.mjs`. If two agents need the same file, run them sequentially.
 - Subagents can't commit, push, stash, reset or check out; the guard blocks it.
+- Logs are part of the feature, not a follow-up: a plan with a side-effect flow and no *Logging* section goes back to the planner, and the reviewer checks the logs.
 - Read the agents' reports, not their diffs. Open source files only to settle a dispute between agents.
 - Leave `.claude/work/<slug>/` in place after the task (it's gitignored). It is the audit trail and lets a later session resume.

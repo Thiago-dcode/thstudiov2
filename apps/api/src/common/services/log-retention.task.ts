@@ -3,14 +3,10 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { pruneDailyLogFiles, resolveDefaultLogFolder } from '@repo/backend-lib/services/log-service';
 import { getLogRetentionDays } from '@repo/backend-lib/config/logging';
 import { CRON_LOCK_TTL, runCronExclusive } from '../utils/cron-lock';
-import { createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger } from 'src/common/services/request.service';
 
 @Injectable()
 export class LogRetentionTask {
-  private readonly logger = createApiLogger({
-    channel: 'system',
-  });
-
   @Cron(CronExpression.EVERY_DAY_AT_1AM, {
     name: 'log-retention-cleanup',
     timeZone: 'UTC',
@@ -23,7 +19,7 @@ export class LogRetentionTask {
         return;
       }
       
-      const log = this.logger.name('log-retention-cleanup');
+      const log = apiLogger('system', { operation: 'log-retention-cleanup' });
       const logRoot = resolveDefaultLogFolder();
 
       try {

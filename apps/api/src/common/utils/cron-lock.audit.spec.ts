@@ -29,7 +29,6 @@ jest.mock('@repo/backend-lib/config/logging', () => {
   return actual;
 });
 
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { CRON_LOCK_TTL, runCronExclusive } from './cron-lock';
 
 describe('runCronExclusive { audit }', () => {

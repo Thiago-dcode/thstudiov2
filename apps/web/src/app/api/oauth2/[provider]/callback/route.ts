@@ -40,6 +40,13 @@ const redirectTo = (path: string) => {
 
 const LOG_FIELDS = { operation: "oauth-callback" };
 
+/** The line's `request`: the route pattern as written in the app dir, never the requested URL. */
+const CALLBACK_LOG_CONTEXT = {
+  kind: "route",
+  method: "GET",
+  route: "/api/oauth2/[provider]/callback",
+} as const;
+
 /** Standard OAuth error codes (`access_denied`…). Anything else is attacker-controlled noise. */
 const OAUTH_ERROR_CODE = /^[a-z_]{1,64}$/;
 
@@ -49,7 +56,11 @@ const OAUTH_ERROR_CODE = /^[a-z_]{1,64}$/;
  * same states as a forged callback, and the API throttles real abuse.
  */
 const reject = (reason: string, extra?: Record<string, unknown>) => {
-  webLogger.warn("OAuth callback rejected", { reason, ...extra }, LOG_FIELDS);
+  webLogger.warn("OAuth callback rejected", {
+    reason,
+    ...extra,
+    ...LOG_FIELDS,
+  });
   return redirectTo("/");
 };
 
@@ -72,7 +83,7 @@ export async function GET(
       // The raw value is user input: never logged.
       if (!isOauthProvider(provider)) return reject("unknown-provider");
       const info = { provider };
-      webLogger.info("OAuth callback started", info, LOG_FIELDS);
+      webLogger.info("OAuth callback started", { ...info, ...LOG_FIELDS });
 
       // The provider reports denied consent or a failure as `?error=...`.
       const { searchParams } = request.nextUrl;
@@ -122,16 +133,14 @@ export async function GET(
         const urlError = authUrlErrorFromApi(result.error.api_error_code);
         // 4xx: the user's case (closed registration, bad invitation…). 5xx: the api failed.
         const level = result.error.status_code >= 500 ? "error" : "warn";
-        webLogger[level](
-          "OAuth callback rejected by api",
-          {
-            ...info,
-            invited: Boolean(invitationCode),
-            api_error_code: result.error.api_error_code ?? null,
-            shown_to_user: Boolean(urlError),
-          },
-          { ...LOG_FIELDS, status_code: result.error.status_code },
-        );
+        webLogger[level]("OAuth callback rejected by api", {
+          ...info,
+          invited: Boolean(invitationCode),
+          api_error_code: result.error.api_error_code ?? null,
+          shown_to_user: Boolean(urlError),
+          ...LOG_FIELDS,
+          status_code: result.error.status_code,
+        });
         if (!urlError) return redirectTo("/");
         // Keep the invitation: with registration closed, sign-up without it bounces to the home
         // page, and the user needs it to retry (e.g. with the invited email after a mismatch).
@@ -143,11 +152,11 @@ export async function GET(
       }
       if (!result.data?.auth?.token) {
         // The api answered success without a session: a contract break, not a user problem.
-        webLogger.critical(
-          "OAuth callback succeeded without a token",
-          { ...info, has_data: Boolean(result.data) },
-          LOG_FIELDS,
-        );
+        webLogger.critical("OAuth callback succeeded without a token", {
+          ...info,
+          has_data: Boolean(result.data),
+          ...LOG_FIELDS,
+        });
         return redirectTo("/");
       }
 
@@ -159,21 +168,22 @@ export async function GET(
         revalidateTag(`user-exists-${auth.username}`, { expire: 0 });
       const response = redirectTo(alreadyExist ? "/atelier" : "/get-started");
       await setUserSessionByCookie(auth, response.cookies);
-      webLogger.success(
-        "OAuth callback completed",
-        { ...info, user_id: auth.id, new_account: !alreadyExist },
-        LOG_FIELDS,
-      );
+      webLogger.success("OAuth callback completed", {
+        ...info,
+        user_id: auth.id,
+        new_account: !alreadyExist,
+        ...LOG_FIELDS,
+      });
       return response;
     } catch (error) {
       // Every expected failure returns above; reaching here is an unknown error (api unreachable,
       // cookie or session code throwing). The user still lands on the home page.
-      webLogger.critical(
-        "OAuth callback failed",
-        { step, error_name: errorName(error) },
-        LOG_FIELDS,
-      );
+      webLogger.critical("OAuth callback failed", {
+        step,
+        error_name: errorName(error),
+        ...LOG_FIELDS,
+      });
       return redirectTo("/");
     }
-  });
+  }, CALLBACK_LOG_CONTEXT);
 }

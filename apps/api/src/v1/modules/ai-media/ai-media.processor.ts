@@ -2,7 +2,6 @@ import { Processor } from '@nestjs/bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Job } from 'bullmq';
 import { AiService } from '@repo/backend-lib/services/ai-service';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import {
   AI_MEDIA_QUEUE,
@@ -20,10 +19,13 @@ import { MediaService } from '../media/media.service';
 import { PortfolioRepository } from '../portfolios/portfolio.repository';
 import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
 import { AiMediaService } from './ai-media.service';
-import { apiLogConfig } from 'src/common/utils/api-logger';
+import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 @Processor(AI_MEDIA_QUEUE)
 export class AiMediaProcessor extends GlobalProcessor {
+  private readonly logger: ApiLogger;
+
   constructor(
     private readonly aiService: AiService,
     private readonly aiMediaService: AiMediaService,
@@ -33,10 +35,11 @@ export class AiMediaProcessor extends GlobalProcessor {
     private readonly portfolioRepository: PortfolioRepository,
     private readonly collectionRepository: CollectionRepository,
     private readonly locationService: LocationService,
-    private readonly logger: LogService,
+    private readonly requestService: RequestService,
     private readonly eventEmitter: EventEmitter2,
   ) {
     super();
+    this.logger = this.requestService.log('ai-media');
   }
 
   async process(job: Job): Promise<unknown> {
@@ -60,7 +63,7 @@ export class AiMediaProcessor extends GlobalProcessor {
    * media_translations rows.
    */
   private async generateMediaMetadata(request: GenerateMediaMetadataInput) {
-    const log = this.logger.name('generate-media-metadata');
+    const log = this.requestService.log('ai-media', { operation: 'generate-media-metadata' });
 
     try {
       const [asset, categories, currentCategoryIds] = await Promise.all([
@@ -109,7 +112,7 @@ export class AiMediaProcessor extends GlobalProcessor {
         // can name what the pixels cannot (subject, project, where it was made).
         { title: asset.title, description: asset.description, location },
         selectedCategories,
-        apiLogConfig(),
+        this.requestService.traceCarrier(),
       );
 
       // EN row (fallback to first) → the main-row SEO columns; filename is shared across locales.
@@ -151,7 +154,7 @@ export class AiMediaProcessor extends GlobalProcessor {
         user_id: request.user_id,
         entity_id: request.media_id,
         read_at: null,
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
 
       return media;
     } catch (error) {
@@ -164,7 +167,7 @@ export class AiMediaProcessor extends GlobalProcessor {
         user_id: request.user_id,
         entity_id: request.media_id,
         read_at: null,
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
 
       log.error(
         `Failed to generate metadata for media [${request.media_id}] (user ${request.user_id}) - ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -193,12 +196,14 @@ export class AiMediaProcessor extends GlobalProcessor {
         this.collectionRepository.markSeoStaleByMediaId(mediaId),
       ]);
     } catch (error) {
-      this.logger
-        .name('mark-parent-seo-stale')
-        .error(
-          `Failed to mark parent SEO stale for media [${mediaId}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
-          error,
-        );
+      this.logger.error(
+        `Failed to mark parent SEO stale for media [${mediaId}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
+        {
+          operation: 'mark-parent-seo-stale',
+          error_name: error instanceof Error ? error.name : typeof error,
+          error_message: error instanceof Error ? error.message : String(error),
+        },
+      );
     }
   }
 }

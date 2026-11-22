@@ -1,4 +1,4 @@
-import type { LogServiceType } from "../types";
+import type { LogServiceType } from "@repo/common-lib/types/log";
 
 /**
  * The running app's service (api, worker, web, dbcli), for lines whose logger config names none

@@ -41,9 +41,15 @@ const build = () => {
       try { lines.push(JSON.parse(String(line))); } catch { stray.push(line); }
     });
   }
-  const logger = consoleLogger({ channel: 'plan-subscriptions' });
-  const nameSpy = jest.spyOn(logger, 'name');
-  const requestService = { user };
+  const logger = consoleLogger({ defaultOptions: { channel: 'plan-subscriptions' } });
+  // LogService is immutable (no `service()`/`name()`/`channel()`), so a shared logger cannot be renamed:
+  // the check is that the class has no such member and the logger's id is what it was before the calls.
+  const idBefore = logger.id;
+  const assertLoggerNotMutated = () => {
+    for (const member of ['service', 'name', 'channel']) expect(member in LogService.prototype).toBe(false);
+    expect(logger.id).toBe(idBefore);
+  };
+  const requestService = { user, log: () => logger, traceCarrier: () => ({ service: 'api' }) };
   const userBenefitsService = {
     redeemed: jest.fn().mockResolvedValue(false),
     getByIdAndUser: jest.fn().mockResolvedValue({ id: 5, trial_days: 7, active: true }),
@@ -53,7 +59,6 @@ const build = () => {
   const planPriceService = { findOne: jest.fn() };
   const helpers = { deleteManyCached: jest.fn().mockResolvedValue(undefined), cacheRemember: jest.fn() };
   const service = new PlanSubscriptionsService(
-    logger as unknown as LogService,
     planSubscriptionsRepository as any,
     planPriceService as any,
     requestService as any,
@@ -63,7 +68,7 @@ const build = () => {
     { findOneBy: jest.fn() } as any,
     helpers as any,
   );
-  return { service, lines, stray, nameSpy, userBenefitsService, planSubscriptionsRepository, planPriceService, helpers };
+  return { service, lines, stray, assertLoggerNotMutated, userBenefitsService, planSubscriptionsRepository, planPriceService, helpers };
 };
 
 const newPlanPrice = { id: 4, price: 20, stripe_id: 'price_new' };
@@ -212,8 +217,10 @@ describe('PlanSubscriptionsService logging', () => {
 
   it('AC-19: the service never renames the shared logger', async () => {
     mockStripe.checkout.sessions.create.mockResolvedValue({ id: 'cs_4', url: CHECKOUT_URL });
-    const { service, nameSpy } = build();
+    const { service, lines, assertLoggerNotMutated } = build();
     await runWithTraceId('R', () => service.handleStripeSubscription(input(freeSub)));
-    expect(nameSpy).not.toHaveBeenCalled();
+    expect(lines.length).toBeGreaterThan(0);
+    expect(lines.every((l) => l.channel === 'plan-subscriptions')).toBe(true);
+    assertLoggerNotMutated();
   });
 });

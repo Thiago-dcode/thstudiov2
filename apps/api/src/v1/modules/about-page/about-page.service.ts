@@ -18,7 +18,6 @@ import {
 } from '@repo/common-lib/constants/events';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
 import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
-import { apiLogConfig } from 'src/common/utils/api-logger';
 
 @Injectable()
 export class AboutPageService {
@@ -57,7 +56,7 @@ export class AboutPageService {
       const photoUrl = await this.helpers.getAsset(photoPath);
       const { moderation } = await this.aiService.moderateContent(photoUrl, {
         user_id: userId,
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
       if (!moderation.is_allowed) {
         await this.helpers.deleteAsset(photoPath);
         throw new MediaModerationException(moderation.reason);
@@ -96,7 +95,7 @@ export class AboutPageService {
       const photoUrl = await this.helpers.getAsset(newPhotoPath);
       const { moderation } = await this.aiService.moderateContent(photoUrl, {
         user_id: aboutPage.user_id,
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
       if (!moderation.is_allowed) {
         await this.helpers.deleteAsset(newPhotoPath);
         throw new MediaModerationException(moderation.reason);

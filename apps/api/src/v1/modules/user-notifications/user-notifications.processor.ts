@@ -12,14 +12,10 @@ import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { UserNotificationsRepository } from './user-notifications.repository';
 import { UserNotificationsService } from './user-notifications.service';
 import { UserNotificationsGateway } from './user-notifications.gateway';
-import { createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger } from 'src/common/services/request.service';
 
 @Processor(USER_NOTIFICATIONS_QUEUE)
 export class UserNotificationsProcessor extends GlobalProcessor {
-  private readonly logger = createApiLogger({
-    channel: 'user-notifications',
-  });
-
   constructor(
     private readonly userNotificationsRepository: UserNotificationsRepository,
     private readonly userNotificationsService: UserNotificationsService,
@@ -40,7 +36,7 @@ export class UserNotificationsProcessor extends GlobalProcessor {
   }
 
   private async createOrUpdateUserNotification(data: CreateUserNotificationInput) {
-    const log = this.logger.name(JOB_CREATE_OR_UPDATE_USER_NOTIFICATION);
+    const log = apiLogger('user-notifications', { operation: JOB_CREATE_OR_UPDATE_USER_NOTIFICATION });
     try {
       let userNotification = await this.userNotificationsRepository.findByTypeAndEntityId(
         data.type,

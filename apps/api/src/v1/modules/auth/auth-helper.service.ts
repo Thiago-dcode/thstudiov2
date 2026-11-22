@@ -1,19 +1,24 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { UserAuth, UserPayload } from '@repo/common-lib/types/auth';
 import { compareAsc } from 'date-fns';
 import { UserSessionsService } from 'src/v1/modules/user-sessions/user-sessions.service';
+import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 @Injectable()
 export class AuthHelper {
+  private readonly logger: ApiLogger;
+
   constructor(
     private jwtService: JwtService,
     private configService: ConfigService,
     private userSessionsService: UserSessionsService,
-    private logger: LogService,
-  ) {}
+    private readonly requestService: RequestService,
+  ) {
+    this.logger = this.requestService.log('auth');
+  }
 
   async resolveUserAuth(token: string): Promise<UserAuth> {
     try {

@@ -1,9 +1,6 @@
 import { BadRequestException, HttpException } from '@nestjs/common';
-import { logService } from '@repo/backend-lib/config/logging';
-import type { LogService } from '@repo/backend-lib/services/log-service';
-import { consoleLogger } from 'src/common/testing/console-logger';
+import { consoleRequestService } from 'src/common/testing/console-logger';
 import { ResponseExceptionFilter } from './response-exception.filter';
-import { RequestService } from '../services/request.service';
 
 const ADDRESSES = ['login@example.com', 'nested@example.com', 'array@example.com', 'inline@example.com', 'query@example.com', 'param@example.com'];
 
@@ -12,8 +9,7 @@ const setup = (request: Record<string, unknown>) => {
   for (const method of ['log', 'warn', 'error'] as const) {
     jest.spyOn(console, method).mockImplementation((line: unknown) => { out.push(String(line)); });
   }
-  jest.spyOn(logService, 'api').mockImplementation((cfg = {}) => consoleLogger(cfg));
-  const requestService = {} as unknown as RequestService;
+  const requestService = consoleRequestService();
   const filter = new ResponseExceptionFilter(requestService);
   const json = jest.fn();
   const response: any = { status: jest.fn().mockReturnValue({ json }) };
@@ -102,8 +98,8 @@ describe('ResponseExceptionFilter email handling', () => {
     for (const address of ADDRESSES) expect(logged).not.toContain(address);
   });
 
-  it.each([404, 503])('AC-38: a %i error line carries status_code', (code) => {
-    const { filter, host, out } = setup(baseRequest());
+  it.each([400, 503])('AC-38: a %i error line carries status_code', (code) => {
+    const { filter, host, out } = setup(baseRequest({ route: { path: '/x' } }));
     filter.catch(new HttpException('x', code), host);
     const line = JSON.parse(out[0]);
     expect(line.status_code).toBe(code);

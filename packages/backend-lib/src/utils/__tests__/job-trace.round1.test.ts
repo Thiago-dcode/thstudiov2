@@ -2,9 +2,10 @@ const mockLoggers: Record<string, Record<string, jest.Mock>> = {};
 jest.mock('../../config/logging', () => {
   const actual = jest.requireActual('../../config/logging');
   // Every factory hands its service and overrides to one mock, as the real ones build one config.
-  const create = (_storage: unknown, cfg: { channel: string }) => {
-      mockLoggers[cfg.channel] ??= { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn(), flush: jest.fn().mockResolvedValue(undefined) };
-      return mockLoggers[cfg.channel];
+  const create = (_storage: unknown, cfg: { defaultOptions?: { channel: string } }) => {
+      const channel = cfg.defaultOptions?.channel ?? 'system';
+      mockLoggers[channel] ??= { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn(), flush: jest.fn().mockResolvedValue(undefined) };
+      return mockLoggers[channel];
     };
   const factory = (service: string | null) => (overrides: Record<string, unknown> = {}) =>
     (create as (buffer: unknown, cfg: any) => unknown)(undefined, { service, ...overrides });
@@ -42,6 +43,7 @@ describe('enqueueJob dedup message', () => {
       job_name: 'some-job',
       job_id: 'mail-existing',
       deduplication_id: 'critical-alert:abc',
+      operation: 'enqueue',
     });
   });
 

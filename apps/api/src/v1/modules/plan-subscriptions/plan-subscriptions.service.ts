@@ -12,6 +12,7 @@ import { PlanSubscriptionsRepository } from './plan-subscriptions.repository';
 import { InitiatePlanSubscriptionRequest } from './requests/initiate-plan-subscription.request';
 import { PlanPricesService } from '../plan-prices/plan-prices.service';
 import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 import { PlansService } from '../plans/plans.service';
 import {
   CreatePlanSubscriptionInput,
@@ -26,7 +27,6 @@ import {
 import { Helpers } from 'src/common/services/helpers.service';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { StripeService } from 'src/common/services/stripe.service';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 import { PaymentMethodsService } from '../utils/payment-methods.service';
 import {
@@ -53,8 +53,9 @@ const isAppUrl = (value: string): boolean => {
 
 @Injectable()
 export class PlanSubscriptionsService {
+  private readonly logger: ApiLogger;
+
   constructor(
-    private readonly logger: LogService,
     private readonly planSubscriptionsRepository: PlanSubscriptionsRepository,
     private readonly planPriceService: PlanPricesService,
     private readonly requestService: RequestService,
@@ -63,7 +64,9 @@ export class PlanSubscriptionsService {
     private readonly userBenefitsService: UserBenefitService,
     private readonly userRepository: UserRepository,
     private readonly helpers: Helpers,
-  ) { }
+  ) {
+    this.logger = this.requestService.log('plan-subscriptions');
+  }
 
   async initiate({
     plan_price_id,
@@ -83,7 +86,6 @@ export class PlanSubscriptionsService {
       const paymentMethod =
         await this.paymentMethodsService.getOne(payment_method);
       if (!paymentMethod || !paymentMethod.enabled) {
-        this.logger.error('Payment method not available or disabled', { payment_method });
         throw new HttpException('Payment method not available', 422);
       }
       // Stripe redirects the customer to these after checkout. The web form already restricts
@@ -93,7 +95,6 @@ export class PlanSubscriptionsService {
       }
       const planPrice = await this.planPriceService.findOne(plan_price_id);
       if (!planPrice) {
-        this.logger.error('Plan price does not exist', { plan_price_id });
         throw new HttpException('Plan price does not exist', 422);
       }
       // A retired plan stays in the table for existing subscribers; nobody new may buy it.
@@ -118,7 +119,6 @@ export class PlanSubscriptionsService {
       }
       if (currentUserSubscription?.plan_price_id === planPrice.id) {
         //This endpoint is only for downgrades or upgrades from a paid plan
-        this.logger.warn('User already has this plan', { planPriceId: planPrice.id, userId: this.requestService.user.id });
         throw new HttpException(
           'User already has this plan',
           HttpStatus.BAD_REQUEST,
@@ -127,7 +127,6 @@ export class PlanSubscriptionsService {
       if (planPrice.plan.is_free) {
         //This should be handle by a cancel method
         //Frontend should avoid request when is the free plan
-        this.logger.warn('Attempted to activate a free plan via initiate', { planPriceId: planPrice.id, userId: this.requestService.user.id });
         throw new HttpException(
           'Cannot activate a free plan.',
           HttpStatus.BAD_REQUEST,
@@ -482,18 +481,15 @@ export class PlanSubscriptionsService {
   }> {
     const customerId = await this.resolveStripeCustomerId();
     if (!customerId) {
-      this.logger.error('Stripe customer not found for portal session', { userId: this.requestService.user?.id });
       throw new HttpException('Stripe customer not found', 422);
     }
     if (!request?.return_url || typeof request.return_url !== 'string') {
-      this.logger.error('Invalid return_url for portal session', { customerId, return_url: request?.return_url });
       throw new HttpException('return_url is required', 422);
     }
     let parsed: URL;
     try {
       parsed = new URL(request.return_url);
     } catch {
-      this.logger.error('return_url is not a valid URL format', { customerId, return_url: request.return_url });
       throw new HttpException('return_url must be a valid URL', 422);
     }
     if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
@@ -677,8 +673,7 @@ export class PlanSubscriptionsService {
         // check the subscription by its id.
         this.logger.critical(
           'PayPal subscription of deleted user could not be cancelled; check it manually',
-          { ...ids, paypal_subscription_id: subscription.paypal_id },
-          { operation: 'hard-delete' },
+          { ...ids, paypal_subscription_id: subscription.paypal_id, operation: 'hard-delete' },
         );
       }
     }
@@ -690,7 +685,7 @@ export class PlanSubscriptionsService {
         if (!this.isStripeMissing(error)) throw error;
       }
     }
-    this.logger.info('Account payments cancelled', { ...ids, ...outcome }, { operation: 'hard-delete' });
+    this.logger.info('Account payments cancelled', { ...ids, ...outcome, operation: 'hard-delete' });
   }
 
   /** Already cancelled/deleted on a previous attempt: treat as done so retries stay idempotent. */

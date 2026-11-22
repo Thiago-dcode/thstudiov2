@@ -1,13 +1,17 @@
-import { LogEntry } from "../types";
+import { LogContext, LogFormat, LogObjectEntry } from "../types";
 
 /** Writes one entry somewhere (a file, the console). A buffer hands entries to it on flush. */
-export abstract class LogDriver {
-    abstract process(entry: LogEntry): Promise<void>;
+export abstract class LogDriver<E extends LogObjectEntry> {
+    abstract process(logContext: LogContext, entry: E): Promise<void>;
 
-    protected formatLogEntry(entry: LogEntry): string {
+
+
+
+    protected formatLogEntry(format: LogFormat, entry: E): string {
         // `format` only picks the layout; it is not part of the written line.
-        const { format: lineFormat, ...line } = entry;
-        if (lineFormat === 'logfmt') return toLogfmt(line) + '\n';
+        const { format: _entryFormat, ...line } = entry;
+
+        if (format === 'logfmt') return toLogfmt(line) + '\n';
         return JSON.stringify(line) + '\n';
     }
 }
@@ -17,7 +21,7 @@ export abstract class LogDriver {
  * dotted keys (`request.method=GET`); arrays and other non-plain values are written as JSON.
  * `null`/`undefined` values are skipped.
  */
-function toLogfmt(record: Record<string, unknown>): string {
+function toLogfmt(record: Record<string, any>): string {
     const pairs: string[] = [];
     const visit = (value: unknown, key: string, seen: Set<object>): void => {
         if (value === null || value === undefined) return;
@@ -39,7 +43,7 @@ function toLogfmt(record: Record<string, unknown>): string {
     return pairs.join(' ');
 }
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
+function isPlainObject(value: unknown): value is LogObjectEntry {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
     const proto = Object.getPrototypeOf(value);
     return proto === Object.prototype || proto === null;

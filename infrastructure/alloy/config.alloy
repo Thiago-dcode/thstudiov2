@@ -23,6 +23,7 @@ loki.process "app" {
       service = "service",
       channel = "channel",
       level   = "level",
+      method  = "method",
       ts      = "timestamp",
     }
   }
@@ -37,6 +38,7 @@ loki.process "app" {
       service = "",
       channel = "",
       level   = "",
+      method  = "",
     }
   }
 

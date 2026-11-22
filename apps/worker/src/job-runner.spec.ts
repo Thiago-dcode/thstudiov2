@@ -2,8 +2,7 @@ const mockHandle = jest.fn();
 jest.mock('./processors/media.processor', () => ({ MediaProcessor: { handle: (job: unknown) => mockHandle(job) } }));
 jest.mock('./processors/backup.processor', () => ({ BackupProcessor: { handle: jest.fn().mockResolvedValue({ status: 'done' }) } }));
 
-import { logBuffer } from '@repo/backend-lib/config/logging';
-import type { LogEntry } from '@repo/backend-lib/services/log-service';
+import { logBuffer, type LogEntry } from '@repo/backend-lib/config/logging';
 import { JOB_FLUSH_LOGS, JOB_PROCESS_MEDIA, LOG_QUEUE, MEDIA_QUEUE } from '@repo/common-lib/constants/queues';
 import { jobResolver, runWorkerJob } from './job-runner';
 
@@ -21,7 +20,7 @@ describe('runWorkerJob', () => {
   beforeEach(() => {
     mockHandle.mockReset();
     added = [];
-    jest.spyOn(logBuffer, 'add').mockImplementation((entry) => void added.push(entry));
+    jest.spyOn(logBuffer, 'add').mockImplementation((_logContext, entry) => void added.push(entry));
   });
   afterEach(() => jest.restoreAllMocks());
 
@@ -31,6 +30,7 @@ describe('runWorkerJob', () => {
     expect(added.map((e) => e.message)).toEqual(['Job started', 'Job completed']);
     expect(added[0]).toMatchObject({ service: 'worker', id: 'REQ-UPLOAD', channel: 'queue' });
     expect(added[0].extraInfo).toMatchObject({ job_id: 'w1', job_name: JOB_PROCESS_MEDIA, queue: MEDIA_QUEUE, attempt: 1 });
+    expect(added[0].request).toMatchObject({ queue: MEDIA_QUEUE, job_name: JOB_PROCESS_MEDIA, job_id: 'w1', attempt: 1 });
   });
 
   it('AC-14: an unknown job name still throws the same error', async () => {
@@ -43,9 +43,9 @@ describe('runWorkerJob', () => {
     await expect(runWorkerJob('other-queue', fakeJob())).rejects.toThrow('not recognized for queue "other-queue"');
   });
 
-  it('AC-14: a job without a carrier logs with id null', async () => {
+  it('AC-14: a job without a carrier logs with an empty id', async () => {
     await runWorkerJob(MEDIA_QUEUE, fakeJob({ opts: { attempts: 1 } }));
-    expect(added[0].id).toBeNull();
+    expect(added[0].id).toBe('');
   });
 
   it('AC-14: handler errors propagate unchanged and nothing is flushed', async () => {

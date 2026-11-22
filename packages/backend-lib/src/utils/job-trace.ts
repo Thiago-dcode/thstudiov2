@@ -1,8 +1,10 @@
 import type { Job, JobsOptions, Queue } from 'bullmq';
 import { JOB_ERROR_500_MAIL, JOB_FLUSH_LOGS } from '@repo/common-lib/constants/queues';
+import { LOG_SERVICES } from '@repo/common-lib/constants/log';
+import type { JobLogContext, LogChannel, LogServiceType } from '@repo/common-lib/types/log';
 import type { LogService } from '../services/log-service/log.service';
-import type { LogChannel, LogConfig } from '../services/log-service/types';
-import { logService } from '../config/logging';
+import type { LogContext, LogObjectEntry, LogOverrides, Resolvable } from '../services/log-service/types';
+import { logService, type LogEntry } from '../config/logging';
 import { maskEmailAddresses } from '../services/log-service/helpers/redact';
 
 /**
@@ -50,23 +52,67 @@ export function readJobTrace(job: Pick<Job, 'opts'> | undefined | null): { id: s
     }
 }
 
-/** The job's trace id (whoever enqueued it), or `null`. A job logger: `logService.worker({ channel, id: jobTraceId(job) })`. */
+/** The job's trace id (whoever enqueued it), or `null`. The worker's `workerLogger` / `workerTraceCarrier` use it as the line's `id`. */
 export function jobTraceId(job: Pick<Job, 'opts'> | undefined | null): string | null {
     return readJobTrace(job)?.id ?? null;
 }
 
 /**
- * `log` with the job's trace id when the job has one, else `log`'s own id. Pass it on to the
- * job's enqueues (`QueueHelper.*(…, jobLogConfig(job, logConfig.worker))`).
+ * What a caller hands to `QueueHelper.*` / `enqueueJob(s)` / `runJobWithLogs` /
+ * `logPermanentJobFailure` so the job's lines and the next jobs carry its service, trace id and
+ * request context. Only these three are read: a carrier can never inject `defaultOptions`,
+ * `format` or a `callback`. The api builds it with `requestService.traceCarrier()`, the worker
+ * with `workerTraceCarrier(job)`, the dbcli with `dbcliTraceCarrier()`.
  */
-export function jobLogConfig(job: Pick<Job, 'opts'> | undefined | null, log: Partial<LogConfig> = {}): Partial<LogConfig> {
+export type LogTraceCarrier = {
+    service?: Resolvable<string>;
+    id?: Resolvable<string | null>;
+    globalContext?: (logContext: LogContext) => LogObjectEntry | undefined;
+};
+
+/**
+ * `log` with the job's trace id when the job has one, else `log`'s own id. Pass it on to the
+ * job's enqueues (`QueueHelper.*(…, workerTraceCarrier(job))`).
+ */
+export function jobLogConfig(job: Pick<Job, 'opts'> | undefined | null, log: LogTraceCarrier = {}): LogTraceCarrier {
     const id = jobTraceId(job);
     return id ? { ...log, id } : log;
 }
 
-/** A logger for the caller's config: its service's factory, else the process service's (`lib`). */
-function loggerFor({ service, ...overrides }: Partial<LogConfig>, channel: LogChannel): LogService {
-    return (service ? logService[service] : logService.lib)({ ...overrides, channel });
+type AnyLogger = LogService<any, LogEntry>;
+
+/**
+ * Each service's factory, typed loosely: the carrier was built by that same service's helper.
+ * Read when a logger is built, not at import: `config/logging` and this module import each other.
+ */
+const serviceFactory = (service: LogServiceType): ((overrides: LogOverrides<any>) => AnyLogger) =>
+    logService[service];
+
+/** The carrier's service, resolved. A throwing function gives `undefined`: the line is never lost. */
+function carrierService(carrier: LogTraceCarrier): string | undefined {
+    try {
+        return typeof carrier.service === 'function' ? carrier.service() : carrier.service;
+    } catch {
+        return undefined;
+    }
+}
+
+/**
+ * A logger for the caller's carrier: its service's factory when the service is one of
+ * `LOG_SERVICES`, else the process service's (`lib`). Reads only `service`, `id` and
+ * `globalContext`, never the rest of the carrier.
+ */
+function loggerFor(carrier: LogTraceCarrier, channel: LogChannel): AnyLogger {
+    const service = carrierService(carrier);
+    const defaultOptions = { channel };
+    if (service && (LOG_SERVICES as readonly string[]).includes(service)) {
+        return serviceFactory(service as LogServiceType)({
+            id: carrier.id,
+            globalContext: carrier.globalContext,
+            defaultOptions,
+        });
+    }
+    return logService.lib({ id: carrier.id, defaultOptions });
 }
 
 type EnqueueOptions = JobsOptions & { deduplication?: { id: string } };
@@ -80,7 +126,7 @@ export async function enqueueJob<T = unknown>(
     name: string,
     data: T,
     opts?: JobsOptions,
-    log: Partial<LogConfig> = {},
+    log: LogTraceCarrier = {},
 ): Promise<Job> {
     const silent = SILENT_ENQUEUE_JOBS.has(name);
     const queueLog = loggerFor(log, 'queue');
@@ -104,14 +150,14 @@ export async function enqueueJob<T = unknown>(
                     job_id: job?.id ?? undefined,
                     ...(traced?.delay ? { delay_ms: traced.delay } : {}),
                     ...(traced?.deduplication?.id ? { deduplication_id: traced.deduplication.id } : {}),
+                    operation: 'enqueue',
                 },
-                { operation: 'enqueue' },
             );
         }
         return job;
     } catch (error) {
         if (!silent) {
-            queueLog.error('Job enqueue failed', { ...extra, error_message: errorMessage(error) }, { operation: 'enqueue' });
+            queueLog.error('Job enqueue failed', { ...extra, error_message: errorMessage(error), operation: 'enqueue' });
         }
         throw error;
     }
@@ -121,17 +167,17 @@ export async function enqueueJob<T = unknown>(
 export async function enqueueJobs(
     queue: Queue,
     jobs: { name: string; data: unknown; opts?: JobsOptions }[],
-    log: Partial<LogConfig> = {},
+    log: LogTraceCarrier = {},
 ): Promise<Job[]> {
     const queueLog = loggerFor(log, 'queue');
     const extra = { queue: queue.name, job_names: [...new Set(jobs.map((job) => job.name))], count: jobs.length };
     try {
         const id = queueLog.id;
         const added = await queue.addBulk(jobs.map((job) => ({ ...job, opts: withJobTrace(job.opts, id) })));
-        queueLog.info('Jobs enqueued', extra, { operation: 'enqueue' });
+        queueLog.info('Jobs enqueued', { ...extra, operation: 'enqueue' });
         return added;
     } catch (error) {
-        queueLog.error('Job enqueue failed', { ...extra, error_message: errorMessage(error) }, { operation: 'enqueue' });
+        queueLog.error('Job enqueue failed', { ...extra, error_message: errorMessage(error), operation: 'enqueue' });
         throw error;
     }
 }
@@ -141,6 +187,25 @@ type RunnableJob = Pick<Job, 'id' | 'name' | 'opts' | 'attemptsMade'> & { queueN
 /** Whether the attempt running now is the job's last one (`attempts` defaults to 1). */
 export function isFinalAttempt(job: Pick<Job, 'attemptsMade' | 'opts'>): boolean {
     return (job.attemptsMade ?? 0) + 1 >= Math.max(1, job.opts?.attempts ?? 1);
+}
+
+/**
+ * The job's request context, from an allow-list: never `job.data`, whose payload can hold
+ * passwords, tokens or emails. The trace id is the line's `id`, not repeated here.
+ *
+ * `attempt` is the one running: `attemptsMade + 1` while the job runs. BullMQ counts a failed
+ * attempt into `attemptsMade` before it fires `failed`, so a line about a finished job passes
+ * `{ finished: true }` and `attempt` is `attemptsMade` itself.
+ */
+export function jobLogContext(job: RunnableJob, { finished = false }: { finished?: boolean } = {}): JobLogContext {
+    const made = job.attemptsMade ?? 0;
+    return {
+        queue: job.queueName ?? 'unknown',
+        job_name: job.name,
+        job_id: job.id !== undefined && job.id !== null ? String(job.id) : null,
+        attempt: finished ? Math.max(1, made) : made + 1,
+        max_attempts: Math.max(1, job.opts?.attempts ?? 1),
+    };
 }
 
 function jobFields(job: RunnableJob, attempt: number) {
@@ -160,35 +225,32 @@ function jobFields(job: RunnableJob, attempt: number) {
 export async function runJobWithLogs<T>(
     job: RunnableJob,
     fn: () => Promise<T> | T,
-    { lifecycle = true, log = {} }: { lifecycle?: boolean; log?: Partial<LogConfig> } = {},
+    { lifecycle = true, log = {} }: { lifecycle?: boolean; log?: LogTraceCarrier } = {},
 ): Promise<T> {
     const queueLog = loggerFor(jobLogConfig(job, log), 'queue');
     const attempt = (job.attemptsMade ?? 0) + 1;
     const isFinal = isFinalAttempt(job);
     const fields = jobFields(job, attempt);
     const startedAt = Date.now();
-    if (lifecycle) queueLog.info('Job started', fields, { operation: 'job' });
+    if (lifecycle) queueLog.info('Job started', { ...fields, operation: 'job' });
     try {
         const result = await fn();
-        if (lifecycle) queueLog.info('Job completed', { ...fields, duration_ms: Date.now() - startedAt }, { operation: 'job' });
+        if (lifecycle) queueLog.info('Job completed', { ...fields, duration_ms: Date.now() - startedAt, operation: 'job' });
         return result;
     } catch (error) {
         if (lifecycle) {
             const name = errorName(error);
             if (DEFERRAL_ERRORS.has(name)) {
-                queueLog.info('Job deferred', { ...fields, reason: name }, { operation: 'job' });
+                queueLog.info('Job deferred', { ...fields, reason: name, operation: 'job' });
             } else if (!isFinal && name !== 'UnrecoverableError') {
-                queueLog.warn(
-                    'Job attempt failed',
-                    {
-                        ...fields,
-                        duration_ms: Date.now() - startedAt,
-                        error_name: name,
-                        error_message: errorMessage(error),
-                        will_retry: true,
-                    },
-                    { operation: 'job' },
-                );
+                queueLog.warn('Job attempt failed', {
+                    ...fields,
+                    duration_ms: Date.now() - startedAt,
+                    error_name: name,
+                    error_message: errorMessage(error),
+                    will_retry: true,
+                    operation: 'job',
+                });
             }
         }
         throw error;
@@ -233,9 +295,17 @@ export async function logPermanentJobFailure(
     job: FailedJob | undefined,
     error: Error,
     prev?: string,
-    log: Partial<LogConfig> = {},
+    log: LogTraceCarrier = {},
 ): Promise<void> {
-    const failedJobLog = loggerFor(jobLogConfig(job, log), 'failed-job');
+    // The `failed` event fires after BullMQ counted the failed attempt, so a worker carrier's
+    // context (built as the job runs, `attemptsMade + 1`) is rebuilt for the finished job.
+    const carrier = jobLogConfig(job, log);
+    const failedJobLog = loggerFor(
+        job && carrierService(carrier) === 'worker'
+            ? { ...carrier, globalContext: () => jobLogContext(job, { finished: true }) }
+            : carrier,
+        'failed-job',
+    );
     if (!job) {
         failedJobLog.error('Queue worker failed with no job', {
             message: maskText(error?.message),

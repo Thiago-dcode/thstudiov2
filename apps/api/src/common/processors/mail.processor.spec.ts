@@ -1,23 +1,27 @@
 const logger: Record<string, jest.Mock> = {
-  name: jest.fn(),
   info: jest.fn(),
   error: jest.fn(),
   critical: jest.fn(),
   warn: jest.fn(),
 };
 
-import type { LogService } from '@repo/backend-lib/services/log-service';
+import type { ApiLogger } from 'src/common/services/request.service';
 import { logBuffer, logService } from '@repo/backend-lib/config/logging';
 import { consoleLogger } from 'src/common/testing/console-logger';
 import { JOB_ERROR_500_MAIL, JOB_SEND_BATCH_EMAIL, JOB_SEND_MAIL } from '@repo/common-lib/constants/queues';
 import { MailProcessor } from './mail.processor';
+
+const channelOf = (cfg: object) =>
+  (cfg as { defaultOptions?: { channel?: string }; channel?: string }).defaultOptions?.channel ??
+  (cfg as { channel?: string }).channel;
 
 const build = () => {
   // The processor's own `mail` logger; the job wrapper's lifecycle loggers get a silent one.
   const quiet = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn() };
   const create = jest
     .spyOn(logService, 'api')
-    .mockImplementation((cfg = {}) => (cfg.channel === 'mail' ? logger : quiet) as unknown as LogService);
+    // The api loggers carry the channel as a default option; backend-lib's job loggers still pass it top-level.
+    .mockImplementation((cfg = {}) => (channelOf(cfg) === 'mail' ? logger : quiet) as unknown as ApiLogger);
   const mailService = { send: jest.fn(), sendRaw: jest.fn(), sendBatchRaw: jest.fn() };
   const processor = new MailProcessor(mailService as any, {} as any);
   return { processor, mailService, create };
@@ -39,7 +43,6 @@ const everything = () =>
 describe('MailProcessor alerting and lines', () => {
   beforeEach(() => {
     Object.values(logger).forEach((fn) => fn.mockReset());
-    logger.name.mockReturnValue(logger);
   });
   afterEach(() => {
     jest.restoreAllMocks();
@@ -47,18 +50,17 @@ describe('MailProcessor alerting and lines', () => {
 
   it('AC-14: the processor logger carries its channel in the config', () => {
     const { create } = build();
-    expect(create.mock.calls.at(-1)?.[0]).toMatchObject({ channel: 'mail' });
+    expect(create.mock.calls.at(-1)?.[0]).toMatchObject({ defaultOptions: { channel: 'mail' } });
   });
 
   it('AC-32: a successful single mail logs "Mail sent" with the recipient count and provider id', async () => {
     const { processor, mailService } = build();
     mailService.sendRaw.mockResolvedValue({ data: { id: 'prov-1' }, accepted: ['a@b.c'], envelope: { to: ['a@b.c'] } });
     await processor.process(jobOf(JOB_SEND_MAIL, { to: 'a@b.c', from: 'x@y.z', subject: 'Hi' }));
-    const [message, extra, fields] = logger.info.mock.calls[0];
+    const [message, extra] = logger.info.mock.calls[0];
     expect(message).toBe('Mail sent');
-    expect(extra).toMatchObject({ recipient_count: 1, provider_message_id: 'prov-1' });
+    expect(extra).toMatchObject({ recipient_count: 1, provider_message_id: 'prov-1', operation: 'send-mail' });
     expect(typeof extra.duration_ms).toBe('number');
-    expect(fields).toEqual({ operation: 'send-mail' });
   });
 
   it('AC-32: recipient_count counts an array of recipients', async () => {

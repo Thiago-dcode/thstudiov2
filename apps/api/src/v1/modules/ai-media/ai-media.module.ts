@@ -1,6 +1,5 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { AI_MEDIA_QUEUE } from '@repo/common-lib/constants/queues';
 import { AiConsumptionGuard } from 'src/common/guards/ai-consumption.guard';
 import { AddressModule } from '../addresses/address.module';
@@ -14,7 +13,6 @@ import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { AiMediaController } from './ai-media.controller';
 import { AiMediaProcessor } from './ai-media.processor';
 import { AiMediaService } from './ai-media.service';
-import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   controllers: [AiMediaController],
@@ -22,14 +20,6 @@ import { createApiLogger } from 'src/common/utils/api-logger';
     AiMediaService,
     AiMediaProcessor,
     AiConsumptionGuard,
-    {
-      provide: LogService,
-      useFactory: () => {
-        return createApiLogger({
-          channel: 'ai-media',
-        });
-      },
-    },
   ],
   // Portfolio/Collection modules are imported for their repositories only: once a media gets its SEO,
   // the portfolios and collections that display it have their SEO stamp cleared, so the nightly sweep

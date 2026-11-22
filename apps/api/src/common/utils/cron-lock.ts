@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import { createClient } from 'redis';
 import { runWithTraceId } from 'src/common/services/request-storage';
-import { createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger } from 'src/common/services/request.service';
 
 type RedisClient = ReturnType<typeof createClient>;
 
@@ -10,7 +10,7 @@ type RedisClient = ReturnType<typeof createClient>;
  * Run audit for every cron: start, completed/failed, skipped. Operation is the cron name, and
  * `cron` is in every line's extraInfo.
  */
-const cronLog = createApiLogger({ channel: 'system' });
+const cronLog = apiLogger('system');
 
 /** Identifies this process in the lock value (useful when inspecting `cron-lock:*` keys). */
 const INSTANCE_ID = `${process.env.HOSTNAME ?? 'api'}:${process.pid}:${randomUUID().slice(0, 8)}`;
@@ -83,28 +83,25 @@ export async function runCronExclusive(
   }
   if (!acquired) {
     if (audit) {
-      cronLog.info('Cron run skipped', { cron: name, reason: 'lock_held' }, { operation: name });
+      cronLog.info('Cron run skipped', { cron: name, reason: 'lock_held', operation: name });
     }
     return false;
   }
-  // Its own trace: every line of the run and every job it enqueues (via `apiLogConfig()`) carry this id.
+  // Its own trace: every line of the run and every job it enqueues (via `apiTraceCarrier()` / `requestService.traceCarrier()`) carry this id.
   await runWithTraceId(randomUUID(), async () => {
     const startedAt = Date.now();
-    if (audit) cronLog.info('Cron run started', { cron: name }, { operation: name });
+    if (audit) cronLog.info('Cron run started', { cron: name, operation: name });
     try {
       await job();
-      if (audit) cronLog.info('Cron run completed', { cron: name, duration_ms: Date.now() - startedAt }, { operation: name });
+      if (audit) cronLog.info('Cron run completed', { cron: name, duration_ms: Date.now() - startedAt, operation: name });
     } catch (error) {
-      cronLog.error(
-        'Cron run failed',
-        {
-          cron: name,
-          duration_ms: Date.now() - startedAt,
-          error_name: error instanceof Error ? error.name : typeof error,
-          error_message: error instanceof Error ? error.message : String(error),
-        },
-        { operation: name },
-      );
+      cronLog.error('Cron run failed', {
+        cron: name,
+        duration_ms: Date.now() - startedAt,
+        error_name: error instanceof Error ? error.name : typeof error,
+        error_message: error instanceof Error ? error.message : String(error),
+        operation: name,
+      });
       throw error;
     }
   });

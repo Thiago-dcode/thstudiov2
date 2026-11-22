@@ -4,8 +4,6 @@ import { UserStorageRequestService } from './user-storage-request.service';
 import { UserStorageRequestRepository } from './user-storage-request.repository';
 import { StorageRequestProcessor } from './storage-request.processor';
 import { STORAGE_REQUESTS_QUEUE } from '@repo/common-lib/constants/queues';
-import { LogService } from '@repo/backend-lib/services/log-service';
-import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [
@@ -15,14 +13,6 @@ import { createApiLogger } from 'src/common/utils/api-logger';
     UserStorageRequestService,
     UserStorageRequestRepository,
     StorageRequestProcessor,
-    {
-      provide: LogService,
-      useFactory: () => {
-        return createApiLogger({
-          channel: 'user-storage-requests',
-        });
-      },
-    },
   ],
   exports: [UserStorageRequestService],
 })

@@ -5,7 +5,6 @@ jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({
 jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({ paypal: {} }));
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { RequestService } from 'src/common/services/request.service';
 import { Helpers } from 'src/common/services/helpers.service';
 import { PlanSubscriptionsService } from './plan-subscriptions.service';
@@ -18,7 +17,10 @@ import { UserRepository } from '../users/users.repository';
 
 describe('PlanSubscriptionsService', () => {
   let service: PlanSubscriptionsService;
-  const requestService: { user: Record<string, unknown> | null } = { user: null };
+  const requestService: { user: Record<string, unknown> | null; log: () => unknown } = {
+    user: null,
+    log: () => ({ info: jest.fn(), error: jest.fn() }),
+  };
   const userRepository = { findOneBy: jest.fn() };
   const resolve = () =>
     (service as unknown as { resolveStripeCustomerId: () => Promise<string | null> }).resolveStripeCustomerId();
@@ -28,7 +30,6 @@ describe('PlanSubscriptionsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PlanSubscriptionsService,
-        { provide: LogService, useValue: { info: jest.fn(), error: jest.fn() } },
         { provide: PlanSubscriptionsRepository, useValue: {} },
         { provide: PlanPricesService, useValue: {} },
         { provide: RequestService, useValue: requestService },

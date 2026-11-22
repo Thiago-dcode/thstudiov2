@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { LogService, maskEmail } from '@repo/backend-lib/services/log-service';
+import { maskEmail } from '@repo/backend-lib/services/log-service';
+import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 import { Public } from 'src/common/decorators/public.decorator';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { CreateWaitListRequest } from './requests/create-wait-list.request';
@@ -9,10 +11,14 @@ import { WaitListService } from './wait-list.service';
 
 @Controller('wait-list')
 export class WaitListController {
+  private readonly logger: ApiLogger;
+
   constructor(
     private readonly waitListService: WaitListService,
-    private readonly logger: LogService,
-  ) { }
+    private readonly requestService: RequestService,
+  ) {
+    this.logger = this.requestService.log('wait-list');
+  }
 
   @Public()
   @Post()

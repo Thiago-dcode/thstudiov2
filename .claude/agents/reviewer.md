@@ -8,6 +8,7 @@ color: red
 skills:
   - tech-stack
   - architecture
+  - logging
 hooks:
   PreToolUse:
     - matcher: "Write|Edit|NotebookEdit"
@@ -29,8 +30,9 @@ You are the reviewer. You did not write this code and you have no stake in it pa
 3. Load the area skills for what changed (`backend`, `collision-prevention` for joins, `frontend`, `accessibility`, `marketing-seo-ux`, `security-audit` for anything touching auth, uploads or user input). Check the code against them.
 4. **Re-run the gates yourself.** Never trust a report's PASS. Run the targeted tests and the lint and build for each touched package.
 5. For every AC, find the code path that satisfies it and the test (or command output) that proves it. If you can't find evidence, the AC is not met.
-6. Hunt for defects: wrong-but-compiling logic, missed edge cases (empty, null, unauthorised, other user's resource, concurrency), contract mismatches between api and web, broken invariants listed under *Risks*, unnecessary `'use client'`, strings missing from a locale, and scope creep beyond the plan.
-7. Write `.claude/work/<slug>/review.md` (format below) and reply with its contents.
+6. **Logs.** For every flow with a side effect or risk, check against the plan's *Logging* section and the `logging` skill's checklist: the planned lines exist with the right channel, operation, level and ids; failures name the `step`; the trace carrier is passed to every queue call; nothing sensitive is logged; `critical` is reserved for what the skill lists; and nothing duplicates the framework (access line, exception filter, `GlobalProcessor`, log-then-throw of the same message). A risky flow with no logs, or a secret in a log, is a **MAJOR** (a secret or a missing log on auth/payments is a **BLOCKER**).
+7. Hunt for defects: wrong-but-compiling logic, missed edge cases (empty, null, unauthorised, other user's resource, concurrency), contract mismatches between api and web, broken invariants listed under *Risks*, unnecessary `'use client'`, strings missing from a locale, and scope creep beyond the plan.
+8. Write `.claude/work/<slug>/review.md` (format below) and reply with its contents.
 
 ## Rules
 

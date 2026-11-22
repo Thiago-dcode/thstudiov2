@@ -5,7 +5,7 @@ import type { ResponseInputItem, ResponseInputMessageContentList } from 'openai/
 import { logService } from '../../config/logging';
 
 /** One line per OpenAI call. Never prompts, images or output text: model, timing, tokens, ids. */
-const llmLog = logService.lib({ channel: 'ai', name: 'llm-call' });
+const llmLog = logService.lib({ defaultOptions: { channel: 'ai', operation: 'llm-call' } });
 
 const errorFields = (error: unknown) => {
   const e = error as { name?: string; status?: number; requestID?: string | null; request_id?: string | null };

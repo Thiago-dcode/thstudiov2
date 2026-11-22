@@ -1,7 +1,6 @@
 jest.mock('../critical-alert-mail', () => ({ criticalAlertMail: jest.fn().mockResolvedValue(undefined) }));
 
-import { logBuffer } from '../../config/logging';
-import type { LogEntry } from '../../services/log-service/types';
+import { logBuffer, type LogEntry } from '../../config/logging';
 import { isFinalAttempt as isFinalFromIndex } from '../index';
 import { isFinalAttempt, logPermanentJobFailure, runJobWithLogs } from '../job-trace';
 
@@ -20,7 +19,7 @@ describe('AC-5: runJobWithLogs / logPermanentJobFailure never flush the process 
 
   beforeEach(() => {
     added = [];
-    jest.spyOn(logBuffer, 'add').mockImplementation((entry) => void added.push(entry));
+    jest.spyOn(logBuffer, 'add').mockImplementation((_logContext, entry) => void added.push(entry));
     flush = jest.spyOn(logBuffer, 'flush');
   });
   afterEach(() => jest.restoreAllMocks());

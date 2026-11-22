@@ -22,15 +22,13 @@ import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from "@repo/common-lib/constants/events";
 import { ArtistPublicPagesChangedEvent } from "../edge-cache/events/artist-public-pages-changed.event";
-import { apiLogConfig, createApiLogger } from 'src/common/utils/api-logger';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
 @Injectable()
 export class ServiceService {
-  private readonly logger = createApiLogger({
-    channel: 'services',
-  });
+  private readonly logger: ApiLogger;
 
   constructor(
     private readonly serviceRepository: ServiceRepository,
@@ -39,7 +37,9 @@ export class ServiceService {
     private readonly helpers: Helpers,
     private readonly aiService: AiService,
     private readonly eventEmitter: EventEmitter2,
-  ) { }
+  ) {
+    this.logger = this.requestService.log('services');
+  }
 
   /**
    * Derives the service's permanent slug from its title, resolving collisions within
@@ -132,7 +132,7 @@ export class ServiceService {
       const thumbnailUrl = await this.helpers.getAsset(thumbnailPath);
       const { moderation } = await this.aiService.moderateContent(thumbnailUrl, {
         user_id: request.user_id,
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
 
       if (!moderation.is_allowed) {
         await this.helpers.deleteAsset(thumbnailPath);
@@ -162,7 +162,7 @@ export class ServiceService {
       this.highlightCountCacheKey(request.user_id),
     ]);
 
-    await QueueHelper.createComputeUserMetricsJob(request.user_id, apiLogConfig());
+    await QueueHelper.createComputeUserMetricsJob(request.user_id, this.requestService.traceCarrier());
     await QueueHelper.createGenerateSingleEntityMetadataJob(
       {
         entity: 'service',
@@ -170,7 +170,7 @@ export class ServiceService {
         user_id: service.user_id,
       },
       { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
-      apiLogConfig(),
+      this.requestService.traceCarrier(),
     );
     this.eventEmitter.emit(
       ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
@@ -226,7 +226,7 @@ export class ServiceService {
       const thumbnailUrl = await this.helpers.getAsset(thumbnailPath);
       const { moderation } = await this.aiService.moderateContent(thumbnailUrl, {
         user_id: service.user_id,
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
 
       if (!moderation.is_allowed) {
         await this.helpers.deleteAsset(thumbnailPath);

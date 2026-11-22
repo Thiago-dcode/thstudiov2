@@ -25,19 +25,19 @@ const user = {
 
 describe('RequestService log context', () => {
   it('AC-2: log is null outside a request store', () => {
-    expect(build().log).toBeNull();
+    expect(build().logContext).toBeNull();
   });
 
   it('AC-2: run() initialises method to null (no log context yet); once set, log has exactly the AC-1 keys in order', async () => {
     const svc = build();
-    let log: ReturnType<() => typeof svc.log> = null;
-    let before: ReturnType<() => typeof svc.log> = null;
+    let log: ReturnType<() => typeof svc.logContext> = null;
+    let before: ReturnType<() => typeof svc.logContext> = null;
     let method: string | null = 'unset';
     await svc.run(() => {
       method = svc.method;
-      before = svc.log;
+      before = svc.logContext;
       svc.method = 'GET';
-      log = svc.log;
+      log = svc.logContext;
     });
     expect(method).toBeNull();
     expect(before).toBeNull();
@@ -55,7 +55,7 @@ describe('RequestService log context', () => {
     await svc.run(() => {
       svc.method = 'POST';
       expect(svc.method).toBe('POST');
-      expect(svc.log!.method).toBe('POST');
+      expect(svc.logContext!.method).toBe('POST');
     });
   });
 
@@ -63,11 +63,11 @@ describe('RequestService log context', () => {
     const svc = build();
     await svc.run(() => {
       svc.method = 'GET';
-      const a = svc.log!;
-      const b = svc.log!;
+      const a = svc.logContext!;
+      const b = svc.logContext!;
       expect(a).not.toBe(b);
       a.path = 'mutated';
-      expect(svc.log!.path).toBeNull();
+      expect(svc.logContext!.path).toBeNull();
       expect(svc.path).toBeNull();
     });
   });
@@ -79,7 +79,7 @@ describe('RequestService log context', () => {
       svc.user = user;
       svc.path = '/v1/x';
       svc.method = 'GET';
-      const log = svc.log!;
+      const log = svc.logContext!;
       expect(log.user_id).toBe(42);
       expect(log.user_role).toBe('USER');
       const text = JSON.stringify(log);
@@ -96,10 +96,10 @@ describe('RequestService log context', () => {
     await svc.run(() => {
       svc.method = 'GET';
       svc.viewer = { id: 9, role: { id: 3, name: 'ADMIN' } } as unknown as UserAuth;
-      expect(svc.log!.user_id).toBe(9);
-      expect(svc.log!.user_role).toBe('ADMIN');
+      expect(svc.logContext!.user_id).toBe(9);
+      expect(svc.logContext!.user_role).toBe('ADMIN');
       svc.user = user;
-      expect(svc.log!.user_id).toBe(42);
+      expect(svc.logContext!.user_id).toBe(42);
     });
   });
 

@@ -8,7 +8,6 @@ import {
 } from '@repo/common-lib/constants/headers';
 import { maskEmailAddresses, redactRoutePath } from '@repo/backend-lib/services/log-service';
 import { API_ERROR_CHANNEL } from '@repo/backend-lib/config/logging';
-import { createApiLogger } from '../utils/api-logger';
 import { format } from 'date-fns/format';
 import { VALIDATION_ERROR_STATUS } from '../utils/constants';
 import { Error as ApiError, ErrorResponse } from '@repo/common-lib/types/response';
@@ -43,6 +42,12 @@ const withoutClientCode = (input: unknown): unknown => {
   const scrubbed = withoutEmails(input);
   if (!scrubbed || typeof scrubbed !== 'object' || Array.isArray(scrubbed) || !('code' in scrubbed)) return scrubbed;
   return { ...(scrubbed as Record<string, unknown>), code: '[REDACTED]' };
+};
+
+/** The request-start header (epoch ms) as ISO, or null when absent or not a date. */
+const toIsoOrNull = (value: unknown): string | null => {
+  const ms = Number(value);
+  return Number.isFinite(ms) && ms > 0 ? new Date(ms).toISOString() : null;
 };
 
 /** `Cannot GET /x?token=abc` -> `Cannot GET /x`. */
@@ -104,10 +109,9 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         path: request.path,
       };
       try {
-        // The api logger gives this line the same `id`/`request` as the request's other lines and
-        // its `api.access` line. The channel goes in the config: the channel builder would mutate
-        // the instance.
-        const logService = createApiLogger({ channel: API_ERROR_CHANNEL });
+        // The request logger gives this line the same `id`/`request` as the request's other lines
+        // and its `api.access` line.
+        const logService = this.requestService.log(API_ERROR_CHANNEL);
         // Nest's unknown-route 404 says `Cannot GET <originalUrl>`, query string included, and a
         // query can carry a one-time token. Any message can also quote a submitted address
         // ("Email ross@example.com is taken"). The client still gets the original message.
@@ -117,6 +121,9 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         const context = {
           ...error,
           path: this.loggedPath(request),
+          // When the request failed, plus when it arrived (the start header), so a slow failure shows its duration.
+          timestamp: new Date().toISOString(),
+          request_started_at: toIsoOrNull(request?.headers?.[REQUEST_START_TIME]),
           message: logMessage,
           errors: errors.map((entry) => (typeof entry === 'string' ? toLogged(entry) : entry)),
           // A 404 body is whatever an unknown caller posted to a route that does not exist:
@@ -127,8 +134,12 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         };
         // 4xx is the client's mistake, not ours: keep it out of ERROR so real failures stand out.
         // Every 5xx is CRITICAL, which sends the (throttled) admin alert mail.
-        if (status < 500) logService.warn(logMessage, context, { status_code: status });
-        else logService.critical(logMessage, context, { status_code: status });
+        // A 404 has nothing to add to the `api.access` line (route is `unmatched`, status 404), and
+        // scanners make it the noisiest line there is: no second line for it.
+        if (status === 404) {
+          // logged by the access line only
+        } else if (status < 500) logService.warn(logMessage, { ...context, status_code: status });
+        else logService.critical(logMessage, { ...context, status_code: status });
       } catch (error) {
         console.error('Exception occurred:', error);
       }
@@ -172,12 +183,13 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         path: request?.path,
       };
       try {
-        const logService = createApiLogger({ channel: API_ERROR_CHANNEL });
-        logService.critical(
-          maskEmailAddresses(message),
-          { ...error, message: maskEmailAddresses(message), path: this.loggedPath(request) },
-          { status_code: 500 },
-        );
+        const logService = this.requestService.log(API_ERROR_CHANNEL);
+        logService.critical(maskEmailAddresses(message), {
+          ...error,
+          message: maskEmailAddresses(message),
+          path: this.loggedPath(request),
+          status_code: 500,
+        });
       } catch (error) {
         console.error('Exception occurred:', error);
       }

@@ -1,4 +1,4 @@
-import { LogEntry } from "../types";
+import { LogContext, LogObjectEntry } from "../types";
 import { LogDriver } from "../drivers/log.driver";
 
 /**
@@ -8,14 +8,14 @@ import { LogDriver } from "../drivers/log.driver";
  * It also tracks in-flight work (pushes, callbacks such as the critical mail). A process never
  * flushes: it `settle()`s before exit, so nothing it started is lost.
  */
-export abstract class LogBuffer {
+export abstract class LogBuffer<E extends LogObjectEntry = {}> {
     /** Pushes, flushes and callbacks running right now. Read only by `settle()`. */
     private inFlight = new Set<Promise<void>>();
 
-    constructor(protected readonly logDriver: LogDriver) {}
+    constructor(protected readonly logDriver: LogDriver<E>) { }
 
     /** Queues an entry for the next `flush()`. Never throws, never waits. */
-    abstract add(entry: LogEntry): void;
+    abstract add(logContext: LogContext, entry: E): void;
 
     /** Entries waiting for a flush. */
     abstract length(): Promise<number>;
@@ -41,9 +41,9 @@ export abstract class LogBuffer {
     }
 
     /** One entry through the driver. A failed write is reported, never thrown: one bad line must not sink a batch. */
-    protected async write(entry: LogEntry): Promise<void> {
+    protected async write(logContext: LogContext, entry: E): Promise<void> {
         try {
-            await this.logDriver.process(entry);
+            await this.logDriver.process(logContext, entry);
         } catch (error) {
             console.error('LogBuffer: failed to write a log line', error);
         }

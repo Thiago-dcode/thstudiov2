@@ -1,7 +1,6 @@
 import { InjectQueue, Processor } from '@nestjs/bullmq';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Job, Queue, Worker } from 'bullmq';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { EDGE_HTML_MAX_STALE_MS } from '@repo/common-lib/constants/edge-cache';
 import { EDGE_CACHE_QUEUE, JOB_PURGE_ARTIST_EDGE_CACHE } from '@repo/common-lib/constants/queues';
 import { PurgeArtistEdgeCacheJobInput } from '@repo/common-lib/types/edge-cache';
@@ -10,6 +9,8 @@ import { UsernameHistoryRepository } from '../username-history/username-history.
 import { UserRepository } from '../users/users.repository';
 import { EdgeCacheService } from './edge-cache.service';
 import { EdgePurgeLedger } from './edge-purge-ledger';
+import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 export type PurgeArtistEdgeCacheResult =
   | { purged: false; reason: string }
@@ -33,15 +34,18 @@ export const EDGE_PURGE_COVER_SKEW_MS = 1_000;
 
 @Processor(EDGE_CACHE_QUEUE, EDGE_CACHE_PROCESSOR_OPTIONS)
 export class EdgeCacheProcessor extends GlobalProcessor {
+  private readonly logger: ApiLogger;
+
   constructor(
     private readonly edgeCacheService: EdgeCacheService,
     private readonly userRepository: UserRepository,
     private readonly usernameHistoryRepository: UsernameHistoryRepository,
-    private readonly logger: LogService,
+    private readonly requestService: RequestService,
     private readonly ledger: EdgePurgeLedger,
     @InjectQueue(EDGE_CACHE_QUEUE) private readonly queue: Queue,
   ) {
     super();
+    this.logger = this.requestService.log('edge-cache');
   }
 
   async process(job: Job<PurgeArtistEdgeCacheJobInput>): Promise<unknown> {
@@ -60,8 +64,8 @@ export class EdgeCacheProcessor extends GlobalProcessor {
     // Per-call operation: never the name builder on this shared logger. The user id is on every line.
     const op = { operation: 'purge' };
     const log = {
-      info: (message: string, extra?: Record<string, unknown>) => this.logger.info(message, { user_id: userId, ...extra }, op),
-      warn: (message: string, extra?: Record<string, unknown>) => this.logger.warn(message, { user_id: userId, ...extra }, op),
+      info: (message: string, extra?: Record<string, unknown>) => this.logger.info(message, { user_id: userId, ...extra, ...op }),
+      warn: (message: string, extra?: Record<string, unknown>) => this.logger.warn(message, { user_id: userId, ...extra, ...op }),
     };
 
     const target = this.edgeCacheService.purgeTarget();

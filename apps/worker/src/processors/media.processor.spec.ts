@@ -53,7 +53,7 @@ describe('MediaProcessor.processMedia', () => {
             warn: jest.fn(),
             error: jest.fn(),
         };
-        return { logger: { name: () => log } as any, log };
+        return { logger: (() => log) as any, log };
     };
 
     /** Only the collaborators these two paths actually reach need to behave. */

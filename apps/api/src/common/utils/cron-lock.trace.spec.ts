@@ -32,7 +32,7 @@ jest.mock('@repo/backend-lib/config/logging', () => {
 import { logBuffer } from '@repo/backend-lib/config/logging';
 import { withJobTrace } from '@repo/backend-lib/utils';
 import { currentRequestId } from 'src/common/services/request-storage';
-import { apiLogConfig } from 'src/common/utils/api-logger';
+import { apiTraceCarrier } from 'src/common/services/request.service';
 import { CRON_LOCK_TTL, runCronExclusive } from './cron-lock';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -52,8 +52,7 @@ describe('runCronExclusive audit lines', () => {
     });
     expect(seen).toMatch(UUID);
     expect(mockCronLog.info.mock.calls.map((c) => c[0])).toEqual(['Cron run started', 'Cron run completed']);
-    expect(mockCronLog.info.mock.calls[0][1]).toEqual({ cron: 'nightly' });
-    expect(mockCronLog.info.mock.calls[0][2]).toEqual({ operation: 'nightly' });
+    expect(mockCronLog.info.mock.calls[0][1]).toEqual({ cron: 'nightly', operation: 'nightly' });
     expect(mockCronLog.info.mock.calls[1][1]).toMatchObject({ cron: 'nightly' });
     expect(typeof mockCronLog.info.mock.calls[1][1].duration_ms).toBe('number');
     expect(flush).not.toHaveBeenCalled();
@@ -85,18 +84,17 @@ describe('runCronExclusive audit lines', () => {
     const job = jest.fn();
     await expect(runCronExclusive('held', CRON_LOCK_TTL.daily, job)).resolves.toBe(false);
     expect(job).not.toHaveBeenCalled();
-    const [message, extra, fields] = mockCronLog.info.mock.calls[0];
+    const [message, extra] = mockCronLog.info.mock.calls[0];
     expect(message).toBe('Cron run skipped');
-    expect(extra).toEqual({ cron: 'held', reason: 'lock_held' });
-    expect(fields).toEqual({ operation: 'held' });
+    expect(extra).toEqual({ cron: 'held', reason: 'lock_held', operation: 'held' });
   });
 
-  it('AC-15: an enqueue inside the job (with apiLogConfig) carries the run id', async () => {
+  it('AC-15: an enqueue inside the job (with apiTraceCarrier) carries the run id', async () => {
     let carrier: any;
     let runId: string | null = null;
     await runCronExclusive('enqueuer', CRON_LOCK_TTL.daily, async () => {
       runId = currentRequestId();
-      const id = apiLogConfig().id as () => string | null;
+      const id = apiTraceCarrier().id as () => string | null;
       carrier = JSON.parse(withJobTrace(undefined, id()).telemetry!.metadata as string);
     });
     expect(carrier.id).toBe(runId);

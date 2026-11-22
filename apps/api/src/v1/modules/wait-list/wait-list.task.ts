@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { MailService } from '@repo/backend-lib/services/mail-service';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import { subDays } from 'date-fns';
 import { WaitListRepository } from './wait-list.repository';
@@ -10,7 +9,8 @@ import { WaitListReminderMail } from './mails/wait-list-reminder.mail';
 import { WaitListFollowUpMail } from './mails/wait-list-follow-up.mail';
 import { WAIT_LIST_SHOWCASE_PATH } from './wait-list.constants';
 import { CRON_LOCK_TTL, runCronExclusive } from 'src/common/utils/cron-lock';
-import { apiLogConfig } from 'src/common/utils/api-logger';
+import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 @Injectable()
 export class WaitListTask {
@@ -32,14 +32,18 @@ export class WaitListTask {
    */
   private static readonly MAX_INVITES_PER_RUN = 200;
 
+  private readonly logger: ApiLogger;
+
   constructor(
     private readonly waitListRepository: WaitListRepository,
     private readonly waitListService: WaitListService,
     private readonly waitListReminderMail: WaitListReminderMail,
     private readonly waitListFollowUpMail: WaitListFollowUpMail,
     private readonly mailService: MailService,
-    private readonly logger: LogService,
-  ) {}
+    private readonly requestService: RequestService,
+  ) {
+    this.logger = this.requestService.log('wait-list');
+  }
 
   /**
    * Daily wait-list nurture run: the day-1 follow-up email, then invites for everyone who validated
@@ -109,7 +113,7 @@ export class WaitListTask {
           await this.mailService.sendAsync(
             this.waitListFollowUpMail.setData({ email: row.email, showcaseUrl }, row.language),
             { jobId: `wait-list-follow-up-${row.id}` },
-            apiLogConfig(),
+            this.requestService.traceCarrier(),
           );
           await this.waitListRepository.updateById(row.id, { follow_up_email_sent_at: new Date() });
           sentCount++;
@@ -212,7 +216,7 @@ export class WaitListTask {
               {
                 jobId: `wait-list-reminder-${row.id}-${row.reminder_count}`,
               },
-              apiLogConfig(),
+              this.requestService.traceCarrier(),
             );
 
             await this.waitListRepository.markReminderSent(row.id, row.reminder_count + 1, new Date());

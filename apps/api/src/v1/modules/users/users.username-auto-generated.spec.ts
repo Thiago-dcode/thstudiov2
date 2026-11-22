@@ -78,15 +78,14 @@ const build = (
     release: jest.fn(),
   };
   const helpers = { deleteManyCached: jest.fn().mockResolvedValue(undefined), deleteCached: jest.fn() };
-  const logService = { name: jest.fn().mockReturnThis(), error: jest.fn(), info: jest.fn() };
+  const logService = { error: jest.fn(), info: jest.fn() };
   const eventEmitter = { emit: jest.fn() };
   const service = new UserService(
     userRepository as never,
     eventEmitter as never,
-    logService as never,
     {} as never, // mailService
     helpers as never,
-    { user: caller } as never, // requestService
+    { user: caller, log: () => logService, traceCarrier: () => ({ service: 'api' }) } as never, // requestService
     {} as never, // notifyNewUserMail
     {} as never, // aiService
     {} as never, // profileStatusService

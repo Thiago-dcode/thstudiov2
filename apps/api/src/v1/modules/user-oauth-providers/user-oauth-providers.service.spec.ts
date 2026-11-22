@@ -41,7 +41,7 @@ describe('UserOauthProvidersService', () => {
     return new UserOauthProvidersService(
       repository as never,
       configService as never,
-      logger as never,
+      { log: () => logger } as never,
     );
   };
 

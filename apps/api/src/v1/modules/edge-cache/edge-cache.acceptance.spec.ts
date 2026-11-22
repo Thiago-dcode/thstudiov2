@@ -4,6 +4,7 @@ jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({
   stripeWebhookSecret: '',
 }));
 
+import { consoleRequestService } from 'src/common/testing/console-logger';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UnrecoverableError } from 'bullmq';
@@ -55,7 +56,7 @@ const cfResponse = (status: number, body: unknown = { success: status < 300, err
 
 const build = ({ current = 'ana', reserved = [] as string[] } = {}) => {
   const logger = buildLogger();
-  const service = new EdgeCacheService(logger as never);
+  const service = new EdgeCacheService(consoleRequestService(logger as never));
   const userRepository = {
     findByIdCompact: jest.fn(async () => {
       if (current === null) throw new HttpException('nf', HttpStatus.NOT_FOUND);
@@ -75,7 +76,7 @@ const build = ({ current = 'ana', reserved = [] as string[] } = {}) => {
     service,
     userRepository as never,
     history as never,
-    logger as never,
+    consoleRequestService(logger as never),
     ledger as never,
     queue as never,
   );
@@ -134,7 +135,7 @@ describe('edge purge acceptance (service + processor together)', () => {
         const lines = [...logger.info.mock.calls, ...logger.warn.mock.calls, ...logger.error.mock.calls];
         expect(lines).toHaveLength(1);
         expect(String(lines[0][0])).toBe("Edge purge skipped");
-        expect(lines[0][1]).toEqual({ user_id: 7, reason });
+        expect(lines[0][1]).toEqual({ user_id: 7, reason, operation: 'purge' });
         expect(everythingLogged(logger)).not.toContain(TOKEN);
       },
     );
@@ -240,7 +241,7 @@ describe('edge purge acceptance (service + processor together)', () => {
 
     it('AC-19: the real @OnEvent listener is wired to the event name and a Redis failure never reaches the emitter', async () => {
       const logger = buildLogger();
-      const service = new EdgeCacheService(logger as never);
+      const service = new EdgeCacheService(consoleRequestService(logger as never));
       const enqueue = jest.spyOn(QueueHelper, 'createPurgeArtistEdgeCacheJob').mockRejectedValue(new Error('redis down'));
       const emitter = new EventEmitter2();
       emitter.on(ARTIST_PUBLIC_PAGES_CHANGED_EVENT, (event: ArtistPublicPagesChangedEvent) =>
@@ -256,7 +257,7 @@ describe('edge purge acceptance (service + processor together)', () => {
         emitter.emitAsync(ARTIST_PUBLIC_PAGES_CHANGED_EVENT, new ArtistPublicPagesChangedEvent(7, ['ana'])),
       ).resolves.toBeDefined();
       expect(enqueue).toHaveBeenCalledWith({ user_id: 7, usernames: ['ana'] }, expect.objectContaining({ service: 'api' }));
-      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('redis down'));
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('redis down'), { operation: 'enqueue' });
     });
   });
 
@@ -267,7 +268,7 @@ describe('edge purge acceptance (service + processor together)', () => {
       const mediaService = { updateForUser: jest.fn() };
       const mediaRepository = { restoreStatus: jest.fn().mockResolvedValue(undefined) };
       const logger = buildLogger();
-      const processor = new MediaProcessor(mediaService as never, mediaRepository as never, logger as never, emitter as never);
+      const processor = new MediaProcessor(mediaService as never, mediaRepository as never, consoleRequestService(logger as never), emitter as never);
 
       mediaService.updateForUser.mockResolvedValue({ id: 5 });
       await processor.process({ name: JOB_UPDATE_MEDIA, data: { media_id: 5, user_id: 7, data: {} } } as never);

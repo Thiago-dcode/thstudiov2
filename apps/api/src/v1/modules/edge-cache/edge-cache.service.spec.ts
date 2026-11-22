@@ -1,5 +1,5 @@
 import { UnrecoverableError } from 'bullmq';
-import { LogService } from '@repo/backend-lib/services/log-service';
+import { consoleRequestService } from 'src/common/testing/console-logger';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { EdgeCacheService, EdgePurgeTarget, MAX_PREFIXES_PER_REQUEST } from './edge-cache.service';
 import { ArtistPublicPagesChangedEvent } from './events/artist-public-pages-changed.event';
@@ -55,7 +55,7 @@ describe('EdgeCacheService', () => {
 
   beforeEach(() => {
     logger = buildLogger();
-    service = new EdgeCacheService(logger as never);
+    service = new EdgeCacheService(consoleRequestService(logger as never));
     // Never the real Cloudflare API.
     fetchMock = jest.spyOn(globalThis, 'fetch').mockImplementation(() => {
       throw new Error('fetch must be stubbed per test');
@@ -310,7 +310,7 @@ describe('EdgeCacheService', () => {
         service.handleArtistPublicPagesChanged(new ArtistPublicPagesChangedEvent(7)),
       ).resolves.toBeUndefined();
 
-      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('user [7]'));
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('user [7]'), { operation: 'enqueue' });
     });
   });
 });

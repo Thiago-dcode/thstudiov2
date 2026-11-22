@@ -1,6 +1,5 @@
 import { AI_CREDIT_LOCK_TTL_MS, AI_CREDIT_LOCK_WAIT_MS, withUserLock } from 'src/common/utils/user-lock';
 import { HttpException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import {
   GenerateManyMediaMetadataError,
@@ -13,16 +12,19 @@ import { MediaHelper } from '@repo/common-lib/utils/media';
 import { AiCreditsHelper } from '@repo/common-lib/utils/ai-credits';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
 import { RequestService } from 'src/common/services/request.service';
-import { apiLogConfig } from 'src/common/utils/api-logger';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 @Injectable()
 export class AiMediaService {
+  private readonly logger: ApiLogger;
+
   constructor(
     private readonly mediaRepository: MediaRepository,
     private readonly userExtraDataService: UserExtraDataService,
     private readonly requestService: RequestService,
-    private readonly logger: LogService,
-  ) { }
+  ) {
+    this.logger = this.requestService.log('ai-media');
+  }
 
   /**
    * Queues metadata for many media in one request. Every id must exist and belong to the caller.
@@ -219,9 +221,9 @@ export class AiMediaService {
         entity_id: request.media_id,
         type: 'GENERATE_MEDIA_METADATA',
         user_id: request.user_id,
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
 
-      await QueueHelper.createGenerateMediaMetadataJob(request, apiLogConfig());
+      await QueueHelper.createGenerateMediaMetadataJob(request, this.requestService.traceCarrier());
 
       this.logger.info(
         `Generate media metadata job enqueued: media [${request.media_id}]`,

@@ -15,7 +15,6 @@ import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { RequestService } from 'src/common/services/request.service';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
 import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
-import { apiLogConfig } from 'src/common/utils/api-logger';
 
 @Injectable()
 export class AddressService {
@@ -191,6 +190,6 @@ export class AddressService {
     const city = result.city?.trim();
     if (state) payload.state = state;
     if (city) payload.city = city;
-    await QueueHelper.createOrUpdateLocationJob(payload, apiLogConfig());
+    await QueueHelper.createOrUpdateLocationJob(payload, this.requestService.traceCarrier());
   }
 }

@@ -111,11 +111,11 @@ describe('ConsumerWatchdog', () => {
     expect(mockLog.critical).toHaveBeenCalledTimes(1);
     expect(exitMock).toHaveBeenCalledWith(1);
 
-    const [message, extra, opts] = mockLog.critical.mock.calls[0];
+    const [message, extra] = mockLog.critical.mock.calls[0];
     expect(message).toMatch(/^API replica restarting: queue consumer down \(dev\.a11studio\.com/);
     expect(JSON.stringify(extra)).toContain('stripe-webhooks');
     expect(JSON.stringify(extra)).toContain('worker is not running');
-    expect(opts).toMatchObject({ operation: 'consumer-watchdog' });
+    expect(extra).toMatchObject({ operation: 'consumer-watchdog' });
   });
 
   it('AC-10: takes SET api-watchdog:restart NX PX 120000 before restarting', async () => {
@@ -224,8 +224,7 @@ describe('ConsumerWatchdog', () => {
     await expect(watchdog.tick()).resolves.toBeUndefined();
     expect(mockLog.error).toHaveBeenCalledWith(
       'Consumer watchdog tick failed',
-      expect.objectContaining({ error_message: 'boom' }),
-      expect.anything(),
+      expect.objectContaining({ error_message: 'boom', operation: 'consumer-watchdog' }),
     );
     await ticks(watchdog, 3); // count was reset by the error tick
     expect(exitMock).not.toHaveBeenCalled();
