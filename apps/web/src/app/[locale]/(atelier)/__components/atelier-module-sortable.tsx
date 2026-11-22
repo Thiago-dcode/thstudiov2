@@ -57,7 +57,7 @@ export function AtelierModuleSortable<T extends AtelierModuleItem>({
       isSaving={isPending}
       onSave={(sorted) => {
         pendingRef.current = sorted;
-        void handleAction();
+        handleAction().catch(() => toast.error(t("invalidOrder")));
       }}
       className={ATELIER_MODULE_GRID}
       renderItem={(item, controls) =>

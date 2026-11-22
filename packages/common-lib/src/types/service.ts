@@ -37,7 +37,8 @@ type InternalServiceFields =
   | 'seo_title'
   | 'seo_description'
   | 'seo_generated_at'
-  | 'is_indexable';
+  | 'is_indexable'
+  | 'position';
 
 // What users can provide when creating a service (public API input)
 export type CreateServiceInput = Omit<

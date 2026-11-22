@@ -2269,6 +2269,8 @@ const messages = {
         priceInfo: "O preço é opcional; deixe em 0.",
         showPrice: "Mostrar preço",
         active: "Público",
+        activeInfo:
+          "Se desmarcar, este serviço fica oculto do seu perfil de artista e das listagens. Você ainda pode editá-lo no Atelier.",
         showOnProfile: "Mostrar na página de perfil",
         showOnProfileInfo:
           "Quando ativado, este serviço é destacado no seu perfil público de artista para que os visitantes o encontrem mais facilmente. Você pode destacar até {limit} serviços na sua página de perfil.",

@@ -128,8 +128,13 @@ export const runModuleStatusAction = async (
       const t = await getTranslations();
 
       // Key names only, never values.
+      // Limited to the known keys so client-controlled names can't bloat a log line.
       const fields =
-        input && typeof input === "object" ? Object.keys(input).join(",") : "";
+        input && typeof input === "object"
+          ? (["is_highlight", "is_active"] as const)
+              .filter((key) => key in input)
+              .join(",")
+          : "";
 
       if (!Number.isInteger(id) || id < 1) {
         webLogger.warn(`${config.subject} status update invalid payload`, {

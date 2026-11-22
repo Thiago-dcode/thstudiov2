@@ -1,4 +1,8 @@
 import type { HighlightCount } from "@repo/common-lib/types/general";
+import type {
+  ModuleStatus,
+  ModuleStatusInput,
+} from "@repo/common-lib/types/module-status";
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import type {
   CreateServicePayload,
@@ -6,6 +10,11 @@ import type {
   ServiceIndexRequest,
   UpdateServicePayload,
 } from "@repo/common-lib/types/service";
+import type {
+  SortModuleItem,
+  SortModulesInput,
+  SortModulesResult,
+} from "@repo/common-lib/types/sort-module";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { fetchApi } from "@/lib/facade/fetchApi";
 import { BaseService } from "@/lib/services/base.service";
@@ -33,6 +42,21 @@ class ServiceService extends BaseService {
   ): Promise<ApiResponse<Service>> {
     return await this.fetchApi.patch({
       resource: `/${id}`,
+      body,
+    });
+  }
+  async sort(items: SortModuleItem[]): Promise<ApiResponse<SortModulesResult>> {
+    return await this.fetchApi.patch({
+      resource: "/sort",
+      body: { items } satisfies SortModulesInput,
+    });
+  }
+  async updateStatus(
+    id: number,
+    body: ModuleStatusInput,
+  ): Promise<ApiResponse<ModuleStatus>> {
+    return await this.fetchApi.patch({
+      resource: `/${id}/status`,
       body,
     });
   }

@@ -130,6 +130,34 @@ function ServiceCardBody({
   );
 }
 
+/**
+ * Cover-only slot for the atelier module card: the column thumbnail with no link and no body.
+ * Server-rendered and handed to client wrappers as a `ReactNode`.
+ */
+export function ServiceCover({
+  service,
+  isBlocked,
+  blockedLabel,
+  className,
+}: {
+  service: Service;
+  isBlocked: boolean;
+  blockedLabel?: string;
+  className?: string;
+}) {
+  return (
+    <div className={cn(isBlocked && "opacity-60", className)}>
+      <ServiceCardThumbnail
+        title={service.title}
+        thumbnail={service.thumbnail}
+        isBlocked={isBlocked}
+        blockedLabel={blockedLabel}
+        variant="column"
+      />
+    </div>
+  );
+}
+
 export function ServiceCard({
   service,
   username,

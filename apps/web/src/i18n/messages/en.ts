@@ -2258,6 +2258,8 @@ const messages = {
         priceInfo: "Price is optional; leave it at 0.",
         showPrice: "Show price",
         active: "Public",
+        activeInfo:
+          "When this is off, the service is hidden from your artist profile and listings. You can still edit it in Atelier.",
         showOnProfile: "Show on profile page",
         showOnProfileInfo:
           "When enabled, this service is highlighted on your public artist profile so visitors can find it more easily. You can highlight up to {limit} services on your profile page.",

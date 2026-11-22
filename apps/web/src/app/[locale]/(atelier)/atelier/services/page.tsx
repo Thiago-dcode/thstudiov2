@@ -3,7 +3,7 @@ import { Briefcase } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
-import { ServiceCard } from "@/modules/user-services/components/service-card";
+import { ServiceCover } from "@/modules/user-services/components/service-card";
 import userServiceService from "@/modules/user-services/user-service.service";
 import {
   AdminPageContainer,
@@ -11,6 +11,7 @@ import {
   AdminPageTitle,
 } from "../../__components/admin-page.component";
 import { CreateResourceButton } from "../../__components/create-resource-button";
+import { ServiceSortable } from "./_components/service-sortable";
 
 export default async function ServicesPage() {
   const t = await getTranslations("atelier.services");
@@ -36,17 +37,24 @@ export default async function ServicesPage() {
         />
       </AdminPageTitle>
       {services.length > 0 ? (
-        <div className="grid grid-cols-2 laptop:grid-cols-3 desktop-lg:grid-cols-5  gap-4">
-          {services.map((service) => (
-            <ServiceCard
-              key={service.id}
-              service={service}
-              username={userAuth.username}
-              isAtelier
-              blockedLabel={tCommon("blocked")}
-            />
-          ))}
-        </div>
+        <ServiceSortable
+          username={userAuth.username}
+          items={services.map((service) => ({
+            id: service.id,
+            slug: service.slug,
+            title: service.title,
+            is_highlight: service.is_highlight,
+            is_active: service.is_active,
+            is_blocked: Boolean(service.blocked_at),
+            media: (
+              <ServiceCover
+                service={service}
+                isBlocked={Boolean(service.blocked_at)}
+                blockedLabel={tCommon("blocked")}
+              />
+            ),
+          }))}
+        />
       ) : (
         <AdminPageEmptyState
           icon={<Briefcase />}

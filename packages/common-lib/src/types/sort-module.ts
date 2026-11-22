@@ -1,6 +1,6 @@
 /**
  * One row of a sort request. `module_id` is the row id of whichever sortable table is being
- * sorted (portfolios now; collections, services and clients later).
+ * sorted (portfolios, collections and services; clients later).
  */
 export type SortModuleItem = {
   module_id: number;

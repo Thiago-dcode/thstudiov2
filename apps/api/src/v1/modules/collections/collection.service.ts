@@ -14,14 +14,16 @@ import { Helpers } from "src/common/services/helpers.service";
 import { ApiException } from "src/common/exceptions/api-exception";
 import { FullPortfolioCollection } from "@repo/common-lib/types/collection";
 import { insertWithUniqueSlug, resolveEntitySlug } from "src/common/utils/slug.util";
-import { assertOwnedIds, classifyOwnedIds } from "src/common/utils/owned-ids.util";
+import { assertOwnedIds } from "src/common/utils/owned-ids.util";
 import type { SortModulesResult } from "@repo/common-lib/types/sort-module";
 import type { ModuleStatus } from "@repo/common-lib/types/module-status";
 import { SortModulesRequest } from "src/common/requests/sort-modules.request";
+import { UpdateModuleStatusRequest } from "src/common/requests/update-module-status.request";
 import {
-  UpdateModuleStatusRequest,
-  hasModuleStatusChange,
-} from "src/common/requests/update-module-status.request";
+  reorderOwnedModules,
+  updateOwnedModuleStatus,
+  type SortableModuleLabels,
+} from "src/common/utils/sortable-module.util";
 import type { ApiLogger } from "src/common/services/request.service";
 import { ENTITY_CREATE_LOCK_TTL_MS, withUserLock } from "src/common/utils/user-lock";
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
@@ -30,6 +32,12 @@ import { PUBLIC_ENTITY_FILTERS } from "src/common/utils/public-entity";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from "@repo/common-lib/constants/events";
 import { ArtistPublicPagesChangedEvent } from "../edge-cache/events/artist-public-pages-changed.event";
+
+const COLLECTION_LABELS: SortableModuleLabels = {
+  subject: 'Collection',
+  plural: 'collections',
+  idKey: 'collection_id',
+};
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -274,108 +282,55 @@ export class CollectionService {
    * only ever send the caller's own ids.
    */
   async updatePositions(request: SortModulesRequest): Promise<SortModulesResult> {
-    const userId = this.requestService.user.id;
-    const itemCount = request.items.length;
-    this.reorderLog.info('Collection reorder started', { user_id: userId, item_count: itemCount });
-
-    const { missing, foreign } = await classifyOwnedIds(
-      TABLES_ENUM.COLLECTIONS,
-      request.items.map((item) => item.module_id),
-      userId,
-    );
-    if (foreign.length) {
-      // Counts only: never the other owner's ids.
-      this.reorderLog.critical('Collection reorder targeted foreign collections', {
-        user_id: userId,
-        item_count: itemCount,
-        foreign_count: foreign.length,
-        step: 'ownership',
-      });
-      throw new BadRequestException('Collection not found');
-    }
-    if (missing.length) {
-      throw new BadRequestException('Collection not found');
-    }
-
-    const updatedCount = await this.collectionRepository.updatePositions(userId, request.items);
-    if (updatedCount > 0) {
-      this.eventEmitter.emit(
-        ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
-        new ArtistPublicPagesChangedEvent(userId),
-      );
-    }
-
-    this.reorderLog.success('Collection reorder completed', {
-      user_id: userId,
-      item_count: itemCount,
-      updated_count: updatedCount,
+    return reorderOwnedModules({
+      labels: COLLECTION_LABELS,
+      table: TABLES_ENUM.COLLECTIONS,
+      log: this.reorderLog,
+      userId: this.requestService.user.id,
+      items: request.items,
+      write: (userId, items) => this.collectionRepository.updatePositions(userId, items),
+      onChanged: (userId) => {
+        this.eventEmitter.emit(
+          ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+          new ArtistPublicPagesChangedEvent(userId),
+        );
+      },
     });
-    return { updated_count: updatedCount };
   }
 
   /**
-   * Quick toggle of `is_highlight` / `is_active` from the atelier card. Unlike `update()` it
-   * rewrites nothing else (that one replaces the media list), and mirrors its side effects:
-   * highlight-count cache, SEO-metadata cache (its noindex depends on `is_active`) and the edge purge.
+   * Quick toggle of `is_highlight` / `is_active` from the atelier card. Mirrors the side effects
+   * of `update()` for those two flags: highlight-count cache, SEO-metadata cache (its noindex
+   * depends on `is_active`) and the edge purge.
    */
   async updateStatus(id: number, request: UpdateModuleStatusRequest): Promise<ModuleStatus> {
-    if (!hasModuleStatusChange(request)) {
-      throw new BadRequestException('Nothing to update');
-    }
     const userId = this.requestService.user.id;
-    const fields = (['is_highlight', 'is_active'] as const).filter((key) => request[key] !== undefined);
-    this.statusLog.info('Collection status update started', {
-      user_id: userId,
-      collection_id: id,
-      fields: fields.join(','),
-    });
-
-    const current = await this.collectionRepository.getOneCompact(id);
-    if (!current) {
-      throw new BadRequestException('Collection not found');
-    }
-    if (current.user_id !== userId) {
-      this.statusLog.critical('Collection status update targeted a foreign collection', {
-        user_id: userId,
-        collection_id: id,
-        step: 'ownership',
-      });
-      throw new BadRequestException('Collection not found');
-    }
-
-    await this.enforceHighlightLimit(userId, request.is_highlight, current.is_highlight);
-
-    const updated = await this.collectionRepository.updateStatus(id, userId, request);
-    const result: ModuleStatus = updated ?? {
+    return updateOwnedModuleStatus({
+      labels: COLLECTION_LABELS,
+      log: this.statusLog,
+      userId,
       id,
-      is_highlight: current.is_highlight,
-      is_active: current.is_active,
-    };
-
-    if (updated) {
-      if (request.is_highlight !== undefined) {
-        await this.invalidateHighlightCountCache(userId);
-      }
-      if (request.is_active !== undefined) {
-        await this.helper.deleteCached(
-          CACHE_KEY_COLLECTION_SEO(userId, current.slug),
-          { appended_language: true },
+      request,
+      getCurrent: (rowId) => this.collectionRepository.getOneCompact(rowId),
+      enforceHighlightLimit: (ownerId, isHighlight, current) =>
+        this.enforceHighlightLimit(ownerId, isHighlight, current),
+      write: (rowId, ownerId, input) => this.collectionRepository.updateStatus(rowId, ownerId, input),
+      onChanged: async (current) => {
+        if (request.is_highlight !== undefined) {
+          await this.invalidateHighlightCountCache(userId);
+        }
+        if (request.is_active !== undefined) {
+          await this.helper.deleteCached(
+            CACHE_KEY_COLLECTION_SEO(userId, current.slug),
+            { appended_language: true },
+          );
+        }
+        this.eventEmitter.emit(
+          ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+          new ArtistPublicPagesChangedEvent(userId),
         );
-      }
-      this.eventEmitter.emit(
-        ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
-        new ArtistPublicPagesChangedEvent(userId),
-      );
-    }
-
-    this.statusLog.success('Collection status updated', {
-      user_id: userId,
-      collection_id: id,
-      is_highlight: result.is_highlight,
-      is_active: result.is_active,
-      changed: updated !== null,
+      },
     });
-    return result;
   }
 
   async delete(id: number) {
