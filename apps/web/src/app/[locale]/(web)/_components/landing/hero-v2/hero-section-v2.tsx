@@ -65,9 +65,9 @@ export const HeroSectionV2 = async ({
               <SlotMachine
                 texts={accentWords}
                 itemHeight="1.2em"
-                interval={3000}
+                interval={4000}
                 fitWidth
-                spinDuration={2500}
+                spinDuration={3000}
                 className="text-accent translate-y-[-0.09em]"
               />{" "}
               {t("titleConnector")}
@@ -76,15 +76,15 @@ export const HeroSectionV2 = async ({
               <SlotMachine
                 texts={discoverWords}
                 itemHeight="1.2em"
-                interval={3200}
-                spinDuration={2500}
+                interval={4200}
+                spinDuration={3000}
                 fitWidth
                 className="translate-y-[-0.09em]"
               />
               .
             </span>
           </p>
-          <p className="hero-stagger-2 max-w-2xl font-normal! leading-relaxed text-text-muted text-base! tablet:text-xl! laptop:text-2xl!">
+          <p className="hero-stagger-2 max-w-2xl font-semibold! leading-relaxed  text-base! tablet:text-xl! laptop:text-2xl!">
             {t("subtitle")}
           </p>
         </div>

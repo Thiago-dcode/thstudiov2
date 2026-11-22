@@ -20,7 +20,7 @@ const messages = {
       definition:
         "A11STUDIO is where photographers show their work — and where clients come to find and hire them.",
       titlePrefix: "Let your",
-      titleAccentWords: ["photos", "vision", "craft", "work", "story"],
+      titleAccentWords: ["art", "vision", "craft", "work", "story"],
       titleConnector: "be",
       titleDiscoverWords: [
         "shared",

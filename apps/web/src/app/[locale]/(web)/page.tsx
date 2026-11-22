@@ -38,7 +38,7 @@ const SECTIONS: {
   Component: ComponentType<LandingSectionProps>;
 }[] = [
   { id: "home-hero-section", Component: HeroSectionV2 },
-  { id: "disciplines", Component: DisciplineLandingsSection },
+  // { id: "disciplines", Component: DisciplineLandingsSection },
   { id: "value-pillars", Component: ValuePillarsSection },
   { id: "featured-portfolio", Component: FeaturedPortfolioSection },
   { id: "featured-artists", Component: FeaturedArtistsSection },
