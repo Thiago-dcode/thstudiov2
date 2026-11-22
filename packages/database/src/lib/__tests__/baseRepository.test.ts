@@ -986,3 +986,202 @@ describe('BaseRepository - buildQuery', () => {
     });
   });
 });
+
+// ============================================================================
+// OWNED WRITES (sortable modules): updatePositionsForOwner / updateStatusForOwner
+// ============================================================================
+class OwnedWriteRepository extends BaseRepository {
+  constructor(tableName: any) {
+    super(tableName);
+  }
+  public positions(...args: Parameters<BaseRepository['updatePositionsForOwner']>) {
+    return this.updatePositionsForOwner(...args);
+  }
+  public status(...args: Parameters<BaseRepository['updateStatusForOwner']>) {
+    return this.updateStatusForOwner(...args);
+  }
+  public seo(column: string) {
+    return this.seoFreshnessSet(column);
+  }
+}
+
+describe('BaseRepository - owned writes', () => {
+  let repository: OwnedWriteRepository;
+  let queryMock: jest.Mock;
+  const squash = (sql: string) => sql.replace(/\s+/g, ' ').trim();
+  const SEO_CASE =
+    'seo_generated_at = CASE WHEN t.seo_generated_at IS NOT NULL AND t.seo_generated_at >= t.updated_at THEN CURRENT_TIMESTAMP ELSE t.seo_generated_at END';
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const { initClient, getClient } = require('../client');
+    await initClient({
+      host: 'localhost',
+      port: 5432,
+      username: 'u',
+      password: 'p',
+      database: 'd',
+      client: 'postgres',
+    });
+    queryMock = getClient().query as jest.Mock;
+    queryMock.mockReset();
+    queryMock.mockResolvedValue({ rows: [], rowCount: 0 });
+    repository = new OwnedWriteRepository('portfolios' as any);
+  });
+
+  afterEach(async () => {
+    const { killClient } = require('../client');
+    await killClient();
+  });
+
+  describe('updatePositionsForOwner', () => {
+    const items = [
+      { module_id: 11, position: 1 },
+      { module_id: 12, position: 0 },
+    ];
+
+    it('AC-6: issues exactly ONE query, guarded by the owner, with IS DISTINCT FROM, all values bound', async () => {
+      queryMock.mockResolvedValue({ rows: [], rowCount: 2 });
+      const count = await repository.positions(7, items);
+
+      expect(count).toBe(2);
+      expect(queryMock).toHaveBeenCalledTimes(1);
+      const [sql, values] = queryMock.mock.calls[0];
+      const text = squash(sql);
+      expect(text).toMatch(/^UPDATE portfolios AS t SET position = v\.position/);
+      expect(text).toContain('FROM unnest($1::int[], $2::int[]) AS v(id, position)');
+      expect(text).toContain('t.id = v.id');
+      expect(text).toContain('t.user_id = $3');
+      expect(text).toContain('t.position IS DISTINCT FROM v.position');
+      expect(values).toEqual([[11, 12], [1, 0], 7]);
+    });
+
+    it('AC-6: ids, positions and the owner are bound, never interpolated into the SQL text', async () => {
+      await repository.positions(424242, [{ module_id: 987654, position: 135 }]);
+      const [sql] = queryMock.mock.calls[0];
+      expect(sql).not.toContain('424242');
+      expect(sql).not.toContain('987654');
+      expect(sql).not.toMatch(/\b135\b/);
+    });
+
+    it('AC-7: without seoStampColumn there is no CASE; with it the SEO stamp is carried forward only when fresh', async () => {
+      await repository.positions(7, items);
+      expect(squash(queryMock.mock.calls[0][0])).not.toContain('CASE');
+
+      queryMock.mockClear();
+      await repository.positions(7, items, { seoStampColumn: 'seo_generated_at' });
+      expect(queryMock).toHaveBeenCalledTimes(1);
+      expect(squash(queryMock.mock.calls[0][0])).toContain(SEO_CASE);
+    });
+
+    it('AC-6: honours a custom owner column', async () => {
+      await repository.positions(7, items, { ownerColumn: 'artist_id' });
+      expect(squash(queryMock.mock.calls[0][0])).toContain('t.artist_id = $3');
+    });
+
+    it('AC-6: an empty list does no query and returns 0', async () => {
+      await expect(repository.positions(7, [])).resolves.toBe(0);
+      expect(queryMock).not.toHaveBeenCalled();
+    });
+
+    it('AC-6: unsafe identifiers are refused before any query', async () => {
+      await expect(
+        repository.positions(7, items, { ownerColumn: 'user_id = 1 OR 1=1; --' }),
+      ).rejects.toThrow();
+      await expect(
+        repository.positions(7, items, { seoStampColumn: 'x; DROP TABLE users' }),
+      ).rejects.toThrow();
+      expect(queryMock).not.toHaveBeenCalled();
+    });
+
+    it('AC-6: returns 0 when the driver reports no rowCount', async () => {
+      queryMock.mockResolvedValue({ rows: [] });
+      await expect(repository.positions(7, items)).resolves.toBe(0);
+    });
+  });
+
+  describe('updateStatusForOwner', () => {
+    it('AC-13: only the sent column appears in SET and in the change filter', async () => {
+      queryMock.mockResolvedValue({ rows: [{ id: 5, is_highlight: false, is_active: false }], rowCount: 1 });
+      const out = await repository.status(5, 7, { is_active: false });
+
+      expect(out).toEqual({ id: 5, is_highlight: false, is_active: false });
+      expect(queryMock).toHaveBeenCalledTimes(1);
+      const [sql, values] = queryMock.mock.calls[0];
+      const text = squash(sql);
+      expect(text).toContain('SET is_active = $3');
+      expect(text.slice(0, text.indexOf('WHERE'))).not.toContain('is_highlight');
+      expect(text).toContain('WHERE t.id = $1 AND t.user_id = $2 AND (t.is_active IS DISTINCT FROM $3)');
+      expect(text).toContain('RETURNING t.id, t.is_highlight, t.is_active');
+      expect(values).toEqual([5, 7, false]);
+    });
+
+    it('AC-13: both columns are written together, bound in order, filtered with OR', async () => {
+      queryMock.mockResolvedValue({ rows: [{ id: 5, is_highlight: true, is_active: false }], rowCount: 1 });
+      await repository.status(5, 7, { is_highlight: true, is_active: false });
+      const [sql, values] = queryMock.mock.calls[0];
+      const text = squash(sql);
+      expect(text).toContain('SET is_highlight = $3, is_active = $4');
+      expect(text).toContain('(t.is_highlight IS DISTINCT FROM $3 OR t.is_active IS DISTINCT FROM $4)');
+      expect(values).toEqual([5, 7, true, false]);
+    });
+
+    it('AC-13: an undefined key is never written (no NULL); an input with no keys does no query and returns null', async () => {
+      await expect(repository.status(5, 7, { is_highlight: undefined, is_active: undefined })).resolves.toBeNull();
+      expect(queryMock).not.toHaveBeenCalled();
+
+      await repository.status(5, 7, { is_highlight: undefined, is_active: true });
+      const [sql, values] = queryMock.mock.calls[0];
+      const text = squash(sql);
+      expect(text.slice(0, text.indexOf('WHERE'))).not.toContain('is_highlight = ');
+      expect(values).toEqual([5, 7, true]);
+    });
+
+    it('AC-13: arbitrary extra keys on the input never reach the SQL text', async () => {
+      await repository.status(5, 7, { is_active: true, role: 'admin', 'x = 1; --': 1 } as any);
+      const [sql, values] = queryMock.mock.calls[0];
+      expect(sql).not.toContain('role');
+      expect(sql).not.toContain('admin');
+      expect(sql).not.toContain('--');
+      expect(values).toEqual([5, 7, true]);
+    });
+
+    it('AC-17: returns null when nothing matched or nothing would change (zero rows)', async () => {
+      queryMock.mockResolvedValue({ rows: [], rowCount: 0 });
+      await expect(repository.status(5, 7, { is_active: true })).resolves.toBeNull();
+    });
+
+    it('AC-7/AC-17: the SEO CASE appears only when seoStampColumn is given, in SET of the same single statement', async () => {
+      await repository.status(5, 7, { is_active: true });
+      expect(squash(queryMock.mock.calls[0][0])).not.toContain('CASE');
+
+      queryMock.mockClear();
+      await repository.status(5, 7, { is_active: true }, { seoStampColumn: 'seo_generated_at' });
+      expect(queryMock).toHaveBeenCalledTimes(1);
+      const text = squash(queryMock.mock.calls[0][0]);
+      expect(text).toContain(SEO_CASE);
+      expect(text.indexOf('CASE')).toBeLessThan(text.indexOf('WHERE'));
+    });
+
+    it('AC-6: the owner guard is always present and bound', async () => {
+      await repository.status(5, 7, { is_highlight: true });
+      const [sql, values] = queryMock.mock.calls[0];
+      expect(squash(sql)).toContain('t.user_id = $2');
+      expect(values[1]).toBe(7);
+    });
+
+    it('AC-6: unsafe identifiers are refused before any query', async () => {
+      await expect(repository.status(5, 7, { is_active: true }, { ownerColumn: '1; DROP' })).rejects.toThrow();
+      expect(queryMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('seoFreshnessSet', () => {
+    it('AC-7: keeps a fresh stamp fresh (CURRENT_TIMESTAMP) and leaves a stale or null one as is', () => {
+      expect(repository.seo('seo_generated_at')).toBe(SEO_CASE);
+    });
+    it('AC-7: rejects unsafe column names', () => {
+      expect(() => repository.seo('a b')).toThrow();
+    });
+  });
+});

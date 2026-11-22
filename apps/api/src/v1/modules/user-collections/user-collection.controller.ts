@@ -12,7 +12,7 @@ import { PUBLIC_READ_THROTTLE } from 'src/common/utils/constants';
 import { Public } from 'src/common/decorators/public.decorator';
 import { IsUserAuthPipe } from 'src/pipes/is-user-auth.pipe';
 import { UserCollectionService } from './user-collection.service';
-import { IndexCollectionRequest } from '../collections/requests/index-collection.request';
+import { IndexUserCollectionRequest } from './requests/index-user-collection.request';
 
 // Class-level, unlike `UserController`: every route here is a public artist read,
 // so there are no account endpoints that need to stay on the stricter global
@@ -68,7 +68,7 @@ export class UserCollectionController {
   @Get(':username/collections')
   async getAllByUsername(
     @Param('username') username: string,
-    @Query() query: IndexCollectionRequest,
+    @Query() query: IndexUserCollectionRequest,
   ) {
     return await this.userCollectionService.getAllByUsername(username, query);
   }

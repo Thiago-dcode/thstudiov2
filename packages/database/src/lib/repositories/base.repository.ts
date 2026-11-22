@@ -3,6 +3,8 @@ import { Join, SqlClause, SqlValue, TableName } from '@repo/common-lib/types/dat
 import { Query } from '../facades';
 import { QueryBuilderException } from '../builder/queryBuilder/exceptions';
 import { OffsetPaginationRequest } from '@repo/common-lib/types/request';
+import type { SortModuleItem } from '@repo/common-lib/types/sort-module';
+import type { ModuleStatus, ModuleStatusInput } from '@repo/common-lib/types/module-status';
 type WhereOptions = { column: string, operator: SqlClause, value: SqlValue | SqlValue[] };
 type BaseRepositoryOptions = {
   primaryKey?: string;
@@ -10,6 +12,16 @@ type BaseRepositoryOptions = {
   softDeleteCol?: string
 };
 type valueToAttach = string | number;
+
+/** Column names reach SQL text, so they are checked even though they only ever come from code. */
+const SAFE_IDENTIFIER = /^[a-z_][a-z0-9_]*$/;
+
+type OwnedWriteOptions = {
+  /** Column that holds the owner's user id. */
+  ownerColumn?: string;
+  /** A freshness stamp (e.g. `seo_generated_at`) to carry forward when the row was fresh before the write. */
+  seoStampColumn?: string;
+};
 
 type AttachValues = {
   [key: valueToAttach]: {
@@ -124,6 +136,91 @@ export abstract class BaseRepository {
 
     }));
     return result;
+  }
+
+  private assertSafeIdentifier(name: string): string {
+    if (!SAFE_IDENTIFIER.test(name)) {
+      throw new QueryBuilderException(`Unsafe SQL identifier: ${name}`);
+    }
+    return name;
+  }
+
+  /**
+   * `SET` fragment that keeps a `<col>` freshness stamp (SEO generation, ...) fresh across a write
+   * that is not a content change. The BEFORE-UPDATE trigger bumps `updated_at` on every UPDATE, and
+   * a stamp older than `updated_at` means "stale" to the nightly sweep. `CURRENT_TIMESTAMP` equals
+   * what the trigger writes in the same statement. A stamp that was already stale (or never set)
+   * is kept as it is.
+   */
+  protected seoFreshnessSet(column: string): string {
+    const col = this.assertSafeIdentifier(column);
+    return `${col} = CASE WHEN t.${col} IS NOT NULL AND t.${col} >= t.updated_at THEN CURRENT_TIMESTAMP ELSE t.${col} END`;
+  }
+
+  /**
+   * Writes `position` for every row of `items` that belongs to `ownerId` in ONE statement, so it
+   * is all-or-nothing and cannot touch another owner's row. Rows whose position is unchanged are
+   * not written (no `updated_at` bump). Returns how many rows changed.
+   */
+  protected async updatePositionsForOwner(
+    ownerId: number,
+    items: SortModuleItem[],
+    options: OwnedWriteOptions = {},
+  ): Promise<number> {
+    if (!items.length) return 0;
+    const owner = this.assertSafeIdentifier(options.ownerColumn ?? 'user_id');
+    const sets = ['position = v.position'];
+    if (options.seoStampColumn) sets.push(this.seoFreshnessSet(options.seoStampColumn));
+
+    const result = await Query.raw(
+      `UPDATE ${this.tableName} AS t
+       SET ${sets.join(', ')}
+       FROM unnest($1::int[], $2::int[]) AS v(id, position)
+       WHERE t.id = v.id
+         AND t.${owner} = $3
+         AND t.position IS DISTINCT FROM v.position`,
+      [items.map((item) => item.module_id), items.map((item) => item.position), ownerId],
+    );
+    return Number(result?.rowCount ?? 0);
+  }
+
+  /**
+   * Partial `is_highlight` / `is_active` write for one owned row in ONE statement. Only the keys
+   * present in `input` reach `SET` (the two column names are fixed here, never taken from the
+   * input), so a key that was not sent is never written as NULL. Returns the stored values, or
+   * `null` when no owned row matched or nothing would change.
+   */
+  protected async updateStatusForOwner(
+    id: number,
+    ownerId: number,
+    input: ModuleStatusInput,
+    options: OwnedWriteOptions = {},
+  ): Promise<ModuleStatus | null> {
+    const owner = this.assertSafeIdentifier(options.ownerColumn ?? 'user_id');
+    const values: (number | boolean)[] = [id, ownerId];
+    const sets: string[] = [];
+    const changes: string[] = [];
+    for (const column of ['is_highlight', 'is_active'] as const) {
+      const value = input[column];
+      if (typeof value !== "boolean") continue;
+      values.push(value);
+      sets.push(`${column} = $${values.length}`);
+      changes.push(`t.${column} IS DISTINCT FROM $${values.length}`);
+    }
+    if (!sets.length) return null;
+    if (options.seoStampColumn) sets.push(this.seoFreshnessSet(options.seoStampColumn));
+
+    const result = await Query.raw(
+      `UPDATE ${this.tableName} AS t
+       SET ${sets.join(', ')}
+       WHERE t.id = $1 AND t.${owner} = $2 AND (${changes.join(' OR ')})
+       RETURNING t.id, t.is_highlight, t.is_active`,
+      values,
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    const row = Array.isArray(rows) ? rows[0] : undefined;
+    if (!row) return null;
+    return { id: Number(row.id), is_highlight: row.is_highlight, is_active: row.is_active };
   }
 
   protected async handleOffsetPagination(query: QueryBuilder, pagination: OffsetPaginationRequest) {

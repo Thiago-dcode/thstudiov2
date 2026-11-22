@@ -20,6 +20,7 @@ export type ServiceSchema = {
   user_id: number;
   portfolio_id?: number | null;
   blocked_at?: Date | null;
+  position: number;
   created_at: Date;
   updated_at: Date;
 };
@@ -50,6 +51,7 @@ export type ServiceTermSchema = {
 // ==================== SERVICE FULL SCHEMA (WITH FEATURES & TERMS) ====================
 // Joins: services + service_features + service_terms + portfolios
 // Collisions: id, title, created_at, updated_at
+// portfolios.position is NOT selected: it would collide with services.position (alias p_position if ever needed)
 export type ServiceFullSchema = ServiceSchema & {
   // From service_features (prefixed: sf_)
   sf_id: number;                // COLLISION: id

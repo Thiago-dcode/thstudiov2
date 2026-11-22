@@ -22,6 +22,8 @@ import {
   FullPortfolioCollection,
 } from '@repo/common-lib/types/collection';
 import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';
+import type { SortModuleItem } from '@repo/common-lib/types/sort-module';
+import type { ModuleStatus, ModuleStatusInput } from '@repo/common-lib/types/module-status';
 import type { MediaVisibility } from '@repo/common-lib/types/media';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
@@ -58,6 +60,7 @@ export class CollectionRepository extends BaseRepository {
     'collections.seo_generated_at',
     'collections.description',
     'collections.blocked_at',
+    'collections.position',
     'collections.user_id',
     'collections.created_at',
     'collections.updated_at',
@@ -65,7 +68,7 @@ export class CollectionRepository extends BaseRepository {
 
   private readonly COLUMNS: CollectionFullSchemaColumns[] = [
     ...this.BASE_COLUMNS,
-    'collection_media.position',
+    'collection_media.position as cm_position',
     'media.id as m_id',
     'media.thumbnail',
     'media.title as m_title',
@@ -74,7 +77,7 @@ export class CollectionRepository extends BaseRepository {
 
   private readonly FULL_COLUMNS: CollectionFullSchemaColumns[] = [
     ...this.BASE_COLUMNS,
-    'collection_media.position',
+    'collection_media.position as cm_position',
     'media.id as m_id',
     'media.public_id',
     'media.thumbnail',
@@ -117,6 +120,11 @@ export class CollectionRepository extends BaseRepository {
   ): Promise<Collection[]> {
     const baseQuery = this.query().select(this.BASE_COLUMNS);
     this.applyWhereFilters(baseQuery, filters, options);
+    // The artist's own order leads on single-artist lists. It must come before pagination, which
+    // pushes `id DESC` itself.
+    if (filters.user_id) {
+      baseQuery.orderBy('collections.position', 'ASC');
+    }
     this.requestService.pagination =
       await this.handleOffsetPagination(baseQuery, filters);
     baseQuery.orderBy('created_at', 'DESC');
@@ -131,8 +139,18 @@ export class CollectionRepository extends BaseRepository {
       .whereIn('collections.id', ids)
       .join('id', 'collection_media', 'collection_id', 'LEFT')
       .join('collection_media.media_id', 'media', 'id', 'LEFT');
-    const result = await this.whereMediaVisible(query)
-      .orderBy('created_at', 'DESC')
+    // `formatCollections` keeps this row order, so phase 2 must mirror phase 1's ORDER BY exactly,
+    // or the right page of collections is shown in the wrong order.
+    const ordered = this.whereMediaVisible(query);
+    if (filters.user_id) {
+      ordered
+        .orderBy('collections.position', 'ASC')
+        .orderBy('collections.id', 'DESC')
+        .orderBy('created_at', 'DESC');
+    } else {
+      ordered.orderBy('created_at', 'DESC');
+    }
+    const result = await ordered
       .orderBy('collection_media.position', 'ASC')
       .get<CollectionCompactSchema[]>();
 
@@ -377,6 +395,24 @@ export class CollectionRepository extends BaseRepository {
     return result ? this.formatBaseCollection(result) : null;
   }
 
+  /**
+   * Saves the artist's chosen order. Rows whose position is unchanged are untouched, and a row
+   * whose SEO was fresh stays fresh: a reorder is not a content change, and without that the
+   * nightly sweep would regenerate (and bill) every collection that moved.
+   */
+  async updatePositions(userId: number, items: SortModuleItem[]): Promise<number> {
+    return this.updatePositionsForOwner(userId, items, { seoStampColumn: 'seo_generated_at' });
+  }
+
+  /** Partial `is_highlight` / `is_active` write; `null` when nothing changed. Same SEO rule as above. */
+  async updateStatus(
+    id: number,
+    userId: number,
+    input: ModuleStatusInput,
+  ): Promise<ModuleStatus | null> {
+    return this.updateStatusForOwner(id, userId, input, { seoStampColumn: 'seo_generated_at' });
+  }
+
   async slugExists(slug: string, userId: number): Promise<boolean> {
     const result = await this.query()
       .where('slug', '=', slug)
@@ -566,7 +602,7 @@ export class CollectionRepository extends BaseRepository {
           id: row.m_id,
           public_id: row.public_id,
           title: row.m_title,
-          position: row.position,
+          position: row.cm_position,
           thumbnail: row.thumbnail,
           video_preview: row.video_preview,
           url: row.url,
@@ -597,9 +633,16 @@ export class CollectionRepository extends BaseRepository {
 
     this.applyWhereFilters(query, filters, options);
 
+    // Single-artist lists lead with the artist's own order, before pagination pushes `id DESC`.
+    if (filters.user_id) {
+      query.orderBy('collections.position', 'ASC');
+    }
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC');
+    if (filters.user_id) {
+      query.orderBy('collections.id', 'DESC');
+    }
     query.orderBy('collection_media.position', 'ASC');
 
     return query;
@@ -614,6 +657,7 @@ export class CollectionRepository extends BaseRepository {
       is_highlight: result.is_highlight,
       is_active: result.is_active,
       is_indexable: result.is_indexable,
+      position: result.position,
       seo_title: result.seo_title,
       seo_description: result.seo_description,
       seo_generated_at: result.seo_generated_at,
@@ -639,6 +683,7 @@ export class CollectionRepository extends BaseRepository {
           is_highlight: row.is_highlight,
           is_active: row.is_active,
           is_indexable: row.is_indexable,
+          position: row.position,
           seo_title: row.seo_title,
           seo_description: row.seo_description,
           seo_generated_at: row.seo_generated_at,
@@ -656,7 +701,7 @@ export class CollectionRepository extends BaseRepository {
           id: row.m_id,
           thumbnail: row.thumbnail,
           title: row.m_title,
-          position: row.position,
+          position: row.cm_position,
         };
         map.get(row.id)!.media.push(media);
       }
@@ -675,7 +720,7 @@ export class CollectionRepository extends BaseRepository {
         id: row.m_id,
         public_id: row.public_id,
         title: row.m_title,
-        position: row.position,
+        position: row.cm_position,
         thumbnail: row.thumbnail,
         video_preview: row.video_preview,
         url: row.url,
@@ -700,6 +745,7 @@ export class CollectionRepository extends BaseRepository {
       is_highlight: first.is_highlight,
       is_active: first.is_active,
       is_indexable: first.is_indexable,
+      position: first.position,
       seo_title: first.seo_title,
       seo_description: first.seo_description,
       seo_generated_at: first.seo_generated_at,

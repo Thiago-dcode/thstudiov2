@@ -2045,6 +2045,39 @@ const messages = {
       expandMedia: "Ver a tamaño completo",
       loadMore: "Cargar más",
       blocked: "Bloqueado",
+      sortable: {
+        hint: "Arrastra el control para reordenar.",
+        save: "Actualizar orden",
+        reset: "Restablecer",
+        savedToast: "Orden actualizado",
+        unsaved: "Tienes cambios de orden sin guardar",
+        invalidOrder:
+          "No pudimos guardar este orden. Actualiza la página e inténtalo de nuevo.",
+        dragHandleLabel: "Reordenar {label}",
+        moveEarlier: "Mover {label} antes",
+        moveLater: "Mover {label} después",
+        instructions:
+          "Para recoger un elemento, pulsa Espacio o Intro. Usa las flechas para moverlo y pulsa Espacio o Intro para soltarlo, o Escape para cancelar.",
+        pickedUp: "{label} recogido. Posición {position} de {total}.",
+        movedOver: "{label} movido a la posición {position} de {total}.",
+        dropped: "{label} soltado en la posición {position} de {total}.",
+        cancelled:
+          "Reordenación cancelada. {label} volvió a la posición {position} de {total}.",
+      },
+      moduleCard: {
+        edit: "Editar",
+        editLabel: "Editar {title}",
+        view: "Ver",
+        viewLabel:
+          "Ver {title} en tu página pública (se abre en una pestaña nueva)",
+        badgeOnProfile: "En el perfil",
+        badgeNotPublic: "No público",
+        hiddenInactive: "Activa Público para mostrarlo a los visitantes",
+        hiddenBlocked:
+          "Bloqueado por moderación. No se puede mostrar ni modificar.",
+        invalidStatus:
+          "No pudimos actualizar esto. Actualiza la página e inténtalo de nuevo.",
+      },
       editingCollection: "Editando colección",
       creatingCollection: "Creando colección",
       editingPortfolio: "Editando portafolio",
@@ -2245,6 +2278,8 @@ const messages = {
         priceInfo: "El precio es opcional; déjalo en 0.",
         showPrice: "Mostrar precio",
         active: "Público",
+        activeInfo:
+          "Si lo desmarcas, este servicio se oculta de tu perfil de artista y de los listados. Aún puedes editarlo en Atelier.",
         showOnProfile: "Mostrar en la página de perfil",
         showOnProfileInfo:
           "Cuando está activado, este servicio se destaca en tu perfil público de artista para que los visitantes lo encuentren más fácilmente. Puedes destacar hasta {limit} servicios en tu página de perfil.",

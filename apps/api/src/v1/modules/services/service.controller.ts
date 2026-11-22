@@ -15,6 +15,8 @@ import { CreateServiceRequest } from './requests/create-service.request';
 import { UpdateServiceRequest } from './requests/update-service.request';
 import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
 import { IMAGE_UPLOAD_OPTIONS } from 'src/common/utils/upload-limits';
+import { SortModulesRequest } from 'src/common/requests/sort-modules.request';
+import { UpdateModuleStatusRequest } from 'src/common/requests/update-module-status.request';
 
 @Controller('services')
 export class ServiceController {
@@ -33,6 +35,21 @@ export class ServiceController {
   ) {
     createServiceRequest.thumbnail = thumbnail;
     return await this.serviceService.create(createServiceRequest);
+  }
+
+  // Declared above `:id` so 'sort' is never parsed as a service id. Owners may reorder blocked
+  // services (they still appear in their list), so there is no blocked pipe here.
+  @Patch('sort')
+  async sort(@Body() request: SortModulesRequest) {
+    return await this.serviceService.updatePositions(request);
+  }
+
+  @Patch(':id/status')
+  async updateStatus(
+    @Param('id', ParseIntPipe, new IsResourceBlockedPipe('services')) id: number,
+    @Body() request: UpdateModuleStatusRequest,
+  ) {
+    return await this.serviceService.updateStatus(id, request);
   }
 
   @Patch(':id')

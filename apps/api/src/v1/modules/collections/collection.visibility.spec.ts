@@ -9,7 +9,7 @@ const build = (canSeeHidden: boolean) => {
   const collectionRepository = { getAll: jest.fn().mockResolvedValue([]) };
   const service = new CollectionService(
     collectionRepository as unknown as CollectionRepository,
-    {} as RequestService,
+    { log: () => new Proxy({}, { get: () => jest.fn() }) } as unknown as RequestService,
     {} as UserExtraDataService,
     { getAsset: jest.fn() } as unknown as Helpers,
     { canSeeHidden: jest.fn().mockResolvedValue(canSeeHidden) } as unknown as PublicViewerService,

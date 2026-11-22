@@ -2,7 +2,6 @@ import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { LayoutDashboard } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { PortfolioCard } from "@/modules/portfolios/components/portfolio-card";
 import portfolioService from "@/modules/portfolios/portfolio.service";
@@ -12,6 +11,7 @@ import {
   AdminPageTitle,
 } from "../../__components/admin-page.component";
 import { CreateResourceButton } from "../../__components/create-resource-button";
+import { PortfolioSortable } from "./_components/portfolio-sortable";
 
 export default async function Atelier() {
   const t = await getTranslations("atelier.portfolios");
@@ -38,21 +38,25 @@ export default async function Atelier() {
         />
       </AdminPageTitle>
       {portfoliosResponse.data.length > 0 ? (
-        <div className="grid grid-cols-2 laptop:grid-cols-4 desktop-lg:grid-cols-5 gap-4">
-          {portfoliosResponse.data.map((portfolio) => (
-            <Link
-              key={portfolio.id}
-              href={`/atelier/portfolios/edit/${portfolio.slug}`}
-              className="block w-full min-w-0"
-            >
-              <PortfolioCard.Item
-                portfolio={portfolio}
-                isAtelier
+        <PortfolioSortable
+          username={userAuth.username}
+          items={portfoliosResponse.data.map((portfolio) => ({
+            id: portfolio.id,
+            slug: portfolio.slug,
+            title: portfolio.title,
+            is_highlight: portfolio.is_highlight,
+            is_active: portfolio.is_active,
+            is_blocked: Boolean(portfolio.blocked_at),
+            media: (
+              <PortfolioCard.Image
+                src={portfolio.thumbnail}
+                alt={portfolio.title}
+                isBlocked={Boolean(portfolio.blocked_at)}
                 blockedLabel={tCommon("blocked")}
               />
-            </Link>
-          ))}
-        </div>
+            ),
+          }))}
+        />
       ) : (
         <AdminPageEmptyState
           icon={<LayoutDashboard />}

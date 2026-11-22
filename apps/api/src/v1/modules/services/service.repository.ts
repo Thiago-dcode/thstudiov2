@@ -18,6 +18,8 @@ import {
   ServiceIndexRequest,
 } from '@repo/common-lib/types/service';
 import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';
+import type { SortModuleItem } from '@repo/common-lib/types/sort-module';
+import type { ModuleStatus, ModuleStatusInput } from '@repo/common-lib/types/module-status';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import { SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/cache';
@@ -52,6 +54,7 @@ export class ServiceRepository extends BaseRepository {
     'services.user_id',
     'services.portfolio_id',
     'services.blocked_at',
+    'services.position',
     'services.created_at',
     'services.updated_at',
   ] as const;
@@ -298,6 +301,24 @@ export class ServiceRepository extends BaseRepository {
     return this.formatService(result);
   }
 
+  /**
+   * Saves the artist's chosen order. Rows whose position is unchanged are untouched, and a row
+   * whose SEO was fresh stays fresh: a reorder is not a content change, and without that the
+   * nightly sweep would regenerate (and bill) every service that moved.
+   */
+  async updatePositions(userId: number, items: SortModuleItem[]): Promise<number> {
+    return this.updatePositionsForOwner(userId, items, { seoStampColumn: 'seo_generated_at' });
+  }
+
+  /** Partial `is_highlight` / `is_active` write; `null` when nothing changed. Same SEO rule as above. */
+  async updateStatus(
+    id: number,
+    userId: number,
+    input: ModuleStatusInput,
+  ): Promise<ModuleStatus | null> {
+    return this.updateStatusForOwner(id, userId, input, { seoStampColumn: 'seo_generated_at' });
+  }
+
   async delete(id: number) {
     return await this.query().where('id', '=', id).delete();
   }
@@ -365,9 +386,19 @@ export class ServiceRepository extends BaseRepository {
       }
     }
 
+    // One artist's list honours the order they chose. Positions are per artist, so a list across
+    // artists would interleave everyone's #1 and keeps its created_at order. This sits before
+    // pagination (which pushes id DESC). `services.position` is qualified: FULL_COLUMNS joins
+    // portfolios, which has a position column too.
+    if (filters.user_id) {
+      query.orderBy('services.position', 'ASC');
+    }
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC');
+    if (filters.user_id) {
+      query.orderBy('services.id', 'DESC');
+    }
 
     return query;
   }
@@ -391,6 +422,7 @@ export class ServiceRepository extends BaseRepository {
       user_id: result.user_id,
       portfolio_id: result.portfolio_id,
       blocked_at: result.blocked_at,
+      position: result.position,
       created_at: result.created_at,
       updated_at: result.updated_at,
     };
@@ -448,6 +480,7 @@ export class ServiceRepository extends BaseRepository {
       user_id: first.user_id,
       portfolio_id: first.portfolio_id,
       blocked_at: first.blocked_at,
+      position: first.position,
       portfolio,
       created_at: first.created_at,
       updated_at: first.updated_at,

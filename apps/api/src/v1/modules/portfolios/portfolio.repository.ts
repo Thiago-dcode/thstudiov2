@@ -19,6 +19,8 @@ import {
 } from '@repo/common-lib/types/portfolio';
 import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';
 import type { MediaVisibility } from '@repo/common-lib/types/media';
+import type { SortModuleItem } from '@repo/common-lib/types/sort-module';
+import type { ModuleStatus, ModuleStatusInput } from '@repo/common-lib/types/module-status';
 import { PublicCompactUser } from '@repo/common-lib/types/user';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
@@ -97,6 +99,7 @@ export class PortfolioRepository extends BaseRepository {
     'portfolios.seo_description',
     'portfolios.seo_generated_at',
     'portfolios.blocked_at',
+    'portfolios.position',
     'portfolios.user_id',
     'portfolios.created_at',
     'portfolios.updated_at',
@@ -113,7 +116,7 @@ export class PortfolioRepository extends BaseRepository {
   private readonly FULL_COLUMNS: PortfolioFullSchemaColumns[] = [
     ...this.COLUMNS as unknown as PortfolioFullSchemaColumns[],
     'portfolio_media.media_id',
-    'portfolio_media.position',
+    'portfolio_media.position as pm_position',
     'media.id as m_id',
     'media.public_id',
     'media.thumbnail as m_thumbnail',
@@ -295,6 +298,24 @@ export class PortfolioRepository extends BaseRepository {
        WHERE id = $3`,
       [seo.seo_title ?? null, seo.seo_description ?? null, id],
     );
+  }
+
+  /**
+   * Saves the artist's chosen order. Rows whose position is unchanged are untouched, and a row
+   * whose SEO was fresh stays fresh: a reorder is not a content change, and without that the
+   * nightly sweep would regenerate (and bill) every portfolio that moved.
+   */
+  async updatePositions(userId: number, items: SortModuleItem[]): Promise<number> {
+    return this.updatePositionsForOwner(userId, items, { seoStampColumn: 'seo_generated_at' });
+  }
+
+  /** Partial `is_highlight` / `is_active` write; `null` when nothing changed. Same SEO rule as above. */
+  async updateStatus(
+    id: number,
+    userId: number,
+    input: ModuleStatusInput,
+  ): Promise<ModuleStatus | null> {
+    return this.updateStatusForOwner(id, userId, input, { seoStampColumn: 'seo_generated_at' });
   }
 
   /**
@@ -728,6 +749,12 @@ export class PortfolioRepository extends BaseRepository {
         .orderByDistance('addresses.latitude', 'addresses.longitude', filters.lat, filters.lng, 'ASC');
     }
 
+    // One artist's list honours the order they chose. Positions are per artist, so a list across
+    // artists would interleave everyone's #1 and keeps its created_at order. This sits after the
+    // distance order (which replaces the order string) and before pagination (which pushes id DESC).
+    if (filters.user_id) {
+      query.orderBy('portfolios.position', 'ASC');
+    }
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     query.orderBy('portfolios.created_at', 'DESC');
@@ -747,6 +774,7 @@ export class PortfolioRepository extends BaseRepository {
       is_highlight: result.is_highlight,
       is_active: result.is_active,
       is_indexable: result.is_indexable,
+      position: result.position,
       seo_title: result.seo_title,
       seo_description: result.seo_description,
       seo_generated_at: result.seo_generated_at,
@@ -777,7 +805,7 @@ export class PortfolioRepository extends BaseRepository {
           id: row.m_id,
           public_id: row.public_id,
           title: row.m_title,
-          position: row.position,
+          position: row.pm_position,
           thumbnail: row.m_thumbnail,
           video_preview: row.video_preview,
           url: row.url,
@@ -819,6 +847,7 @@ export class PortfolioRepository extends BaseRepository {
       is_highlight: first.is_highlight,
       is_active: first.is_active,
       is_indexable: first.is_indexable,
+      position: first.position,
       seo_title: first.seo_title,
       seo_description: first.seo_description,
       seo_generated_at: first.seo_generated_at,

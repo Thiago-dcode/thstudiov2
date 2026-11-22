@@ -23,12 +23,29 @@ import { EventEmitter2 } from "@nestjs/event-emitter";
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from "@repo/common-lib/constants/events";
 import { ArtistPublicPagesChangedEvent } from "../edge-cache/events/artist-public-pages-changed.event";
 import type { ApiLogger } from 'src/common/services/request.service';
+import type { SortModulesResult } from '@repo/common-lib/types/sort-module';
+import type { ModuleStatus } from '@repo/common-lib/types/module-status';
+import { SortModulesRequest } from 'src/common/requests/sort-modules.request';
+import { UpdateModuleStatusRequest } from 'src/common/requests/update-module-status.request';
+import {
+  reorderOwnedModules,
+  updateOwnedModuleStatus,
+  type SortableModuleLabels,
+} from 'src/common/utils/sortable-module.util';
+
+const SERVICE_LABELS: SortableModuleLabels = {
+  subject: 'Service',
+  plural: 'services',
+  idKey: 'service_id',
+};
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
 @Injectable()
 export class ServiceService {
   private readonly logger: ApiLogger;
+  private readonly reorderLog: ApiLogger;
+  private readonly statusLog: ApiLogger;
 
   constructor(
     private readonly serviceRepository: ServiceRepository,
@@ -39,6 +56,8 @@ export class ServiceService {
     private readonly eventEmitter: EventEmitter2,
   ) {
     this.logger = this.requestService.log('services');
+    this.reorderLog = this.requestService.log('services', { operation: 'service-reorder' });
+    this.statusLog = this.requestService.log('services', { operation: 'service-status-update' });
   }
 
   /**
@@ -259,5 +278,66 @@ export class ServiceService {
     );
 
     return updated;
+  }
+
+  /**
+   * Saves the order the artist dragged their services into. Unlike portfolios, the visitor list
+   * of a user's services is cached in Redis, so a real change also drops that entry.
+   */
+  async updatePositions(request: SortModulesRequest): Promise<SortModulesResult> {
+    return reorderOwnedModules({
+      labels: SERVICE_LABELS,
+      table: TABLES_ENUM.SERVICES,
+      log: this.reorderLog,
+      userId: this.requestService.user.id,
+      items: request.items,
+      write: (userId, items) => this.serviceRepository.updatePositions(userId, items),
+      onChanged: async (userId) => {
+        await this.helpers.deleteCached(serviceCacheKeys.allByUser(userId));
+        this.eventEmitter.emit(
+          ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+          new ArtistPublicPagesChangedEvent(userId),
+        );
+      },
+    });
+  }
+
+  /**
+   * Quick toggle of `is_highlight` / `is_active` from the atelier card. Unlike `update()` it
+   * rewrites nothing else (that one replaces features and terms), and mirrors its side effects:
+   * list/slug/highlight-count caches, SEO-metadata cache (its noindex depends on `is_active`)
+   * and the edge purge.
+   */
+  async updateStatus(id: number, request: UpdateModuleStatusRequest): Promise<ModuleStatus> {
+    const userId = this.requestService.user.id;
+    return updateOwnedModuleStatus({
+      labels: SERVICE_LABELS,
+      log: this.statusLog,
+      userId,
+      id,
+      request,
+      getCurrent: (serviceId) => this.serviceRepository.getOneCompact(serviceId),
+      enforceHighlightLimit: (ownerId, isHighlight, current) =>
+        this.enforceHighlightLimit(ownerId, isHighlight, current),
+      write: (serviceId, ownerId, input) =>
+        this.serviceRepository.updateStatus(serviceId, ownerId, input),
+      onChanged: async (current) => {
+        await this.helpers.deleteManyCached([
+          serviceCacheKeys.allByUser(userId),
+          serviceCacheKeys.bySlug(userId, current.slug),
+          ...(request.is_highlight !== undefined ? [this.highlightCountCacheKey(userId)] : []),
+        ]);
+        if (request.is_active !== undefined) {
+          await this.helpers.deleteCached(
+            CACHE_KEY_SERVICE_SEO(userId, current.slug),
+            { appended_language: true },
+          );
+        }
+        this.eventEmitter.emit(
+          ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+          new ArtistPublicPagesChangedEvent(userId),
+        );
+      },
+    });
   }
 }

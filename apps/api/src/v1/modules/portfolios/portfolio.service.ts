@@ -27,11 +27,26 @@ import { Query } from "@repo/database/facades";
 import { LayoutService } from "../layouts/layout.service";
 import { insertWithUniqueSlug, resolveEntitySlug } from "src/common/utils/slug.util";
 import { assertOwnedIds } from "src/common/utils/owned-ids.util";
+import type { SortModulesResult } from "@repo/common-lib/types/sort-module";
+import type { ModuleStatus } from "@repo/common-lib/types/module-status";
+import { SortModulesRequest } from "src/common/requests/sort-modules.request";
+import { UpdateModuleStatusRequest } from "src/common/requests/update-module-status.request";
+import {
+  reorderOwnedModules,
+  updateOwnedModuleStatus,
+  type SortableModuleLabels,
+} from "src/common/utils/sortable-module.util";
 import { ENTITY_CREATE_LOCK_TTL_MS, withUserLock } from "src/common/utils/user-lock";
 import { descriptiveFilename, versionedAssetPath } from "src/common/utils/asset-path.util";
 import { PublicViewerService } from "src/common/services/public-viewer.service";
 import { PUBLIC_ENTITY_FILTERS } from "src/common/utils/public-entity";
 import type { ApiLogger } from 'src/common/services/request.service';
+
+const PORTFOLIO_LABELS: SortableModuleLabels = {
+  subject: 'Portfolio',
+  plural: 'portfolios',
+  idKey: 'portfolio_id',
+};
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -48,6 +63,8 @@ export const FEATURED_PORTFOLIO_CACHE_KEY = 'portfolio-featured';
 @Injectable()
 export class PortfolioService {
   private readonly logger: ApiLogger;
+  private readonly reorderLog: ApiLogger;
+  private readonly statusLog: ApiLogger;
 
   constructor(
     private readonly portfolioRepository: PortfolioRepository,
@@ -60,6 +77,8 @@ export class PortfolioService {
     private readonly publicViewer: PublicViewerService,
   ) {
     this.logger = this.requestService.log('portfolios');
+    this.reorderLog = this.requestService.log('portfolios', { operation: 'portfolio-reorder' });
+    this.statusLog = this.requestService.log('portfolios', { operation: 'portfolio-status-update' });
   }
 
   /**
@@ -425,6 +444,64 @@ export class PortfolioService {
     );
 
     return updated;
+  }
+
+  /**
+   * Saves the order the artist dragged their portfolios into. A partial list is allowed: rows that
+   * are not sent keep their position. Another owner's id is answered exactly like a missing one,
+   * so the response is not an ownership oracle, but it is logged `critical` because the UI can
+   * only ever send the caller's own ids.
+   */
+  async updatePositions(request: SortModulesRequest): Promise<SortModulesResult> {
+    return reorderOwnedModules({
+      labels: PORTFOLIO_LABELS,
+      table: TABLES_ENUM.PORTFOLIOS,
+      log: this.reorderLog,
+      userId: this.requestService.user.id,
+      items: request.items,
+      write: (userId, items) => this.portfolioRepository.updatePositions(userId, items),
+      onChanged: (userId) => {
+        this.eventEmitter.emit(
+          ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+          new ArtistPublicPagesChangedEvent(userId),
+        );
+      },
+    });
+  }
+
+  /**
+   * Quick toggle of `is_highlight` / `is_active` from the atelier card. Mirrors the side effects
+   * of `update()` for those two flags: highlight-count cache, SEO-metadata cache (its noindex
+   * depends on `is_active`) and the edge purge.
+   */
+  async updateStatus(id: number, request: UpdateModuleStatusRequest): Promise<ModuleStatus> {
+    const userId = this.requestService.user.id;
+    return updateOwnedModuleStatus({
+      labels: PORTFOLIO_LABELS,
+      log: this.statusLog,
+      userId,
+      id,
+      request,
+      getCurrent: (rowId) => this.portfolioRepository.getOneCompact(rowId),
+      enforceHighlightLimit: (ownerId, isHighlight, current) =>
+        this.enforceHighlightLimit(ownerId, isHighlight, current),
+      write: (rowId, ownerId, input) => this.portfolioRepository.updateStatus(rowId, ownerId, input),
+      onChanged: async (current) => {
+        if (request.is_highlight !== undefined) {
+          await this.invalidateHighlightCountCache(userId);
+        }
+        if (request.is_active !== undefined) {
+          await this.helpers.deleteCached(
+            CACHE_KEY_PORTFOLIO_SEO(userId, current.slug),
+            { appended_language: true },
+          );
+        }
+        this.eventEmitter.emit(
+          ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+          new ArtistPublicPagesChangedEvent(userId),
+        );
+      },
+    });
   }
 
   async delete(id: number) {

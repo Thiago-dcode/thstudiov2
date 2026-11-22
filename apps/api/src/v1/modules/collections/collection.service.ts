@@ -15,6 +15,16 @@ import { ApiException } from "src/common/exceptions/api-exception";
 import { FullPortfolioCollection } from "@repo/common-lib/types/collection";
 import { insertWithUniqueSlug, resolveEntitySlug } from "src/common/utils/slug.util";
 import { assertOwnedIds } from "src/common/utils/owned-ids.util";
+import type { SortModulesResult } from "@repo/common-lib/types/sort-module";
+import type { ModuleStatus } from "@repo/common-lib/types/module-status";
+import { SortModulesRequest } from "src/common/requests/sort-modules.request";
+import { UpdateModuleStatusRequest } from "src/common/requests/update-module-status.request";
+import {
+  reorderOwnedModules,
+  updateOwnedModuleStatus,
+  type SortableModuleLabels,
+} from "src/common/utils/sortable-module.util";
+import type { ApiLogger } from "src/common/services/request.service";
 import { ENTITY_CREATE_LOCK_TTL_MS, withUserLock } from "src/common/utils/user-lock";
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { PublicViewerService } from "src/common/services/public-viewer.service";
@@ -22,6 +32,12 @@ import { PUBLIC_ENTITY_FILTERS } from "src/common/utils/public-entity";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from "@repo/common-lib/constants/events";
 import { ArtistPublicPagesChangedEvent } from "../edge-cache/events/artist-public-pages-changed.event";
+
+const COLLECTION_LABELS: SortableModuleLabels = {
+  subject: 'Collection',
+  plural: 'collections',
+  idKey: 'collection_id',
+};
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -31,6 +47,9 @@ export const collectionCacheKeys = {
 
 @Injectable()
 export class CollectionService {
+  private readonly reorderLog: ApiLogger;
+  private readonly statusLog: ApiLogger;
+
   constructor(
     private readonly collectionRepository: CollectionRepository,
     private readonly requestService: RequestService,
@@ -38,7 +57,10 @@ export class CollectionService {
     private readonly helper: Helpers,
     private readonly publicViewer: PublicViewerService,
     private readonly eventEmitter: EventEmitter2,
-  ) { }
+  ) {
+    this.reorderLog = this.requestService.log('collections', { operation: 'collection-reorder' });
+    this.statusLog = this.requestService.log('collections', { operation: 'collection-status-update' });
+  }
 
   /**
    * Public route, also the atelier's list (`user_id` = the caller). Anyone else gets only active,
@@ -251,6 +273,64 @@ export class CollectionService {
     );
 
     return updated;
+  }
+
+  /**
+   * Saves the order the artist dragged their collections into. A partial list is allowed: rows that
+   * are not sent keep their position. Another owner's id is answered exactly like a missing one,
+   * so the response is not an ownership oracle, but it is logged `critical` because the UI can
+   * only ever send the caller's own ids.
+   */
+  async updatePositions(request: SortModulesRequest): Promise<SortModulesResult> {
+    return reorderOwnedModules({
+      labels: COLLECTION_LABELS,
+      table: TABLES_ENUM.COLLECTIONS,
+      log: this.reorderLog,
+      userId: this.requestService.user.id,
+      items: request.items,
+      write: (userId, items) => this.collectionRepository.updatePositions(userId, items),
+      onChanged: (userId) => {
+        this.eventEmitter.emit(
+          ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+          new ArtistPublicPagesChangedEvent(userId),
+        );
+      },
+    });
+  }
+
+  /**
+   * Quick toggle of `is_highlight` / `is_active` from the atelier card. Mirrors the side effects
+   * of `update()` for those two flags: highlight-count cache, SEO-metadata cache (its noindex
+   * depends on `is_active`) and the edge purge.
+   */
+  async updateStatus(id: number, request: UpdateModuleStatusRequest): Promise<ModuleStatus> {
+    const userId = this.requestService.user.id;
+    return updateOwnedModuleStatus({
+      labels: COLLECTION_LABELS,
+      log: this.statusLog,
+      userId,
+      id,
+      request,
+      getCurrent: (rowId) => this.collectionRepository.getOneCompact(rowId),
+      enforceHighlightLimit: (ownerId, isHighlight, current) =>
+        this.enforceHighlightLimit(ownerId, isHighlight, current),
+      write: (rowId, ownerId, input) => this.collectionRepository.updateStatus(rowId, ownerId, input),
+      onChanged: async (current) => {
+        if (request.is_highlight !== undefined) {
+          await this.invalidateHighlightCountCache(userId);
+        }
+        if (request.is_active !== undefined) {
+          await this.helper.deleteCached(
+            CACHE_KEY_COLLECTION_SEO(userId, current.slug),
+            { appended_language: true },
+          );
+        }
+        this.eventEmitter.emit(
+          ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+          new ArtistPublicPagesChangedEvent(userId),
+        );
+      },
+    });
   }
 
   async delete(id: number) {
