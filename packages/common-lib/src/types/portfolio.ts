@@ -49,7 +49,8 @@ type InternalPortfolioFields =
   | 'seo_title'
   | 'seo_description'
   | 'seo_generated_at'
-  | 'is_indexable';
+  | 'is_indexable'
+  | 'position';
 
 // What users can provide when creating a portfolio (public API input)
 export type CreatePortfolioInput = Omit<

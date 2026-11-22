@@ -33,7 +33,7 @@ abstract class BaseBuilder {
    * const result = await queryBuilder.raw('SELECT COUNT(*) FROM users WHERE age > ?', [18]);
    * ```
    */
-  public static async raw(query: string, values?: (string | number | null)[]) {
+  public static async raw(query: string, values?: (string | number | boolean | null | (string | number)[])[]) {
     return await getClient().query(query, values);
   }
 

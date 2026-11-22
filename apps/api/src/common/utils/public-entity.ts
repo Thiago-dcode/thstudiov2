@@ -11,7 +11,4 @@ export const PUBLIC_ENTITY_FILTERS = { is_active: true, blocked: false } as cons
  */
 export const PUBLIC_UNPAGINATED_MAX_ROWS = 100;
 
-export const isHiddenFromPublic = (entity: {
-  is_active?: boolean | null;
-  blocked_at?: Date | string | null;
-}): boolean => !entity.is_active || !!entity.blocked_at;
+export { isHiddenFromPublic } from '@repo/common-lib/utils/public-entity';

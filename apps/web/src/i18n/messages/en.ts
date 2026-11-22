@@ -2028,6 +2028,37 @@ const messages = {
       expandMedia: "View full size",
       loadMore: "Load more",
       blocked: "Blocked",
+      sortable: {
+        hint: "Drag the handle to reorder.",
+        save: "Update order",
+        reset: "Reset",
+        savedToast: "Order updated",
+        unsaved: "You have unsaved order changes",
+        invalidOrder:
+          "We couldn't save this order. Refresh the page and try again.",
+        dragHandleLabel: "Reorder {label}",
+        moveEarlier: "Move {label} earlier",
+        moveLater: "Move {label} later",
+        instructions:
+          "To pick up an item, press Space or Enter. Use the arrow keys to move it, then press Space or Enter to drop it, or Escape to cancel.",
+        pickedUp: "Picked up {label}. Position {position} of {total}.",
+        movedOver: "{label} moved to position {position} of {total}.",
+        dropped: "{label} dropped at position {position} of {total}.",
+        cancelled:
+          "Reordering cancelled. {label} returned to position {position} of {total}.",
+      },
+      moduleCard: {
+        edit: "Edit",
+        editLabel: "Edit {title}",
+        view: "View",
+        viewLabel: "View {title} on your public page (opens in a new tab)",
+        badgeOnProfile: "On profile",
+        badgeNotPublic: "Not public",
+        hiddenInactive: "Turn on Public to show it to visitors",
+        hiddenBlocked: "Blocked by moderation. It can't be shown or changed.",
+        invalidStatus:
+          "We couldn't update this. Refresh the page and try again.",
+      },
       editingCollection: "Editing collection",
       creatingCollection: "Creating collection",
       editingPortfolio: "Editing portfolio",

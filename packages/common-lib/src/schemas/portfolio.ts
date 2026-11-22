@@ -12,6 +12,7 @@ export type PortfolioSchema = {
   is_highlight: boolean;
   is_active: boolean;
   is_indexable: boolean;
+  position: number;
   seo_title?: string | null;
   seo_description?: string | null;
   seo_generated_at?: Date | null;
@@ -58,7 +59,7 @@ const tablesPortfolioFull = [
 export type PortfolioFullSchema = PortfolioWithArtistSchema & {
   // From portfolio_media (prefixed: pm_)
   media_id: number;
-  position: number;
+  pm_position: number;                     // COLLISION: portfolios.position
 
   // From media (prefixed: m_)
   m_id: number;                           // COLLISION: id

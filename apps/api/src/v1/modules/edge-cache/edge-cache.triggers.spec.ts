@@ -5,6 +5,7 @@ jest.mock('src/common/utils/user-lock', () => ({
 }));
 jest.mock('src/common/utils/owned-ids.util', () => ({
   assertOwnedIds: jest.fn().mockResolvedValue(undefined),
+  classifyOwnedIds: jest.fn().mockResolvedValue({ missing: [], foreign: [] }),
 }));
 // `media.service` imports `users.service`, which builds a Stripe client at import time.
 jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({
@@ -161,6 +162,86 @@ describe('edge purge triggers', () => {
 
       expectPurgeFor(emitter, OWNER);
       expect(purgeOrder(emitter)).toBeGreaterThan(repository.delete.mock.invocationCallOrder[0]);
+    });
+
+    const buildSortable = (repositoryOverrides: Record<string, unknown> = {}) => {
+      const emitter = buildEmitter();
+      const repository = {
+        updatePositions: jest.fn().mockResolvedValue(2),
+        updateStatus: jest.fn().mockResolvedValue({ id: 3, is_highlight: false, is_active: false }),
+        getOneCompact: jest.fn().mockResolvedValue({
+          id: 3,
+          user_id: OWNER,
+          slug: 'work',
+          is_highlight: false,
+          is_active: true,
+        }),
+        countHighlights: jest.fn().mockResolvedValue(0),
+        ...repositoryOverrides,
+      };
+      const service = new PortfolioService(
+        repository as never,
+        requestServiceFor({ id: OWNER }),
+        {} as never,
+        emitter as never,
+        helpers() as never,
+        {} as never,
+        {} as never,
+        {} as never,
+      );
+      return { service, repository, emitter };
+    };
+
+    it('AC-8: updatePositions purges the owner once, after the write', async () => {
+      const { service, repository, emitter } = buildSortable();
+      await service.updatePositions({
+        items: [
+          { module_id: 3, position: 0 },
+          { module_id: 4, position: 1 },
+        ],
+      } as never);
+      expectPurgeFor(emitter, OWNER);
+      expect(purgeOrder(emitter)).toBeGreaterThan(repository.updatePositions.mock.invocationCallOrder[0]);
+    });
+
+    it('AC-8: updatePositions does not purge on a no-op (nothing changed)', async () => {
+      const { service, emitter } = buildSortable({ updatePositions: jest.fn().mockResolvedValue(0) });
+      await service.updatePositions({ items: [{ module_id: 3, position: 0 }] } as never);
+      expect(purgeCalls(emitter)).toHaveLength(0);
+    });
+
+    it('AC-8: updatePositions does not purge on a refused (foreign id) request', async () => {
+      const { classifyOwnedIds } = jest.requireMock('src/common/utils/owned-ids.util');
+      classifyOwnedIds.mockResolvedValueOnce({ missing: [], foreign: [3] });
+      const { service, repository, emitter } = buildSortable();
+      await expect(
+        service.updatePositions({ items: [{ module_id: 3, position: 0 }] } as never),
+      ).rejects.toThrow();
+      expect(repository.updatePositions).not.toHaveBeenCalled();
+      expect(purgeCalls(emitter)).toHaveLength(0);
+    });
+
+    it('AC-17: updateStatus purges the owner once, after the write', async () => {
+      const { service, repository, emitter } = buildSortable();
+      await service.updateStatus(3, { is_active: false } as never);
+      expectPurgeFor(emitter, OWNER);
+      expect(purgeOrder(emitter)).toBeGreaterThan(repository.updateStatus.mock.invocationCallOrder[0]);
+    });
+
+    it('AC-17: updateStatus does not purge on a no-op, a refused or an empty request', async () => {
+      const noop = buildSortable({ updateStatus: jest.fn().mockResolvedValue(null) });
+      await noop.service.updateStatus(3, { is_active: true } as never);
+      expect(purgeCalls(noop.emitter)).toHaveLength(0);
+
+      const foreign = buildSortable({
+        getOneCompact: jest.fn().mockResolvedValue({ id: 3, user_id: 999, slug: 'work', is_highlight: false }),
+      });
+      await expect(foreign.service.updateStatus(3, { is_active: false } as never)).rejects.toThrow();
+      expect(purgeCalls(foreign.emitter)).toHaveLength(0);
+
+      const empty = buildSortable();
+      await expect(empty.service.updateStatus(3, {} as never)).rejects.toThrow();
+      expect(purgeCalls(empty.emitter)).toHaveLength(0);
     });
   });
 

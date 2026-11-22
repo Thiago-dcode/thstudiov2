@@ -21,6 +21,8 @@ import { IndexPortfolioRequest } from './requests/index-portfolio.request';
 import { Public } from 'src/common/decorators/public.decorator';
 import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
 import { IMAGE_UPLOAD_OPTIONS } from 'src/common/utils/upload-limits';
+import { SortModulesRequest } from 'src/common/requests/sort-modules.request';
+import { UpdateModuleStatusRequest } from 'src/common/requests/update-module-status.request';
 
 @Controller('portfolios')
 export class PortfolioController {
@@ -58,6 +60,21 @@ export class PortfolioController {
     // }
     createPortfolioRequest.thumbnail = thumbnail;
     return await this.portfolioService.create(createPortfolioRequest);
+  }
+
+  // Declared above `:id` so 'sort' is never parsed as a portfolio id. Owners may reorder blocked
+  // portfolios (they still appear in their list), so there is no blocked pipe here.
+  @Patch('sort')
+  async sort(@Body() request: SortModulesRequest) {
+    return await this.portfolioService.updatePositions(request);
+  }
+
+  @Patch(':id/status')
+  async updateStatus(
+    @Param('id', ParseIntPipe, new IsResourceBlockedPipe('portfolios')) id: number,
+    @Body() request: UpdateModuleStatusRequest,
+  ) {
+    return await this.portfolioService.updateStatus(id, request);
   }
 
   @Patch(':id')

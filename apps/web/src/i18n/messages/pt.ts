@@ -2037,6 +2037,38 @@ const messages = {
       expandMedia: "Ver em tamanho real",
       loadMore: "Carregar mais",
       blocked: "Bloqueado",
+      sortable: {
+        hint: "Arraste a alça para reordenar.",
+        save: "Atualizar ordem",
+        reset: "Redefinir",
+        savedToast: "Ordem atualizada",
+        unsaved: "Você tem alterações de ordem não salvas",
+        invalidOrder:
+          "Não foi possível salvar esta ordem. Atualize a página e tente novamente.",
+        dragHandleLabel: "Reordenar {label}",
+        moveEarlier: "Mover {label} para antes",
+        moveLater: "Mover {label} para depois",
+        instructions:
+          "Para pegar um item, pressione Espaço ou Enter. Use as setas para movê-lo e pressione Espaço ou Enter para soltá-lo, ou Esc para cancelar.",
+        pickedUp: "{label} selecionado. Posição {position} de {total}.",
+        movedOver: "{label} movido para a posição {position} de {total}.",
+        dropped: "{label} solto na posição {position} de {total}.",
+        cancelled:
+          "Reordenação cancelada. {label} voltou à posição {position} de {total}.",
+      },
+      moduleCard: {
+        edit: "Editar",
+        editLabel: "Editar {title}",
+        view: "Ver",
+        viewLabel: "Ver {title} na sua página pública (abre em uma nova aba)",
+        badgeOnProfile: "No perfil",
+        badgeNotPublic: "Não público",
+        hiddenInactive: "Ative Público para mostrar aos visitantes",
+        hiddenBlocked:
+          "Bloqueado pela moderação. Não pode ser exibido nem alterado.",
+        invalidStatus:
+          "Não foi possível atualizar isto. Atualize a página e tente novamente.",
+      },
       editingCollection: "Editando coleção",
       creatingCollection: "Criando coleção",
       editingPortfolio: "Editando portfólio",

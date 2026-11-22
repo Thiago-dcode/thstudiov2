@@ -26,7 +26,14 @@ import { ApiException } from "src/common/exceptions/api-exception";
 import { Query } from "@repo/database/facades";
 import { LayoutService } from "../layouts/layout.service";
 import { insertWithUniqueSlug, resolveEntitySlug } from "src/common/utils/slug.util";
-import { assertOwnedIds } from "src/common/utils/owned-ids.util";
+import { assertOwnedIds, classifyOwnedIds } from "src/common/utils/owned-ids.util";
+import type { SortModulesResult } from "@repo/common-lib/types/sort-module";
+import type { ModuleStatus } from "@repo/common-lib/types/module-status";
+import { SortModulesRequest } from "src/common/requests/sort-modules.request";
+import {
+  UpdateModuleStatusRequest,
+  hasModuleStatusChange,
+} from "src/common/requests/update-module-status.request";
 import { ENTITY_CREATE_LOCK_TTL_MS, withUserLock } from "src/common/utils/user-lock";
 import { descriptiveFilename, versionedAssetPath } from "src/common/utils/asset-path.util";
 import { PublicViewerService } from "src/common/services/public-viewer.service";
@@ -48,6 +55,8 @@ export const FEATURED_PORTFOLIO_CACHE_KEY = 'portfolio-featured';
 @Injectable()
 export class PortfolioService {
   private readonly logger: ApiLogger;
+  private readonly reorderLog: ApiLogger;
+  private readonly statusLog: ApiLogger;
 
   constructor(
     private readonly portfolioRepository: PortfolioRepository,
@@ -60,6 +69,8 @@ export class PortfolioService {
     private readonly publicViewer: PublicViewerService,
   ) {
     this.logger = this.requestService.log('portfolios');
+    this.reorderLog = this.requestService.log('portfolios', { operation: 'portfolio-reorder' });
+    this.statusLog = this.requestService.log('portfolios', { operation: 'portfolio-status-update' });
   }
 
   /**
@@ -425,6 +436,118 @@ export class PortfolioService {
     );
 
     return updated;
+  }
+
+  /**
+   * Saves the order the artist dragged their portfolios into. A partial list is allowed: rows that
+   * are not sent keep their position. Another owner's id is answered exactly like a missing one,
+   * so the response is not an ownership oracle, but it is logged `critical` because the UI can
+   * only ever send the caller's own ids.
+   */
+  async updatePositions(request: SortModulesRequest): Promise<SortModulesResult> {
+    const userId = this.requestService.user.id;
+    const itemCount = request.items.length;
+    this.reorderLog.info('Portfolio reorder started', { user_id: userId, item_count: itemCount });
+
+    const { missing, foreign } = await classifyOwnedIds(
+      TABLES_ENUM.PORTFOLIOS,
+      request.items.map((item) => item.module_id),
+      userId,
+    );
+    if (foreign.length) {
+      // Counts only: never the other owner's ids.
+      this.reorderLog.critical('Portfolio reorder targeted foreign portfolios', {
+        user_id: userId,
+        item_count: itemCount,
+        foreign_count: foreign.length,
+        step: 'ownership',
+      });
+      throw new BadRequestException('Portfolio not found');
+    }
+    if (missing.length) {
+      throw new BadRequestException('Portfolio not found');
+    }
+
+    const updatedCount = await this.portfolioRepository.updatePositions(userId, request.items);
+    if (updatedCount > 0) {
+      this.eventEmitter.emit(
+        ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+        new ArtistPublicPagesChangedEvent(userId),
+      );
+    }
+
+    this.reorderLog.success('Portfolio reorder completed', {
+      user_id: userId,
+      item_count: itemCount,
+      updated_count: updatedCount,
+    });
+    return { updated_count: updatedCount };
+  }
+
+  /**
+   * Quick toggle of `is_highlight` / `is_active` from the atelier card. Unlike `update()` it
+   * rewrites nothing else (that one replaces media and collections), and mirrors its side
+   * effects: highlight-count cache, SEO-metadata cache (its noindex depends on `is_active`) and
+   * the edge purge.
+   */
+  async updateStatus(id: number, request: UpdateModuleStatusRequest): Promise<ModuleStatus> {
+    if (!hasModuleStatusChange(request)) {
+      throw new BadRequestException('Nothing to update');
+    }
+    const userId = this.requestService.user.id;
+    const fields = (['is_highlight', 'is_active'] as const).filter((key) => request[key] !== undefined);
+    this.statusLog.info('Portfolio status update started', {
+      user_id: userId,
+      portfolio_id: id,
+      fields: fields.join(','),
+    });
+
+    const current = await this.portfolioRepository.getOneCompact(id);
+    if (!current) {
+      throw new BadRequestException('Portfolio not found');
+    }
+    if (current.user_id !== userId) {
+      this.statusLog.critical('Portfolio status update targeted a foreign portfolio', {
+        user_id: userId,
+        portfolio_id: id,
+        step: 'ownership',
+      });
+      throw new BadRequestException('Portfolio not found');
+    }
+
+    await this.enforceHighlightLimit(userId, request.is_highlight, current.is_highlight);
+
+    const updated = await this.portfolioRepository.updateStatus(id, userId, request);
+    const result: ModuleStatus = updated ?? {
+      id,
+      is_highlight: current.is_highlight,
+      is_active: current.is_active,
+    };
+
+    if (updated) {
+      if (request.is_highlight !== undefined) {
+        await this.invalidateHighlightCountCache(userId);
+      }
+      if (request.is_active !== undefined) {
+        await this.helpers.deleteCached(
+          CACHE_KEY_PORTFOLIO_SEO(userId, current.slug),
+          { appended_language: true },
+        );
+      }
+      this.eventEmitter.emit(
+        ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+        new ArtistPublicPagesChangedEvent(userId),
+      );
+    }
+
+    this.statusLog.success('Portfolio status updated', {
+      user_id: userId,
+      portfolio_id: id,
+      is_highlight: result.is_highlight,
+      is_active: result.is_active,
+      changed: updated !== null,
+    });
+    return result;
   }
 
   async delete(id: number) {
