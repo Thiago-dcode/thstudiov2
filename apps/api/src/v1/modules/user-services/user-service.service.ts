@@ -131,9 +131,10 @@ export class UserServiceService {
     userId: number,
     filters?: Omit<ServiceIndexRequest, "user_id">,
   ): Promise<Service[]> {
+    // Owner id goes after the client filters so a query param can never retarget the list.
     const services = await this.serviceRepository.getAll({
-      user_id: userId,
       ...filters,
+      user_id: userId,
     });
 
     return await Promise.all(

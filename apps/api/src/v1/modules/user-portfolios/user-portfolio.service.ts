@@ -130,7 +130,8 @@ export class UserPortfolioService {
     if (!user) return [];
 
     const visibility = (await this.publicViewer.canSeeHidden(user.id)) ? {} : PUBLIC_ENTITY_FILTERS;
-    const portfolios = await this.portfolioRepository.getAll({ user_id: user.id, ...filters, ...visibility });
+    // Owner id goes after the client filters so a query param can never retarget the list.
+    const portfolios = await this.portfolioRepository.getAll({ ...filters, user_id: user.id, ...visibility });
 
     return await Promise.all(portfolios.map(async (portfolio) => ({
       ...portfolio,

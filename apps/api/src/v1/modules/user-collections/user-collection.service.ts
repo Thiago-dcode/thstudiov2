@@ -99,7 +99,8 @@ export class UserCollectionService {
     if (!user) return [];
 
     const visibility = (await this.publicViewer.canSeeHidden(user.id)) ? {} : PUBLIC_ENTITY_FILTERS;
-    const result = await this.collectionRepository.getAll({ user_id: user.id, ...filters, ...visibility });
+    // Owner id goes after the client filters so a query param can never retarget the list.
+    const result = await this.collectionRepository.getAll({ ...filters, user_id: user.id, ...visibility });
     return Promise.all(
       result.map(async (co) => {
         const media = await Promise.all(
