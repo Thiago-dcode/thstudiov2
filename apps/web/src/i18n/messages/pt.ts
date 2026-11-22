@@ -22,7 +22,7 @@ const messages = {
       definition:
         "A11STUDIO é onde fotógrafos mostram seu trabalho — e onde os clientes vêm para encontrá-los e contratá-los.",
       titlePrefix: "Deixe que sua",
-      titleAccentWords: ["fotografia", "visão", "criação", "arte", "história"],
+      titleAccentWords: ["arte", "visão", "criação", "arte", "história"],
       titleConnector: "se",
       titleDiscoverWords: [
         "compartilhe",
