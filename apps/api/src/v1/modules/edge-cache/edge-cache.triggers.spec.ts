@@ -17,6 +17,7 @@ jest.mock('@repo/common-lib/utils/generate-uuid', () => ({
 }));
 
 import { QueueHelper } from '@repo/backend-lib/utils';
+import { classifyOwnedIds } from 'src/common/utils/owned-ids.util';
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import { AboutPageService } from '../about-page/about-page.service';
 import { AddressService } from '../addresses/address.service';
@@ -136,6 +137,45 @@ describe('edge purge triggers', () => {
       const { service, emitter } = build();
       await expect(service.update(42, { title: 'x', media: [] } as never)).rejects.toThrow();
       expect(purgeCalls(emitter)).toHaveLength(0);
+    });
+
+    it('AC-7: updatePositions purges the owner once, after the write; not on a no-op', async () => {
+      const { service, repository, emitter } = build();
+      const updatePositions = jest.fn().mockResolvedValue(2);
+      Object.assign(repository, { updatePositions });
+      (classifyOwnedIds as jest.Mock).mockResolvedValueOnce({ missing: [], foreign: [] });
+      await service.updatePositions({ items: [{ module_id: 42, position: 0 }] } as never);
+      expectPurgeFor(emitter, OWNER);
+      expect(purgeOrder(emitter)).toBeGreaterThan(updatePositions.mock.invocationCallOrder[0]);
+
+      const noop = build();
+      Object.assign(noop.repository, { updatePositions: jest.fn().mockResolvedValue(0) });
+      await noop.service.updatePositions({ items: [{ module_id: 42, position: 0 }] } as never);
+      expect(purgeCalls(noop.emitter)).toHaveLength(0);
+    });
+
+    it('AC-7: updatePositions does not purge on a refused (foreign) request', async () => {
+      const { service, repository, emitter } = build();
+      Object.assign(repository, { updatePositions: jest.fn() });
+      (classifyOwnedIds as jest.Mock).mockResolvedValueOnce({ missing: [], foreign: [42] });
+      await expect(
+        service.updatePositions({ items: [{ module_id: 42, position: 0 }] } as never),
+      ).rejects.toThrow();
+      expect(purgeCalls(emitter)).toHaveLength(0);
+    });
+
+    it('AC-15: updateStatus purges the owner once when changed, never on a no-op', async () => {
+      const { service, repository, emitter } = build();
+      const updateStatus = jest.fn().mockResolvedValue({ id: 42, is_highlight: false, is_active: false });
+      Object.assign(repository, { updateStatus });
+      await service.updateStatus(42, { is_active: false } as never);
+      expectPurgeFor(emitter, OWNER);
+      expect(purgeOrder(emitter)).toBeGreaterThan(updateStatus.mock.invocationCallOrder[0]);
+
+      const noop = build();
+      Object.assign(noop.repository, { updateStatus: jest.fn().mockResolvedValue(null) });
+      await noop.service.updateStatus(42, { is_active: true } as never);
+      expect(purgeCalls(noop.emitter)).toHaveLength(0);
     });
   });
 

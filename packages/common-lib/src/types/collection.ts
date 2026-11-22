@@ -24,6 +24,7 @@ export type FullCollection = CollectionSchema & {
 
 // Collection attached to a portfolio via `portfolio_collection`.
 // `position` refers to the collection's position within the portfolio.
+/** `position` here is the portfolio pivot order, not `collections.position`. */
 export type PortfolioCollection = Collection & {
   position: number;
   media: CollectionMedia[];
@@ -31,7 +32,8 @@ export type PortfolioCollection = Collection & {
 
 // Collection attached to a portfolio via `portfolio_collection`.
 // `position` refers to the collection's position within the portfolio.
-export type FullPortfolioCollection = Omit<Collection, 'media'> & {
+/** `position` here is the portfolio pivot order, not `collections.position`. */
+export type FullPortfolioCollection =Omit<Collection, 'media'> & {
   position: number;
   media: FullCollectionMedia[];
 };
@@ -52,7 +54,8 @@ type InternalCollectionFields =
   | 'seo_title'
   | 'seo_description'
   | 'seo_generated_at'
-  | 'is_indexable';
+  | 'is_indexable'
+  | 'position';
 
 export type CreateCollectionInput = Omit<CollectionSchema, InternalCollectionFields | 'is_active'> & {
   is_active?: boolean;

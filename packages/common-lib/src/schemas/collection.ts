@@ -15,6 +15,7 @@ export type CollectionSchema = {
   seo_generated_at?: Date | null;
   description?: string | null;
   blocked_at?: Date | null;
+  position: number;
   user_id: number;
   created_at: Date;
   updated_at: Date;
@@ -27,8 +28,8 @@ export type CollectionSchemaColumns = TableColumn<typeof tablesCollection, Colle
 
 
 export type CollectionCompactSchema = CollectionSchema & {
-  // From collection_media
-  position: number;
+  // From collection_media (aliased, key required so the SELECT `as` clause typechecks)
+  cm_position: number;                    // COLLISION: collections.position (collection_media.position)
   // From media (only collisions prefixed with m_)
   m_id: number;                           // COLLISION: id
   m_title?: string | null;                // COLLISION: title
@@ -62,12 +63,12 @@ export type CollectionFullSchemaColumns = TableColumn<typeof tablesCollectionFul
 // Only collision fields are prefixed with `pc_` for portfolio_collection
 export type PortfolioCollectionSchema = CollectionCompactSchema & {
   // From portfolio_collection (aliased, key required so the SELECT `as` clause typechecks)
-  pc_position: number;          // COLLISION: position (collection_media.position)
+  pc_position: number;          // COLLISION: collections.position / collection_media.position
 };
 
 export type FullPortfolioCollectionSchema = CollectionFullSchema & {
   // From portfolio_collection (aliased, key required so the SELECT `as` clause typechecks)
-  pc_position: number;          // COLLISION: position (collection_media.position)
+  pc_position: number;          // COLLISION: collections.position / collection_media.position
 };
 
 const tablesPortfolioCollection = [

@@ -2,16 +2,16 @@ import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { Library } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import collectionService from "@/modules/collections/collection.service";
-import { CollectionCard } from "@/modules/collections/components/collection-card";
+import { CollectionCover } from "@/modules/collections/components/collection-card";
 import {
   AdminPageContainer,
   AdminPageEmptyState,
   AdminPageTitle,
 } from "../../__components/admin-page.component";
 import { CreateResourceButton } from "../../__components/create-resource-button";
+import { CollectionSortable } from "./_components/collection-sortable";
 
 export default async function CollectionListPage() {
   const t = await getTranslations("atelier.collections");
@@ -38,20 +38,24 @@ export default async function CollectionListPage() {
         />
       </AdminPageTitle>
       {collectionsResponse.data.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {collectionsResponse.data.map((collection) => (
-            <Link
-              key={collection.id}
-              href={`/atelier/collections/edit/${collection.slug}`}
-            >
-              <CollectionCard
+        <CollectionSortable
+          username={userAuth.username}
+          items={collectionsResponse.data.map((collection) => ({
+            id: collection.id,
+            slug: collection.slug,
+            title: collection.title,
+            is_highlight: collection.is_highlight,
+            is_active: collection.is_active,
+            is_blocked: Boolean(collection.blocked_at),
+            media: (
+              <CollectionCover
                 collection={collection}
-                isAtelier
+                isBlocked={Boolean(collection.blocked_at)}
                 blockedLabel={tCommon("blocked")}
               />
-            </Link>
-          ))}
-        </div>
+            ),
+          }))}
+        />
       ) : (
         <AdminPageEmptyState
           icon={<Library />}
