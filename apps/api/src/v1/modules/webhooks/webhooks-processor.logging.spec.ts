@@ -9,7 +9,6 @@ jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({ paypal: 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { Queue } from 'bullmq';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { consoleLogger } from 'src/common/testing/console-logger';
 import { WebhookProcessor } from './webhooks-processor.service';
 
@@ -55,9 +54,7 @@ const build = (opts: { planPrice?: unknown; user?: unknown } = {}) => {
   push(jest.spyOn(console, 'log'));
   push(jest.spyOn(console, 'warn'));
   push(jest.spyOn(console, 'error'));
-  const logger = consoleLogger({ channel: 'webhooks', name: 'stripe-webhook' });
-  const nameSpy = jest.spyOn(logger, 'name');
-  const idSpy = jest.spyOn(logger, 'id', 'set');
+  const logger = consoleLogger({ defaultOptions: { channel: 'webhooks', operation: 'stripe-webhook' } });
   const planSubscriptionService = {
     findActiveSubscription: jest.fn().mockResolvedValue(null),
     findLatestSubscription: jest.fn().mockResolvedValue(null),
@@ -73,10 +70,10 @@ const build = (opts: { planPrice?: unknown; user?: unknown } = {}) => {
     { findOneByStripeId: jest.fn().mockResolvedValue(opts.user ?? { id: 7, stripe_customer_id: 'cus_1', email: 'victim@example.com', name: 'Ana' }) } as any,
     { redeem: jest.fn().mockResolvedValue(undefined) } as any,
     { deleteCached: jest.fn(), deleteManyCached: jest.fn().mockResolvedValue(undefined) } as any,
-    logger,
+    { log: () => logger, traceCarrier: () => ({ service: 'api' }) } as any,
     subscriptionQueue as unknown as Queue,
   );
-  return { processor, lines, planSubscriptionService, subscriptionQueue, nameSpy, idSpy };
+  return { processor, lines, planSubscriptionService, subscriptionQueue };
 };
 
 const wh = (lines: any[], message: string) => lines.filter((l) => l.channel === 'webhooks' && l.message === message);
@@ -99,7 +96,7 @@ describe('WebhookProcessor logging', () => {
   it('AC-24: a created subscription logs "Subscription synced from Stripe" with the event ids and the fresh trace id', async () => {
     const sub = subscription();
     retrieve.mockResolvedValue(sub);
-    const { processor, lines, nameSpy, idSpy } = build();
+    const { processor, lines } = build();
     await processor.process(jobOf(eventOf('customer.subscription.created', sub)));
     const [line] = wh(lines, 'Subscription synced from Stripe');
     expect(line.extraInfo).toMatchObject({ action: 'created', plan_subscription_id: 9, plan_price_id: 3, stripe_status: 'active', is_active: true });
@@ -111,8 +108,6 @@ describe('WebhookProcessor logging', () => {
       user_id: 7,
     });
     expect(line.id).toBe('R');
-    expect(nameSpy).not.toHaveBeenCalled();
-    expect(idSpy).not.toHaveBeenCalled();
   });
 
   it('AC-24: stale-metadata events keep the job trace id, not the metadata requestId', async () => {

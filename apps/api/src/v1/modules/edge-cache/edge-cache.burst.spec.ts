@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { consoleRequestService } from 'src/common/testing/console-logger';
 import { RATE_LIMIT_ERROR } from 'bullmq';
 import { EDGE_PURGE_DEBOUNCE_MS } from '@repo/common-lib/constants/edge-cache';
 import { JOB_PURGE_ARTIST_EDGE_CACHE } from '@repo/common-lib/constants/queues';
@@ -54,7 +55,7 @@ const simulate = (triggers: Trigger[], { purgeTakesMs = 0 } = {}) => {
     warn: () => undefined,
     error: () => undefined,
   };
-  const service = new EdgeCacheService(logger as never);
+  const service = new EdgeCacheService(consoleRequestService(logger as never));
   jest.spyOn(service, 'purgeTarget').mockReturnValue(TARGET);
   const cloudflare: Call[] = [];
   jest.spyOn(service, 'purgePrefixes').mockImplementation(async (_target, prefixes) => {
@@ -73,7 +74,7 @@ const simulate = (triggers: Trigger[], { purgeTakesMs = 0 } = {}) => {
     service,
     userRepository as never,
     history as never,
-    logger as never,
+    consoleRequestService(logger as never),
     ledger as never,
     queue as never,
   );

@@ -12,15 +12,10 @@ import type {
 } from '@repo/common-lib/types/location';
 import { LocationService } from './location.service';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
-import { createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger } from 'src/common/services/request.service';
 
 @Processor(LOCATION_QUEUE)
 export class LocationProcessor extends GlobalProcessor {
-  private readonly logger = createApiLogger({
-    // A literal, not the queue constant: channels are a closed set named after the module.
-    channel: 'locations',
-  });
-
   constructor(
     private readonly locationService: LocationService,
   ) {
@@ -42,7 +37,8 @@ export class LocationProcessor extends GlobalProcessor {
     state?: State;
     city?: City;
   }> {
-    const log = this.logger.name(JOB_CREATE_OR_UPDATE_LOCATION);
+    // A literal channel, not the queue constant: channels are a closed set named after the module.
+    const log = apiLogger('locations', { operation: JOB_CREATE_OR_UPDATE_LOCATION });
     log.info('Create or update location payload', { payload: data });
 
     try {

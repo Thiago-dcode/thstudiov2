@@ -8,7 +8,7 @@ import {
   runJobWithLogs,
 } from '@repo/backend-lib/utils';
 import { runWithTraceId } from 'src/common/services/request-storage';
-import { apiLogConfig } from 'src/common/utils/api-logger';
+import { apiTraceCarrier } from 'src/common/services/request.service';
 
 /** Kept for the specs that import it from here; the implementation lives in backend-lib. */
 export { redactJobData };
@@ -23,7 +23,7 @@ export abstract class GlobalProcessor extends WorkerHost {
     const original = this.process.bind(this) as (job: Job, token?: string) => Promise<unknown>;
     this.process = (job: Job, token?: string) =>
       runWithTraceId(readJobTrace(job)?.id ?? randomUUID(), () =>
-        runJobWithLogs(job, () => original(job, token), { log: apiLogConfig() }),
+        runJobWithLogs(job, () => original(job, token), { log: apiTraceCarrier() }),
       );
   }
 
@@ -34,6 +34,6 @@ export abstract class GlobalProcessor extends WorkerHost {
     prev: string,
   ): Promise<void> {
     // Final attempt or UnrecoverableError: one `failed-job` line, with the job's trace id.
-    await logPermanentJobFailure(job, error, prev, apiLogConfig());
+    await logPermanentJobFailure(job, error, prev, apiTraceCarrier());
   }
 }

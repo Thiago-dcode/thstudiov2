@@ -5,7 +5,8 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LogService } from '@repo/backend-lib/services/log-service';
+import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import {
   UpsertUserOauthProviderInput,
@@ -29,12 +30,15 @@ const MIN_SECRET_LENGTH = 32;
 export class UserOauthProvidersService implements OnModuleInit {
   /** Process-wide constant read once at boot; not per-request state. */
   private secret: string | null = null;
+  private readonly logger: ApiLogger;
 
   constructor(
     private readonly repository: UserOauthProvidersRepository,
     private readonly configService: ConfigService,
-    private readonly logger: LogService,
-  ) { }
+    private readonly requestService: RequestService,
+  ) {
+    this.logger = this.requestService.log('user-oauth-providers');
+  }
 
   /** Fail closed: the API refuses to boot without a usable `OAUTH_TOKEN_SECRET`. */
   onModuleInit() {

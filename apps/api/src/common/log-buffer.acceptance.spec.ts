@@ -16,13 +16,12 @@ jest.mock('@repo/common-lib/config/utils', () => ({ getConfigValue: () => ({ url
 import fs from 'node:fs';
 import path from 'node:path';
 import { logBuffer } from '@repo/backend-lib/config/logging';
+import type { LogEntry } from '@repo/backend-lib/config/logging';
 import { InMemoryLogBuffer } from '@repo/backend-lib/services/log-service';
-import type { LogEntry } from '@repo/backend-lib/services/log-service';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
-import { RequestService } from 'src/common/services/request.service';
+import { apiLogger, apiTraceCarrier, RequestService } from 'src/common/services/request.service';
 import { currentRequestId, requestStorage, runWithTraceId } from 'src/common/services/request-storage';
 import { StripeService } from 'src/common/services/stripe.service';
-import { apiLogConfig, createApiLogger } from 'src/common/utils/api-logger';
 import { CRON_LOCK_TTL, runCronExclusive } from 'src/common/utils/cron-lock';
 
 const ROOT = path.resolve(__dirname, '../../../..');
@@ -118,12 +117,12 @@ describe('grep checks (AC-1, 3, 4, 14, 15, 16, 19, 26, 28)', () => {
     expect(grep(pattern, allSource())).toEqual([]);
   });
 
-  it('AC-19: every QueueHelper call in apps/api passes apiLogConfig(), in apps/worker jobLogConfig(job, ...), in packages/database dbcliLogConfig()', () => {
+  it('AC-19: every QueueHelper call in apps/api passes a request trace carrier, in apps/worker workerTraceCarrier(job), in packages/database dbcliTraceCarrier()', () => {
     const expectations: [string, RegExp][] = [
-      ['apps/api/src', /apiLogConfig\(/],
-      // media.processor builds the per-job config once in traceLog() (asserted below)
-      ['apps/worker/src', /jobLogConfig\(\s*job\s*,\s*logConfig\.worker|this\.traceLog\(\)/],
-      ['packages/database/src', /dbcliLogConfig\(\)/],
+      ['apps/api/src', /(apiTraceCarrier|traceCarrier)\(/],
+      // media.processor builds the per-job carrier once in traceLog() (asserted below)
+      ['apps/worker/src', /workerTraceCarrier\(|this\.traceLog\(\)/],
+      ['packages/database/src', /dbcliTraceCarrier\(\)/],
     ];
     const missing: string[] = [];
     let total = 0;
@@ -136,7 +135,7 @@ describe('grep checks (AC-1, 3, 4, 14, 15, 16, 19, 26, 28)', () => {
       }
     }
     // the worker helper is the one place that builds the per-job config
-    expect(read(path.join(ROOT, 'apps/worker/src/processors/media.processor.ts'))).toContain('return jobLogConfig(this.job, logConfig.worker)');
+    expect(read(path.join(ROOT, 'apps/worker/src/processors/media.processor.ts'))).toContain('return workerTraceCarrier(this.job)');
     expect(total).toBeGreaterThan(30);
     expect(missing).toEqual([]);
   });
@@ -152,10 +151,15 @@ describe('grep checks (AC-1, 3, 4, 14, 15, 16, 19, 26, 28)', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('AC-29: the web logger uses logService.web and the api helper uses logService.api', () => {
+  it('AC-29: the web logger uses logService.web and the api request service uses logService.api', () => {
     expect(read(path.join(ROOT, 'apps/web/src/lib/logging/logger.ts'))).toContain('logService.web(');
-    expect(read(path.join(ROOT, 'apps/api/src/common/utils/api-logger.ts'))).toContain('logService.api(');
-    expect(read(path.join(ROOT, 'apps/worker/src/processors/media.processor.ts'))).toMatch(/logService\.worker\(\{[^}]*jobTraceId\(/);
+    expect(read(path.join(ROOT, 'apps/api/src/common/services/request.service.ts'))).toContain('logService.api(');
+    // the worker's project layer builds every worker logger from the job's trace id
+    expect(read(path.join(ROOT, 'apps/worker/src/logging.ts'))).toMatch(/logService\.worker\(\{[^}]*jobTraceId\(/);
+    // and no worker logger is built anywhere else, so none can be missing the job id
+    const stray = grep(/logService\.worker\(/, allSource((f) => /\.(ts|tsx)$/.test(f) && !isTestFile(f) && f.includes(`${path.sep}worker${path.sep}`)))
+      .filter((hit) => !hit.startsWith('apps/worker/src/logging.ts'));
+    expect(stray).toEqual([]);
   });
 
   it('AC-26: skills no longer mention the removed logging APIs', () => {
@@ -163,7 +167,10 @@ describe('grep checks (AC-1, 3, 4, 14, 15, 16, 19, 26, 28)', () => {
       ['runWithLog' + 'Context', 'addLog' + 'Correlation', 'currentJob' + 'Attempt', 'configureLog' + 'Process', 'flush' + 'Async', 'LOG_QUEUE logger'].join('|'),
     );
     expect(grep(pattern, skillFiles())).toEqual([]);
-    const logging = read(path.join(ROOT, '.agents/skills/logging/SKILL.md'));
+    // The skill is SKILL.md plus its references/ (buffer details live there).
+    const logging = walk(path.join(ROOT, '.agents', 'skills', 'logging'), (f) => f.endsWith('.md'))
+      .map((f) => read(f))
+      .join('\n');
     expect(logging).toContain('settle()');
     expect(logging).toContain('logs:pending');
     expect(logging).toContain('isFinalAttempt');
@@ -183,11 +190,11 @@ describe('grep checks (AC-1, 3, 4, 14, 15, 16, 19, 26, 28)', () => {
   });
 });
 
-describe('AC-16: createApiLogger', () => {
+describe('AC-16: apiLogger', () => {
   let added: LogEntry[];
   beforeEach(() => {
     added = [];
-    jest.spyOn(logBuffer, 'add').mockImplementation((entry) => void added.push(entry));
+    jest.spyOn(logBuffer, 'add').mockImplementation((_context, entry) => void added.push(entry));
   });
   afterEach(() => jest.restoreAllMocks());
 
@@ -196,17 +203,17 @@ describe('AC-16: createApiLogger', () => {
   });
 
   it('AC-16: lines carry service api, the current trace id, and no request key outside HTTP', () => {
-    const logger = createApiLogger({ channel: 'users' });
+    const logger = apiLogger('users');
     logger.info('outside');
     runWithTraceId('JOB-1', () => logger.info('in job'));
-    expect(added[0]).toMatchObject({ service: 'api', channel: 'users', id: null });
+    expect(added[0]).toMatchObject({ service: 'api', channel: 'users', id: '' });
     expect('request' in added[0]).toBe(false);
     expect(added[1]).toMatchObject({ service: 'api', id: 'JOB-1' });
     expect('request' in added[1]).toBe(false);
   });
 
   it('AC-16: inside an HTTP request the line carries the request id and the request context', async () => {
-    const logger = createApiLogger({ channel: 'users' });
+    const logger = apiLogger('users');
     const service = new RequestService(requestStorage);
     await service.run(() => {
       service.method = 'POST';
@@ -216,12 +223,12 @@ describe('AC-16: createApiLogger', () => {
     expect(added[0].request).toMatchObject({ id: added[0].id, method: 'POST' });
   });
 
-  it('AC-16: apiLogConfig carries the emailCritical callback, and an explicit config wins', () => {
-    const cfg = apiLogConfig({ id: 'FIXED', channel: 'x' });
-    expect(cfg).toMatchObject({ service: 'api', id: 'FIXED', channel: 'x' });
-    expect(typeof cfg.callback).toBe('function');
-    expect(typeof apiLogConfig().id).toBe('function');
-    expect(typeof apiLogConfig().request).toBe('function');
+  it('AC-16: apiTraceCarrier carries only service, id and globalContext, and an explicit trace id wins', () => {
+    const cfg = apiTraceCarrier('FIXED');
+    expect(cfg).toMatchObject({ service: 'api', id: 'FIXED' });
+    expect(Object.keys(apiTraceCarrier()).sort()).toEqual(['globalContext', 'id', 'service']);
+    expect(typeof apiTraceCarrier().id).toBe('function');
+    expect(typeof apiTraceCarrier().globalContext).toBe('function');
   });
 });
 
@@ -230,13 +237,13 @@ describe('AC-17: processor jobs and cron runs', () => {
   beforeEach(() => {
     added = [];
     store.clear();
-    jest.spyOn(logBuffer, 'add').mockImplementation((entry) => void added.push(entry));
+    jest.spyOn(logBuffer, 'add').mockImplementation((_context, entry) => void added.push(entry));
     jest.spyOn(logBuffer, 'flush');
   });
   afterEach(() => jest.restoreAllMocks());
 
   // A DI logger is shared and built once, outside any job.
-  const diLogger = createApiLogger({ channel: 'processor-test' });
+  const diLogger = apiLogger('media');
   class TestProcessor extends (GlobalProcessor as any) {
     async process(_job: any) {
       diLogger.info('first');
@@ -251,7 +258,7 @@ describe('AC-17: processor jobs and cron runs', () => {
   it('AC-17: a job with carrier id T logs its own DI-logger lines with id T', async () => {
     const processor: any = new TestProcessor();
     await processor.process(job({ telemetry: { metadata: carrier('T') } }));
-    const own = added.filter((e) => e.channel === 'processor-test');
+    const own = added.filter((e) => e.channel === 'media');
     expect(own.map((e) => e.id)).toEqual(['T', 'T']);
     expect(logBuffer.flush).not.toHaveBeenCalled();
   });
@@ -259,13 +266,13 @@ describe('AC-17: processor jobs and cron runs', () => {
   it('AC-17: without a carrier all of the job\'s lines share one fresh UUID, and two jobs differ', async () => {
     const processor: any = new TestProcessor();
     await processor.process(job({}));
-    const first = added.filter((e) => e.channel === 'processor-test').map((e) => e.id);
+    const first = added.filter((e) => e.channel === 'media').map((e) => e.id);
     expect(first[0]).toMatch(UUID);
     expect(new Set(first).size).toBe(1);
 
     added.length = 0;
     await processor.process(job({}));
-    const second = added.filter((e) => e.channel === 'processor-test').map((e) => e.id);
+    const second = added.filter((e) => e.channel === 'media').map((e) => e.id);
     expect(second[0]).not.toBe(first[0]);
   });
 
@@ -275,13 +282,13 @@ describe('AC-17: processor jobs and cron runs', () => {
       processor.process(job({ telemetry: { metadata: carrier('A') } })),
       processor.process(job({ telemetry: { metadata: carrier('B') } })),
     ]);
-    const own = added.filter((e) => e.channel === 'processor-test').map((e) => e.id);
+    const own = added.filter((e) => e.channel === 'media').map((e) => e.id);
     expect(own.filter((id) => id === 'A')).toHaveLength(2);
     expect(own.filter((id) => id === 'B')).toHaveLength(2);
   });
 
   it('AC-17: a runCron run\'s lines share one fresh UUID and carry cron: <name> in extraInfo; each run differs; nothing flushed', async () => {
-    const jobLogger = createApiLogger({ channel: 'cron-test' });
+    const jobLogger = apiLogger('system');
     await runCronExclusive('nightly-x', CRON_LOCK_TTL.daily, async () => {
       jobLogger.info('inside the cron');
     });

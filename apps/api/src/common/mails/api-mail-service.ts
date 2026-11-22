@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 import { Content, Envelop, Mailable, htmlToText } from '@repo/backend-lib/services/mail-service';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { ViewService } from '@repo/backend-lib/services/view-service';
 import { ViewData } from '@repo/backend-lib/services/view-service';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-preferences.service';
-import { createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 type ViewParams = {
   viewPath: string;
@@ -19,10 +19,7 @@ type ViewParams = {
 @Injectable()
 export abstract class ApiMailService extends Mailable {
   /** Own instance (not DI-shared) so its config never gets mutated by other consumers. */
-  private static readonly emailLog: LogService = createApiLogger({
-    channel: 'mail',
-    name: 'enqueue',
-  });
+  private static readonly emailLog: ApiLogger = apiLogger('mail', { operation: 'enqueue' });
 
   private envelopePromise: Promise<Envelop> | null = null;
   /** Set by subclasses (via `this.lang = lang`) before `envelope()`/`content()` run. */

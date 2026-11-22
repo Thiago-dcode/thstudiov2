@@ -8,7 +8,7 @@ import { NewUserEvent } from './events/new-user.event';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { UserRepository } from './users.repository';
 import { cleanObj } from '@repo/common-lib/utils/object';
-import { LogService, maskEmailAddresses } from '@repo/backend-lib/services/log-service';
+import { maskEmailAddresses } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
 import { SetFreeSubscriptionEvent } from '../plan-subscriptions/events/set-free-subscription.event';
@@ -90,7 +90,7 @@ import {
   MAX_ACCOUNT_DELETION_CODES_PER_DAY,
   TWOFA_RESEND_COOLDOWN_SECONDS,
 } from '@repo/common-lib/constants/limits';
-import { apiLogConfig } from 'src/common/utils/api-logger';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 /** One lock for sending and checking deletion codes, so their reads and writes never interleave. */
 const deletionLockKey = (userId: number) => `account-deletion:${userId}`;
@@ -106,10 +106,11 @@ const USERNAME_BASE_MAX_LENGTH = 12;
 
 @Injectable()
 export class UserService {
+  private readonly logService: ApiLogger;
+
   constructor(
     private readonly userRepository: UserRepository,
     private readonly eventEmitter: EventEmitter2,
-    private readonly logService: LogService,
     private readonly mailService: MailService,
     private readonly helpers: Helpers,
     private readonly requestService: RequestService,
@@ -121,7 +122,9 @@ export class UserService {
     private readonly usernameHistoryRepository: UsernameHistoryRepository,
     private readonly storageService: StorageService,
     private readonly accountDeletionCodeMail: AccountDeletionCodeMail,
-  ) { }
+  ) {
+    this.logService = this.requestService.log('users');
+  }
 
   /**
    * The artist's public pages show what just changed: purge their edge cache. Fire-and-forget; the
@@ -393,8 +396,7 @@ export class UserService {
       // PUT accepts any body, whatever `content_type` the client declared.
       this.logService.warn(
         'Profile image rejected',
-        { user_id: user.id, kind, reason: 'invalid_image' },
-        { operation: 'profile-image' },
+        { user_id: user.id, kind, reason: 'invalid_image', operation: 'profile-image' },
       );
       throw new BadRequestException('Uploaded file is not a valid image');
     }
@@ -404,13 +406,12 @@ export class UserService {
     const { moderation } = await this.aiService.moderateContent(
       `data:image/webp;base64,${optimized.toString('base64')}`,
       { user_id: user.id },
-      apiLogConfig(),
+      this.requestService.traceCarrier(),
     );
     if (!moderation.is_allowed) {
       this.logService.warn(
         'Profile image rejected',
-        { user_id: user.id, kind, reason: 'moderation' },
-        { operation: 'profile-image' },
+        { user_id: user.id, kind, reason: 'moderation', operation: 'profile-image' },
       );
       throw new MediaModerationException(moderation.reason);
     }
@@ -457,7 +458,7 @@ export class UserService {
       // Conditional: an avatar uploaded while this ran wins, and ours is removed.
       if (!(await this.userRepository.setAvatarIfEmpty(user.id, path))) {
         await this.helpers.deleteAsset(path);
-        this.logService.info('Provider avatar skipped', { user_id: user.id, provider, reason: 'avatar_already_set' }, fields);
+        this.logService.info('Provider avatar skipped', { user_id: user.id, provider, reason: 'avatar_already_set', ...fields });
         return;
       }
 
@@ -466,7 +467,7 @@ export class UserService {
         new UpdateProfileStatusEvent(user.id, { has_avatar_field: true }),
       );
       this.emitArtistPagesChanged(user.id);
-      this.logService.success('Provider avatar imported', { user_id: user.id, provider }, fields);
+      this.logService.success('Provider avatar imported', { user_id: user.id, provider, ...fields });
     } catch (error: unknown) {
       // A rejected image already logged its warn in `moderateAndStoreProfileImage`.
       if (error instanceof MediaModerationException || error instanceof BadRequestException) return;
@@ -480,8 +481,8 @@ export class UserService {
           // fetch wraps the real reason (`unexpected redirect`, ENOTFOUND, timeout) in `cause`.
           error_cause:
             error instanceof Error && error.cause instanceof Error ? error.cause.message : undefined,
+          ...fields,
         },
-        fields,
       );
     }
   }
@@ -691,8 +692,8 @@ export class UserService {
           previous_username: previousUsername,
           username: userUpdateData.username,
           username_reset_count: userUpdateData.username_reset_count,
+          operation: 'username-change',
         },
-        { operation: 'username-change' },
       );
     }
 
@@ -733,7 +734,7 @@ export class UserService {
       await QueueHelper.createGenerateSingleEntityMetadataJob(
         { entity: 'user', id: user.id, user_id: user.id },
         { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
-        apiLogConfig(),
+        this.requestService.traceCarrier(),
       );
     }
     // After the rename's reservation and cache clear. Both names are passed so the purge covers
@@ -777,8 +778,7 @@ export class UserService {
     await this.userSessionsService.expireAllForUser(user.id, this.requestService.user.token);
     this.logService.info(
       'Password changed',
-      { user_id: user.id, other_sessions_revoked: true },
-      { operation: 'password-change' },
+      { user_id: user.id, other_sessions_revoked: true, operation: 'password-change' },
     );
     return updatedUser;
   }
@@ -790,7 +790,7 @@ export class UserService {
     // resolveUserAuth does not read `banned`, so live sessions must be ended here.
     await this.userSessionsService.expireAllForUser(userId);
     this.emitArtistPagesChanged(userId);
-    this.logService.warn('User banned', { user_id: userId, reason }, { operation: 'ban' });
+    this.logService.warn('User banned', { user_id: userId, reason, operation: 'ban' });
     return bannedUser;
   }
 
@@ -829,7 +829,7 @@ export class UserService {
     const sent = await this.helpers.getCached<{ count: number; window_ends_at: string }>(sentKey);
     const sentWindowMs = sent ? new Date(sent.window_ends_at).getTime() - Date.now() : 0;
     if (sent && sentWindowMs > 0 && sent.count >= MAX_ACCOUNT_DELETION_CODES_PER_DAY) {
-      this.logService.warn('Account deletion code refused', { user_id: userId, reason: 'daily_limit' }, fields);
+      this.logService.warn('Account deletion code refused', { user_id: userId, reason: 'daily_limit', ...fields });
       throw new ApiException(
         API_ERRORS.ACCOUNT_DELETION_CODE_DAILY_LIMIT,
         'Too many codes today, try again tomorrow',
@@ -867,8 +867,8 @@ export class UserService {
           user_id: userId,
           error_name: error instanceof Error ? error.name : typeof error,
           error_message: maskEmailAddresses(error instanceof Error ? error.message : String(error)),
+          ...fields,
         },
-        fields,
       );
       throw new ServiceUnavailableException('Could not send the code, try again later');
     }
@@ -883,7 +883,7 @@ export class UserService {
     );
 
     // Never the code.
-    this.logService.info('Account deletion code sent', { user_id: userId }, fields);
+    this.logService.info('Account deletion code sent', { user_id: userId, ...fields });
     return {
       expires_at: expiresAt,
       resend_available_at: new Date(issuedAt.getTime() + TWOFA_RESEND_COOLDOWN_SECONDS * 1000),
@@ -902,7 +902,7 @@ export class UserService {
     const pending = await this.helpers.getCached<PendingDeletionCode>(key);
     const remainingMs = pending ? new Date(pending.expires_at).getTime() - Date.now() : 0;
     if (!pending || remainingMs <= 0) {
-      this.logService.warn('Account deletion rejected', { user_id: userId, reason: 'no_pending_code' }, fields);
+      this.logService.warn('Account deletion rejected', { user_id: userId, reason: 'no_pending_code', ...fields });
       throw new BadRequestException('Invalid or expired code');
     }
 
@@ -914,7 +914,7 @@ export class UserService {
       } else {
         await this.helpers.setCached(key, { ...pending, attempts }, remainingMs);
       }
-      this.logService.warn('Account deletion rejected', { user_id: userId, reason: 'wrong_code', attempts, code_burned: burned }, fields);
+      this.logService.warn('Account deletion rejected', { user_id: userId, reason: 'wrong_code', attempts, code_burned: burned, ...fields });
       throw new BadRequestException('Invalid or expired code');
     }
   }
@@ -959,8 +959,7 @@ export class UserService {
     }
     this.logService.info(
       'Account deletion requested',
-      { user_id: userId, cancel_subscription: Boolean(request.cancel_subscription) },
-      { operation: 'account-deletion' },
+      { user_id: userId, cancel_subscription: Boolean(request.cancel_subscription), operation: 'account-deletion' },
     );
     this.emitArtistPagesChanged(userId);
 
@@ -977,9 +976,7 @@ export class UserService {
    */
   async cancelDeletion(userId: number) {
     if (await this.userRepository.unflagDeletion(userId, ACCOUNT_DELETION_GRACE_DAYS)) {
-      this.logService.info('Account deletion cancelled', { user_id: userId }, {
-        operation: 'account-deletion',
-      });
+      this.logService.info('Account deletion cancelled', { user_id: userId, operation: 'account-deletion' });
       this.emitArtistPagesChanged(userId);
       return { deletion_requested_at: null };
     }
@@ -1012,12 +1009,12 @@ export class UserService {
     userId: number,
     forceDelete = false,
   ): Promise<{ deleted: boolean; reason?: string }> {
-    // Per-call operation: never the name builder on this shared DI logger.
+    // Per-call operation, merged into each line's options.
     const op = { operation: 'hard-delete' };
     const log = {
-      info: (message: string, extra?: Record<string, unknown>) => this.logService.info(message, { user_id: userId, ...extra }, op),
-      warn: (message: string, extra?: Record<string, unknown>) => this.logService.warn(message, { user_id: userId, ...extra }, op),
-      error: (message: string, extra?: Record<string, unknown>) => this.logService.error(message, { user_id: userId, ...extra }, op),
+      info: (message: string, extra?: Record<string, unknown>) => this.logService.info(message, { user_id: userId, ...extra, ...op }),
+      warn: (message: string, extra?: Record<string, unknown>) => this.logService.warn(message, { user_id: userId, ...extra, ...op }),
+      error: (message: string, extra?: Record<string, unknown>) => this.logService.error(message, { user_id: userId, ...extra, ...op }),
     };
     // Every early return is logged: "why didn't it delete" is the usual question.
     const skip = (reason: string) => {
@@ -1146,15 +1143,13 @@ export class UserService {
   async handleNewUserEvent(event: NewUserEvent) {
     // A visit to `/artists/{name}` before anyone owned it cached "does not exist" for a week, which
     // would 404 the new owner's page. Logged, not thrown: onboarding below must still run.
-    // Per-call operation: never the name builder on this shared DI logger.
     const fields = { operation: 'new-user' };
     await this.helpers
       .deleteManyCached([CACHE_KEY_USERNAME_EXISTS(event.user.username)])
       .catch((error: unknown) =>
         this.logService.error(
           'Username cache clear failed for new user',
-          { user_id: event.user.id, error_name: error instanceof Error ? error.name : typeof error },
-          fields,
+          { user_id: event.user.id, error_name: error instanceof Error ? error.name : typeof error, ...fields },
         ),
       );
     // Which step failed decides the level: without a Stripe customer the account can never pay.
@@ -1164,7 +1159,7 @@ export class UserService {
       await QueueHelper.createOrUpdateEmailPreferenceJob({
         email: event.user.email,
         user_id: event.user.id,
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
 
       //Create stripe customer
       step = 'stripe-customer';
@@ -1183,8 +1178,7 @@ export class UserService {
       // Ids only: the customer object carries email, phone and address.
       this.logService.info(
         'Stripe customer created',
-        { user_id: event.user.id, stripe_customer_id: stripeCustomer.id },
-        fields,
+        { user_id: event.user.id, stripe_customer_id: stripeCustomer.id, ...fields },
       );
       //UPDATE USER
       step = 'store-customer';
@@ -1213,8 +1207,8 @@ export class UserService {
       // a name the mail uses its nameless greeting, never the random username.
       await this.mailService.sendAsync(this.notifyNewUserMail.setUser(profile, profile.language), {
         delay: 3 * 60 * 1000
-      }, apiLogConfig());
-      this.logService.info('New user onboarding completed', { user_id: event.user.id }, fields);
+      }, this.requestService.traceCarrier());
+      this.logService.info('New user onboarding completed', { user_id: event.user.id, ...fields });
     } catch (error) {
       const failure = {
         step,
@@ -1224,9 +1218,9 @@ export class UserService {
       };
       // Until someone runs `dbcli create:stripe-customers`, this account cannot subscribe.
       if (step === 'stripe-customer' || step === 'store-customer') {
-        this.logService.critical('Stripe customer creation failed for new user', { user_id: event.user.id, ...failure }, fields);
+        this.logService.critical('Stripe customer creation failed for new user', { user_id: event.user.id, ...failure, ...fields });
       } else {
-        this.logService.error('New user onboarding failed', { user_id: event.user.id, ...failure }, fields);
+        this.logService.error('New user onboarding failed', { user_id: event.user.id, ...failure, ...fields });
       }
       throw error;
     }

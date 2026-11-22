@@ -4,15 +4,19 @@ import { CreateUserContactRequest } from './requests/create-user-contact.request
 import { UpdateUserContactRequest } from './requests/update-user-contact.request';
 import { IndexUserContactRequest } from './requests/index-user-contact.request';
 import { QueueHelper } from '@repo/backend-lib/utils';
-import { LogService } from '@repo/backend-lib/services/log-service';
-import { apiLogConfig } from 'src/common/utils/api-logger';
+import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 @Injectable()
 export class UserContactsService {
+  private readonly logger: ApiLogger;
+
   constructor(
     private readonly userContactsRepository: UserContactsRepository,
-    private readonly logger: LogService,
-  ) {}
+    private readonly requestService: RequestService,
+  ) {
+    this.logger = this.requestService.log('user-contacts');
+  }
 
   async create(data: CreateUserContactRequest) {
     this.logger.info("Creating new contact",data);
@@ -20,9 +24,9 @@ export class UserContactsService {
     // `data.user_id` is the contacted artist, not the owner of `contact_email`.
     await QueueHelper.createOrUpdateEmailPreferenceJob({
       email: data.contact_email,
-    }, apiLogConfig());
+    }, this.requestService.traceCarrier());
 
-    await QueueHelper.createUserContactJob(data, apiLogConfig());
+    await QueueHelper.createUserContactJob(data, this.requestService.traceCarrier());
     return {
       id: 0,
       created_at: new Date(),

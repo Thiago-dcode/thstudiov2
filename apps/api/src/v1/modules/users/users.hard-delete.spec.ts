@@ -45,10 +45,9 @@ describe('UserService.deleteAccount', () => {
     service = new UserService(
       userRepository as never,
       eventEmitter as never,
-      logService as never,
       {} as never, // mailService
       helpers as never,
-      {} as never, // requestService
+      { log: () => logService } as never, // requestService
       {} as never, // notifyNewUserMail
       {} as never, // aiService
       {} as never, // profileStatusService
@@ -80,8 +79,7 @@ describe('UserService.deleteAccount', () => {
     await expect(service.deleteAccount(7)).resolves.toEqual({ deleted: false, reason: 'not-found' });
     expect(logService.info).toHaveBeenCalledWith(
       'Account deletion step skipped',
-      { user_id: 7, step: 'hard-delete', reason: 'not-found' },
-      expect.objectContaining({ operation: 'hard-delete' }),
+      { user_id: 7, step: 'hard-delete', reason: 'not-found', operation: 'hard-delete' },
     );
   });
 

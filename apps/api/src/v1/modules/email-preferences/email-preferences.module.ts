@@ -5,8 +5,6 @@ import { EmailPreferencesRepository } from './email-preferences.repository';
 import { EmailPreferencesService } from './email-preferences.service';
 import { EmailPreferencesProcessor } from './email-preferences.processor';
 import { EmailPreferencesController } from './email-preferences.controller';
-import { LogService } from '@repo/backend-lib/services/log-service';
-import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [
@@ -16,14 +14,6 @@ import { createApiLogger } from 'src/common/utils/api-logger';
     EmailPreferencesRepository,
     EmailPreferencesService,
     EmailPreferencesProcessor,
-    {
-      provide: LogService,
-      useFactory: () => {
-        return createApiLogger({
-          channel: 'email-preferences',
-        });
-      },
-    },
   ],
   controllers: [EmailPreferencesController],
   exports: [EmailPreferencesService],

@@ -14,7 +14,6 @@ import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { consoleLogger } from 'src/common/testing/console-logger';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { hash } from '@repo/common-lib/utils/hash';
@@ -57,7 +56,9 @@ const buildService = async () => {
       try { lines.push(JSON.parse(String(line))); } catch { stray.push(line); }
     });
   }
-  const logger = consoleLogger({ channel: 'auth' });
+  const logger = consoleLogger({ defaultOptions: { channel: 'auth' } });
+  requestService.log = () => logger;
+  requestService.traceCarrier = () => ({ service: 'api' });
   const module = await Test.createTestingModule({
     providers: [
       AuthService,
@@ -78,7 +79,6 @@ const buildService = async () => {
       { provide: InvitationLinkService, useValue: {} },
       { provide: UserBenefitService, useValue: {} },
       { provide: WaitListService, useValue: {} },
-      { provide: LogService, useValue: logger },
     ],
   }).compile();
   return module.get(AuthService);
@@ -149,7 +149,8 @@ describe('AuthService audit lines', () => {
     expect(result.token).toBe(JWT);
     const [line] = audit('Login succeeded');
     expect(line.level).toBe('INFO');
-    expect(line.extraInfo).toMatchObject({ method: 'password', user_auth_device_id: 21, trusted_device: true });
+    expect(line.method).toBe('password');
+    expect(line.extraInfo).toMatchObject({ user_auth_device_id: 21, trusted_device: true });
     expect(line.extraInfo.user_id).toBe(7);
     noSecrets();
   });
@@ -190,7 +191,7 @@ describe('AuthService audit lines', () => {
     devices.getOneOrCreate.mockResolvedValue({ id: 21, disabled: true, blocked_at: null });
     devices.update.mockResolvedValue({});
     await service.verify2fa({ email: EMAIL, twofa_code: TWOFA } as any);
-    expect(audit('Login succeeded')[0].extraInfo).toMatchObject({ method: 'twofa' });
+    expect(audit('Login succeeded')[0].method).toBe('twofa');
     noSecrets();
   });
 

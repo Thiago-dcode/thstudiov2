@@ -4,7 +4,7 @@ jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({ paypal: 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { LogService } from '@repo/backend-lib/services/log-service';
-import { consoleLogger } from 'src/common/testing/console-logger';
+import { consoleLogger, consoleRequestService } from 'src/common/testing/console-logger';
 import { JOB_ON_SUBSCRIPTION_CHANGES } from '@repo/common-lib/constants/queues';
 import { PlanSubscriptionProcessor } from './plan-subscription.processor';
 
@@ -34,10 +34,16 @@ const build = (planService: unknown) => {
       try { lines.push(JSON.parse(String(line))); } catch { /* not a log line */ }
     });
   }
-  const logger = consoleLogger({ channel: 'plan-subscriptions', name: 'on-subscription-changes' });
-  const nameSpy = jest.spyOn(logger, 'name');
+  const logger = consoleLogger({ defaultOptions: { channel: 'plan-subscriptions', operation: 'on-subscription-changes' } });
+  // LogService is immutable (no `service()`/`name()`/`channel()`), so a shared logger cannot be renamed:
+  // the check is that the class has no such member and the logger's id is what it was before the calls.
+  const idBefore = logger.id;
+  const assertLoggerNotMutated = () => {
+    for (const member of ['service', 'name', 'channel']) expect(member in LogService.prototype).toBe(false);
+    expect(logger.id).toBe(idBefore);
+  };
   const processor = new PlanSubscriptionProcessor(
-    logger as unknown as LogService,
+    consoleRequestService(logger),
     planService as any,
     { findOneByUserId: jest.fn() } as any,
     { deleteManyCached: jest.fn().mockResolvedValue(undefined) } as any,
@@ -45,7 +51,7 @@ const build = (planService: unknown) => {
     {} as any,
     { emit: jest.fn() } as any,
   );
-  return { processor, lines, nameSpy };
+  return { processor, lines, assertLoggerNotMutated };
 };
 
 describe('PlanSubscriptionProcessor logging', () => {
@@ -61,7 +67,7 @@ describe('PlanSubscriptionProcessor logging', () => {
   });
 
   it('AC-25: the data line carries user_id and prev_plan_id, and never the user row', async () => {
-    const { processor, lines, nameSpy } = build({ findUserActivePlan: jest.fn().mockResolvedValue(null) });
+    const { processor, lines, assertLoggerNotMutated } = build({ findUserActivePlan: jest.fn().mockResolvedValue(null) });
     await expect(processor.process(jobOf(1))).rejects.toThrow();
     const [line] = lines.filter((l) => l.message === 'Processing subscription changes');
     expect(line.extraInfo.user_id).toBe(7);
@@ -69,7 +75,7 @@ describe('PlanSubscriptionProcessor logging', () => {
     expect(line.operation).toBe('on-subscription-changes');
     const dumped = JSON.stringify(lines.filter((l) => l.channel === 'plan-subscriptions'));
     expect(dumped).not.toMatch(/victim@example\.com|"email"|"name":"Ana"|Lopez|"surname"/);
-    expect(nameSpy).not.toHaveBeenCalled();
+    assertLoggerNotMutated();
   });
 
   it('AC-25: a failure on attempt 1/3 logs error with will_retry and no critical', async () => {

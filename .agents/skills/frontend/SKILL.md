@@ -1,186 +1,56 @@
 ---
 name: frontend
-description: >
-  Frontend rules for Next.js, UI components, Server Actions, and styling — combined with
-  expert UI/UX best practices. Use when working with apps/web, packages/ui,
-  packages/frontend-lib, or when building React components, pages, or styling.
-  Also triggers whenever the user asks to design, review, audit, or build any web page,
-  landing page, dashboard, component, or UI — even if they don't say "UX" or "Next.js"
-  explicitly. Triggers include: "build me a page", "design this", "make it look good",
-  "review my layout", "create a component", "improve my UI", "is this good UX?",
-  or any front-end design task. Always use this skill for any front-end work.
+description: >-
+  Frontend rules for TH Studio's Next.js app: design tokens, editorial-minimalist style,
+  Server Actions with useHandleAction, components, forms and responsive layout. Use when
+  working in apps/web, packages/ui or packages/frontend-lib, or when asked to build,
+  design, review or restyle any page, component or UI.
 ---
 
-# Frontend Rules (Next.js + UX)
+# Frontend rules (Next.js + UX)
 
----
+UX comes first: clear flows, obvious affordances, low friction. Immediate feedback (hover, active, skeletons, toasts) is mandatory; skeletons and optimistic UI beat raw speed. Error copy is human and says how to fix the problem.
 
-## 1. Psychology & UX — PRIORITY #1
+Related skills: `accessibility` (WCAG, keyboard, ARIA), `marketing-seo-ux` (public pages, metadata, structured data), `logging` (server-side log lines). For layout, spacing and tone details read `references/design-language.md`.
 
-**UX > Code / Performance / Aesthetics.** Users first: clear flows, obvious affordances, low friction.
+## Style in one paragraph
 
-- **Cognitive Load**: Minimize mental effort (Gestalt). Don't make users think.
-- **Hick's Law**: Simplify choices. Break complex tasks into steps.
-- **Fitts's Law**: Large, distinct, easy-to-hit CTAs.
-- **Feedback**: Immediate response (hover, active, skeletons, toasts) is mandatory.
-- **Perceived Perf**: Skeletons & optimistic UI beat actual speed.
-- **Emotion**: Delight with micro-interactions. Human, empathetic copy — especially on errors.
+Editorial minimalist, light-first with dark mode: pages **breathe**, chrome is quiet, uploaded art is the focus. **Zero border-radius** (no `rounded-*` except `rounded-full` on functionally circular controls). **Accent** (`#B20000`) is rationed to primary CTAs and deliberate emphasis, never fills, borders or links. One primary action and one focal point per view.
 
----
+## Tokens
 
-## 2. Design Language — Editorial Minimalist
+All colours come from `packages/ui/src/styles/globals.css`. **Never hardcode hex or px values**; use the variables or their Tailwind aliases. Dark mode remaps automatically via `.dark`.
 
-**Style**: Professional, minimalist, editorial, quietly exclusive. Light-first with dark mode support. UI disappears — only the user's portfolio/art content commands attention. No decoration competing with content.
-
-**Three non-negotiables**: **breathe** (generous space), **restraint** (less chrome, less noise), **exclusivity** (curated, not crowded).
-
-**Tone references** (feeling, not literal copying): costarastrology.com (editorial restraint, typographic confidence, whitespace), zara.com (sharp edges, neutral palette, product-first, sparing accent).
-
-- **Colors**: Use design tokens from `globals.css` — **never hardcode hex values in components**.
-  - **Accent**: `--color-accent` (`#B20000`) — rationed strictly (see Accent Rationing Rule below).
-  - **Surfaces**: `--color-bg` (page) → `--color-fg` (card) → `--color-fg-1` (chip/hover fill) → `--color-fg-2` (card border).
-  - **Text**: `--color-text` (primary) → `--color-text-muted` (secondary).
-  - **Borders**: `--color-border` (default) → `--color-border-em` (emphasized).
-  - Dark mode overrides via `.dark` class — all tokens adapt automatically.
-- **Typography**:
-  - **Serif** (`--font-serif`) for editorial headings where appropriate.
-  - **Sans** for UI, labels, and interactive elements.
-  - **Scale**: `--size-xs` (0.75rem), `--size-sm` (0.875rem), `--size-base` (1rem), `--size-lg` (1.125rem). Use Tailwind `text-xs/sm/base/lg`.
-  - **Editorial hierarchy**: Confident type scale, real hierarchy, generous line-height/whitespace. Use weight/size (not color/decoration) to signal importance.
-- **Layout**: Ample negative space — pages must **breathe**. Page backgrounds calm and neutral (`#F8F6F2` light / `#1C1B19` dark). Cards and chrome stay quiet — no gradients, no decorative fills on surfaces.
-- **Tone**: Restrained, confident, editorial. Professional and quietly exclusive — curated, never crowded.
-
-### Breathe & Exclusivity Rule
-
-Every layout must feel **spacious and curated** — never dense, never generic SaaS.
-
-**Breathe (space)**:
-- **Prefer air over density.** When in doubt, add padding, margin, or gap — never cram.
-- **Section rhythm**: generous vertical padding (`py-20` mobile → `py-28` tablet+). Section headers need clear separation from content (`mb-12`+).
-- **Content width**: constrain prose and headings (`max-w-lg` / `max-w-xl`) so lines don't stretch edge-to-edge on wide screens.
-- **Group spacing**: related items stay tight (`gap-2`–`gap-4`); unrelated groups get real separation (`gap-8`–`gap-16`, or a divider/whitespace break).
-- **Grids**: use fewer columns before shrinking cards. A 3-column grid with breathing room beats a 5-column squeeze.
-- **Stack before shrink**: on tight viewports, reduce columns or stack — don't compress type, padding, or touch targets to fit more in.
-
-**Exclusivity (curated feel)**:
-- **Show less, better.** Fewer nav items, fewer CTAs, fewer badges, fewer labels per card. Quality and restraint signal premium.
-- **One hero moment per view** — one headline, one primary action, one visual focus. Never compete for attention.
-- **Quiet chrome**: nav, cards, filters, and metadata stay neutral and understated. No busy borders, pills, gradients, or decorative fills.
-- **Editorial copy**: confident, short, human. Avoid startup jargon, exclamation marks, and "feature dump" layouts.
-- **Curated emptiness**: empty states and sparse pages should still feel intentional — centered, spacious, with one clear next step.
-- **No marketplace clutter**: avoid patterns that feel like e-commerce grids, dashboards, or social feeds unless the page truly requires it.
-
-**Anti-patterns** (reject these):
-- Tight grids with `gap-2`/`gap-3` and 4–5+ columns on desktop
-- Edge-to-edge text blocks with no max-width
-- Multiple accent-colored elements on one screen
-- Stacked badges, chips, and metadata competing with the artwork
-- Sections with no vertical pause between them
-
-### Zero Radius Rule
-
-**Zero border-radius everywhere** — sharp corners only. Buttons, cards, inputs, modals, chips, avatars, everything. No `rounded-sm/md/lg/xl`. The only exceptions are functionally circular elements (slider thumb, scrollbar thumb) where `rounded-full` is required for the control to work.
-
-### Accent Rationing Rule
-
-`--color-accent` (`#B20000`) is **rationed** — use only for:
-- Waitlist / primary CTA buttons
-- Primary registration actions
-- Isolated punchy words/labels for deliberate emphasis
-
-**Never** use accent as:
-- Background fill on cards, sections, or decorative surfaces
-- Border decoration or ambient tinting
-- General text color or link color
-- Gradients or glow effects
-
-When in doubt, use neutral tokens. Secondary and ghost buttons remain neutral.
-
-### UI-as-Frame Rule
-
-Chrome (nav, cards, headers, controls) stays quiet: neutral tones, restrained type, generous whitespace. Uploaded portfolio/art is the visual focus everywhere. When in doubt, quieter UI.
-
----
-
-## 3. Visual Hierarchy & Layout
-
-- Use Tailwind spacing scale (based on 4px grid: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64px). **Default upward** — reach for `gap-6`, `gap-8`, `py-16`, `py-20` before smaller values.
-- Place the most important content top-left (F-pattern reading).
-- **One primary action per view** — never compete for attention.
-- Group related elements; separate unrelated ones with **generous whitespace** (see Breathe & Exclusivity Rule).
-- Keep above-the-fold content self-explanatory — the user should know what the page is without scrolling.
-- **Reference spacing** (landing/editorial pages): `WebSection.Container` uses `px-6 py-20 tablet:px-10 tablet:py-28` — match or exceed this rhythm for marketing surfaces.
-
----
-
-## 4. Typography (Detailed)
-
-- Body text: **≥ 16px**, line-height 1.5–1.7.
-- Max **2 typefaces** per page (heading + body).
-- Clear heading hierarchy: H1 → H2 → H3, never skip levels.
-- Line length: **60–80 characters** for body text.
-- Contrast ratio: **≥ 4.5:1** for body, ≥ 3:1 for large text (WCAG AA).
-- **Zero border-radius** — sharp corners everywhere (see Zero Radius Rule in §2).
-
----
-
-## 5. Color Tokens
-
-All colors come from `packages/ui/src/styles/globals.css`. **Never hardcode hex values — always use CSS variables or their Tailwind aliases.**
-
-| Purpose | Token | Tailwind class |
-|---------|-------|----------------|
+| Purpose | Token | Tailwind |
+|---|---|---|
 | Page background | `--color-bg` | `bg-bg` |
 | Card / raised surface | `--color-fg` | `bg-fg` |
 | Chip / hover fill | `--color-fg-1` | `bg-fg-1` |
-| Card border | `--color-fg-2` | `bg-fg-2`, `border-fg-2` |
-| Primary text | `--color-text` | `text-text` |
-| Secondary text | `--color-text-muted` | `text-text-muted` |
+| Card border | `--color-fg-2` | `border-fg-2` |
+| Primary / secondary text | `--color-text` / `--color-text-muted` | `text-text` / `text-text-muted` |
 | Accent (rationed) | `--color-accent` | `bg-accent`, `text-accent` |
-| Default border | `--color-border` | `border-border` |
-| Emphasized border | `--color-border-em` | `border-border-em` |
-| Success | `--color-success` / `--color-success-fg` | `text-success`, `bg-success-fg` |
-| Error | `--color-error` / `--color-error-fg` | `text-error`, `bg-error-fg` |
-| Warning | `--color-warning` / `--color-warning-fg` | `text-warning`, `bg-warning-fg` |
-| Info | `--color-info` / `--color-info-fg` | `text-info`, `bg-info-fg` |
+| Borders | `--color-border` / `--color-border-em` | `border-border` / `border-border-em` |
+| Status | `--color-{success,error,warning,info}` and `-fg` | `text-success`, `bg-success-fg`, … |
 
-- **Never use color as the only differentiator** — pair with icon, label, or pattern.
-- Dark mode is handled via `.dark` class — tokens remap automatically, no manual overrides needed.
-- Use `surface-card` and `surface-card-strong` utility classes for card containers.
-- Shadows: `--shadow-soft` (cards) and `--shadow-strong` (elevated modals/dropdowns).
+Card containers use `surface-card` / `surface-card-strong`. Shadows: `--shadow-soft` (cards), `--shadow-strong` (modals, dropdowns). Never use colour as the only differentiator.
 
----
+## Layout and components
 
-## 6. CTAs & Buttons
+- **Server Components by default**; `use client` only when needed. Pages stay thin, business logic outside UI components.
+- **Mobile first**, `min-width` queries. Breakpoints in `globals.css`: `phone` 480, `phone-lg` 640, `tablet` 768, `tablet-lg` 1024, `laptop` 1280, `desktop` 1536, `desktop-lg` 1920, `ultrawide` 2560. No horizontal scroll at any breakpoint; nav collapses gracefully.
+- Spacing on the Tailwind 4px scale, **defaulting upward** (`gap-6`, `gap-8`, `py-16`, `py-20`). Group related items tightly, separate unrelated ones generously.
+- **Images**: always `next/image` (`fill` + `sizes` + `relative` parent, or explicit `width`/`height`), WebP, lazy by default.
+- **Performance**: no CLS (skeletons, explicit dimensions). LCP < 2.5 s, CLS < 0.1, INP < 200 ms.
+- **Buttons**: hierarchy primary > secondary > ghost; accent only on primary. Touch target ≥ 44×44 px. Show hover, focus, active, disabled. Label the action ("Save changes", not "Submit"). Destructive actions need confirmation.
+- **Forms**: visible labels (a placeholder is not a label), inline validation on blur, correct `type` and `autocomplete`, errors that say what went wrong and how to fix it.
+- **States**: every empty state has a message and a next action; loading states show progress.
 
-- **One primary CTA per view** — hierarchy: primary > secondary > ghost.
-- **Accent background** (`bg-accent`, `#B20000`) is permitted **only** on primary CTAs (waitlist, registration, key conversion actions). Secondary and ghost buttons remain neutral.
-- Minimum touch target: **44×44px**.
-- Always show hover, focus, active, and disabled states.
-- Button labels must describe the action: "Save changes" not "Submit".
-- Destructive actions (delete, remove) require confirmation.
+## Server Actions (priority)
 
----
+**Always use the `useHandleAction` hook**; never manage `isPending`/`error` by hand.
 
-## 7. Component & UI Standards
-
-- **Server First**: Default to Server Components. `use client` only when needed.
-- **Responsive / Mobile-First**: Design and verify on small screens first; fluid layouts, readable type, comfortable touch targets; no hardcoded px (use tokens).
-- Breakpoints (defined in `globals.css`): `phone` (480px) → `phone-lg` (640px) → `tablet` (768px) → `tablet-lg` (1024px) → `laptop` (1280px) → `desktop` (1536px) → `desktop-lg` (1920px) → `ultrawide` (2560px). Use `min-width` media queries.
-- No horizontal scroll on any breakpoint. Navigation must collapse gracefully on mobile.
-- **Images**: Always `next/image`. Use `fill` + `sizes` + `relative` parent. Add `loading="lazy"`, specify `width` and `height`. Use WebP.
-- **Performance**: No CLS (skeletons, explicit dims). Core Web Vitals: **LCP < 2.5s**, **CLS < 0.1**, **INP < 200ms**.
-- **Structure**: Thin pages. Business logic outside UI components.
-
----
-
-## 8. Server Actions — PRIORITY
-
-**MUST use `useHandleAction` hook.** Do not manage `isPending`/`error` manually.
-
-- **Hook**: `apps/web/src/modules/auth/hooks/useHandleAction.ts`
-- **Return**: `ActionReturn<T, K>` (`@repo/common-lib/types/response`)
-- **Logging**: server actions may log via `@/lib/logging/logger` (`webLogger`, `withLogTrace`); see the `logging` skill. `@repo/backend-lib` is server-side only: never import it, or a module that does, from a `"use client"` file.
+- Hook: `apps/web/src/modules/auth/hooks/useHandleAction.ts`; return type `ActionReturn<T, K>` (`@repo/common-lib/types/response`).
+- Server actions may log via `@/lib/logging/logger`. `@repo/backend-lib` is server-only: never import it, or a module that does, from a `"use client"` file.
 
 ```ts
 const { handleSubmit, isPending, errors } = useHandleAction({
@@ -189,104 +59,19 @@ const { handleSubmit, isPending, errors } = useHandleAction({
 });
 ```
 
----
+## Code
 
-## 9. Accessibility (a11y)
+Domain-based file names (`user.utils.ts`, not `utils.ts`). Never import from `apps/api`.
 
-- Semantic HTML: `<header>`, `<nav>`, `<main>`, `<section>`, `<footer>`, `<article>`.
-- All images need `alt` text (decorative: `alt=""`).
-- Full **keyboard navigation** — Tab, Enter, Escape, arrow keys.
-- Visible focus indicators on all interactive elements.
-- Use ARIA roles/labels only when native HTML isn't sufficient.
+## Audit checklist
 
----
+- [ ] Only design tokens, no hex/px literals; cards use `surface-card*`
+- [ ] No `rounded-*` (except circular controls); accent only on CTAs and deliberate emphasis
+- [ ] Layout breathes: generous section padding, constrained prose, no cramped grids; one focal point
+- [ ] One clear primary CTA above the fold; text ≥ 16 px at ≥ 4.5:1 contrast
+- [ ] Keyboard-usable, visible focus, alt text (see `accessibility`)
+- [ ] No CLS, no horizontal scroll on mobile; nav shows active state
+- [ ] Forms have visible labels and helpful errors
+- [ ] Every Server Action goes through `useHandleAction`
 
-## 10. Forms & Inputs
-
-- Labels always **visible** — never use placeholder as a label.
-- Show inline validation on blur, not on submit only.
-- Correct `type` attributes: `email`, `tel`, `number`, `url`, `password`.
-- Enable browser autocomplete (`autocomplete` attribute).
-- Logical Tab order through all fields.
-- Error messages must say **what went wrong and how to fix it**.
-
----
-
-## 11. Navigation & Wayfinding
-
-- User must always know where they are (breadcrumbs, active nav state, page title).
-- Primary nav: **max 7 items**. Keep position consistent across pages.
-- Include search for content-heavy sites (> 20 pages).
-- URL structure should reflect content hierarchy.
-
----
-
-## 12. Content & Microcopy
-
-- Short paragraphs (3–5 lines max); use subheadings for long content.
-- Plain language — 7th–8th grade reading level, no jargon.
-- Every empty state needs a message and a next action.
-- Loading states must communicate progress (spinner + label, skeleton screens, progress bar).
-- Avoid "click here" — use descriptive link text.
-
----
-
-## 13. Trust & Credibility
-
-- HTTPS on all pages.
-- Privacy policy and cookie notice clearly accessible.
-- Show social proof near conversion points (reviews, testimonials, logos).
-- Contact info reachable in ≤ 2 clicks.
-- Consistent brand voice and visual identity.
-
----
-
-## 14. SEO Foundations
-
-- Unique `<title>` (50–60 chars) and `<meta name="description">` (150–160 chars) per page.
-- One `<h1>` per page containing the primary keyword.
-- JSON-LD structured data for rich snippets.
-- Canonical URL on every page. Sitemap.xml and robots.txt present.
-
----
-
-## 15. Clean Code
-
-- **Naming**: Domain-based (e.g., `user.utils.ts` > `utils.ts`).
-- **Boundaries**: NEVER import from `apps/api`.
-
----
-
-## Quick Audit Checklist
-
-```
-[ ] Text readable at 16px+ with 4.5:1 contrast
-[ ] One clear primary CTA above the fold
-[ ] Page loads < 3s on mobile 4G
-[ ] Works without a mouse (keyboard nav)
-[ ] No content shifts during load (CLS)
-[ ] Mobile layout has no horizontal scroll
-[ ] Form labels always visible
-[ ] Images have alt text
-[ ] Nav shows active state
-[ ] Error messages are helpful
-[ ] useHandleAction used for all Server Actions
-[ ] No hardcoded hex/px values — use design tokens from globals.css
-[ ] Cards use `surface-card` or `surface-card-strong` utility classes
-[ ] Zero border-radius everywhere — no `rounded-*` except `rounded-full` on functionally circular controls (slider thumb, scrollbar thumb)
-[ ] Accent color used only on CTAs and deliberate emphasis — not on cards, sections, or decoration
-[ ] Layout breathes — generous section padding, constrained prose width, no cramped multi-column grids
-[ ] Page feels curated/exclusive — few competing elements, quiet chrome, one clear focal point
-```
-
----
-
-## Output Format
-
-When generating UI code or design recommendations:
-
-1. **Structure first** — layout and hierarchy. Ask: does this breathe? Does it feel exclusive or crowded?
-2. **Apply tokens** — spacing, type scale, color system. Prefer generous spacing defaults.
-3. **Add states** — hover, focus, active, disabled, loading, empty, error.
-4. **Test mentally** — keyboard-only, mobile, dark mode, slow network.
-5. **Note tradeoffs** — if a decision sacrifices one principle for another, say so.
+When generating UI: structure first (does it breathe?), then tokens, then states (hover, focus, active, disabled, loading, empty, error), then check keyboard, mobile, dark mode and slow network. Say so if a decision trades one principle for another.

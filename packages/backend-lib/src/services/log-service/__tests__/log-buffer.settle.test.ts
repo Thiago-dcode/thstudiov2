@@ -8,11 +8,11 @@ import { LogBuffer } from '../buffers/log.buffer';
 import { InMemoryLogBuffer } from '../buffers/in-memory-log.buffer';
 import { DEFAULT_LOG_REDIS_KEY, RedisLogBuffer } from '../buffers/redis-log.buffer';
 import { LogDriver } from '../drivers/log.driver';
-import { LogEntry } from '../types';
+import { LogContext, LogEntryBase } from '../types';
 import * as logServiceIndex from '../index';
 
-class SpyDriver extends LogDriver {
-  process = jest.fn(async (_entry: LogEntry): Promise<void> => undefined);
+class SpyDriver extends LogDriver<LogEntryBase> {
+  process = jest.fn(async (_logContext: LogContext, _entry: LogEntryBase): Promise<void> => undefined);
 }
 
 const fakeRedis = () => {
@@ -123,7 +123,11 @@ describe('AC-6 settle', () => {
 
     const stored = redis.lists.get('logs:pending') ?? [];
     expect(stored).toHaveLength(1);
-    expect(JSON.parse(stored[0])).toMatchObject({ service: 'api', message: 'x', level: 'INFO' });
+    // Each stored item is data only: the context the driver needs plus the built entry.
+    expect(JSON.parse(stored[0])).toMatchObject({
+      logContext: { service: 'api', message: 'x', level: 'info' },
+      entry: { service: 'api', message: 'x', level: 'info' },
+    });
     expect(driver.process).not.toHaveBeenCalled();
     expect(flush).not.toHaveBeenCalled();
     expect(redis.multi).not.toHaveBeenCalled();

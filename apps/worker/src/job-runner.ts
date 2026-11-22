@@ -10,10 +10,11 @@ import {
     MEDIA_QUEUE,
     MEDIA_THUMBNAIL_QUEUE,
 } from '@repo/common-lib/constants/queues';
-import { logBuffer, logConfig } from '@repo/backend-lib/config/logging';
+import { logBuffer } from '@repo/backend-lib/config/logging';
 import { runJobWithLogs } from '@repo/backend-lib/utils';
 import type { Job } from 'bullmq';
 import { BackupProcessor } from './processors/backup.processor';
+import { workerTraceCarrier } from './logging';
 import { MediaProcessor } from './processors/media.processor';
 
 export type JobResolver = Record<string, Record<string, (job: Job) => Promise<unknown>>>;
@@ -44,14 +45,15 @@ export const jobResolver: JobResolver = {
  */
 export function runWorkerJob(queueName: string, job: Job): Promise<unknown> {
     const lifecycle = queueName !== LOG_QUEUE;
-    return runJobWithLogs({ ...pickJob(job), queueName }, () => {
+    const runnable = { ...pickJob(job), queueName };
+    return runJobWithLogs(runnable, () => {
         const handler = jobResolver[queueName]?.[job.name];
         if (typeof handler !== 'function') {
             throw new Error(`Job name "${job.name}" not recognized for queue "${queueName}"`);
         }
         // Returned so BullMQ stores it as the job's return value (read by `dbcli db:backup`).
         return handler(job);
-    }, { lifecycle, log: logConfig.worker });
+    }, { lifecycle, log: workerTraceCarrier(runnable) });
 }
 
 /** The fields the lifecycle lines need; `queueName` is passed explicitly in case the job lacks it. */

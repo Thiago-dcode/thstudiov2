@@ -6,7 +6,7 @@ import { config } from '@repo/common-lib/config';
 
  class PaypalPaymentService {
 
-  private readonly log = logService.lib({ channel: 'paypal' });
+  private readonly log = logService.lib({ defaultOptions: { channel: 'paypal' } });
     private authData:PaypalAuthResponse|null;
     
 constructor(public readonly config:PaypalPaymentConfig){

@@ -2,8 +2,7 @@ import { s3PrivateStorageConfig } from '../../config/storage';
 import { StorageService } from '../storage-service/storage.service';
 import { FactoryStorageService } from '../storage-service/factory-storage.service';
 import Logger from '../../utils/console';
-import { LogService } from '../log-service/log.service';
-import { logService } from '../../config/logging';
+import { logService, type LibLogger } from '../../config/logging';
 import { config } from '@repo/common-lib/config';
 import { INDEXNOW_CANONICAL_HOST } from '@repo/common-lib/utils/indexnow';
 import { execFile } from 'node:child_process';
@@ -17,8 +16,8 @@ const execFileAsync = promisify(execFile);
 const LOG = '[backup]';
 
 /** Structured audit trail in the `backup` log channel; console output stays on `Logger`. The worker writes it to disk. */
-const backupLog = (operation: 'backup' | 'cleanup' | 'restore'): LogService =>
-    logService.lib({ channel: 'backup', name: operation, id: `${operation}-${Date.now()}` });
+const backupLog = (operation: 'backup' | 'cleanup' | 'restore'): LibLogger =>
+    logService.lib({ defaultOptions: { channel: 'backup', operation }, id: `${operation}-${Date.now()}` });
 /**
  * Local scratch space for pg_dump/pg_restore; a dump only lives here until it is uploaded. The OS temp dir,
  * not `storage/`: the containers run as the non-root `node` user and cannot create folders under /workspace.
@@ -72,7 +71,7 @@ export const backup = async (storageService?: StorageService): Promise<BackupRes
     return runBackup(backupLog('backup'), storageService);
 };
 
-const runBackup = async (log: LogService, storageService?: StorageService): Promise<BackupResult> => {
+const runBackup = async (log: LibLogger, storageService?: StorageService): Promise<BackupResult> => {
     if (!envCan()) {
         Logger.info(`${LOG} skipped: not the production environment`);
         log.info('Backup skipped', { reason: 'not the production environment' });
@@ -140,7 +139,7 @@ export const deleteExpiredBackup = async (storageService?: StorageService): Prom
     }
 };
 
-const runCleanup = async (log: LogService, storageService?: StorageService): Promise<BackupDeleteResult> => {
+const runCleanup = async (log: LibLogger, storageService?: StorageService): Promise<BackupDeleteResult> => {
     if (!envCan()) {
         Logger.info(`${LOG} cleanup skipped: not the production environment`);
         log.info('Cleanup skipped', { reason: 'not the production environment' });
@@ -220,7 +219,7 @@ export const restore = async ({
 };
 
 const runRestore = async (
-    log: LogService,
+    log: LibLogger,
     date: Date | string,
     allowProduction: boolean,
     storageService: StorageService,

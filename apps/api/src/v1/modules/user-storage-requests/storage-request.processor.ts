@@ -7,14 +7,10 @@ import {
   JOB_CREATE_STORAGE_REQUEST,
 } from '@repo/common-lib/constants/queues';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
-import { createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger } from 'src/common/services/request.service';
 
 @Processor(STORAGE_REQUESTS_QUEUE)
 export class StorageRequestProcessor extends GlobalProcessor {
-  private readonly logger = createApiLogger({
-    channel: 'user-storage-requests',
-  });
-
   constructor(
     private readonly userStorageRequestRepository: UserStorageRequestRepository,
   ) {
@@ -37,7 +33,7 @@ export class StorageRequestProcessor extends GlobalProcessor {
   // ==================== JOB HANDLERS ====================
 
   private async createStorageRequest(data: CreateUserStorageRequestInput) {
-    const log = this.logger.name('create-storage-request');
+    const log = apiLogger('user-storage-requests', { operation: 'create-storage-request' });
     try {
       const storageRequest = await this.userStorageRequestRepository.create(data);
       log.info(

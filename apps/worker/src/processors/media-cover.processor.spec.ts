@@ -51,7 +51,7 @@ describe('MediaProcessor video cover', () => {
 
     const buildLogger = () => {
         const log = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
-        return { name: () => log } as any;
+        return (() => log) as any;
     };
 
     describe('at upload', () => {
@@ -343,7 +343,7 @@ describe('MediaProcessor.deleteReplacedObject', () => {
             { findOneByColumn: jest.fn().mockResolvedValue(row) } as any,
             {} as any,
             {} as any,
-            { name: () => log } as any,
+            (() => log) as any,
         );
         await processor.deleteReplacedObject();
         return storageService;

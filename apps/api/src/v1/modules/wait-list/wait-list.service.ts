@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { LogService, maskEmail } from '@repo/backend-lib/services/log-service';
+import { maskEmail } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import type {
@@ -10,21 +10,24 @@ import type {
 } from '@repo/common-lib/types/wait-list';
 import { getWaitListBenefitType } from '@repo/common-lib/utils/wait-list';
 import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 import { BenefitRepository } from '../benefits/benefit.repository';
 import { UserAuthDevicesService } from '../user-auth-devices/user-auth-devices.service';
 import { IndexWaitListRequest } from './requests/index-wait-list.request';
 import { WaitListRepository } from './wait-list.repository';
-import { apiLogConfig } from 'src/common/utils/api-logger';
 
 @Injectable()
 export class WaitListService {
+  private readonly logger: ApiLogger;
+
   constructor(
     private readonly waitListRepository: WaitListRepository,
     private readonly benefitRepository: BenefitRepository,
-    private readonly logger: LogService,
     private readonly requestService: RequestService,
     private readonly userAuthDevicesService: UserAuthDevicesService,
-  ) { }
+  ) {
+    this.logger = this.requestService.log('wait-list');
+  }
 
   async findAll(filters: IndexWaitListRequest) {
     return this.waitListRepository.getAll(filters);
@@ -134,13 +137,13 @@ export class WaitListService {
 
       await QueueHelper.createOrUpdateEmailPreferenceJob({
         email: normalizedEmail,
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
 
       try {
         await QueueHelper.createWaitListEntryJob({
           email: normalizedEmail,
           language,
-        }, apiLogConfig());
+        }, this.requestService.traceCarrier());
         this.logger.info(`Wait list create job enqueued: ${emailLog}`);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -183,7 +186,7 @@ export class WaitListService {
       await QueueHelper.createInviteWaitListBatchJob({
         count,
         validated_before: validatedBefore?.toISOString(),
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
 
       return {
         count,
@@ -204,7 +207,7 @@ export class WaitListService {
    */
   private async enqueueValidatedEmail(waitListId: number) {
     try {
-      await QueueHelper.createWaitListValidatedEmailJob({ wait_list_id: waitListId }, apiLogConfig());
+      await QueueHelper.createWaitListValidatedEmailJob({ wait_list_id: waitListId }, this.requestService.traceCarrier());
       this.logger.info(`Wait list validated email job enqueued: entry ${waitListId}`);
     } catch (error) {
       this.logger.error(

@@ -20,7 +20,8 @@ describe('UserService — session revocation', () => {
   };
   const userSessionsService = { expireAllForUser: jest.fn() };
   const eventEmitter = { emit: jest.fn() };
-  const requestService: { user: unknown } = { user: null };
+  const logService = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+  const requestService: { user: unknown; log: () => typeof logService } = { user: null, log: () => logService };
 
   let service: UserService;
   let passwordHash: string;
@@ -36,7 +37,6 @@ describe('UserService — session revocation', () => {
     service = new UserService(
       userRepository as never,
       eventEmitter as never,
-      { info: jest.fn(), warn: jest.fn(), error: jest.fn() } as never, // logService
       {} as never, // mailService
       {} as never, // helpers
       requestService as never,

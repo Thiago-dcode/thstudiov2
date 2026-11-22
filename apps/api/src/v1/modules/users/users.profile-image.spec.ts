@@ -6,6 +6,7 @@ jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({
 
 import { BadRequestException } from '@nestjs/common';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
+import { consoleRequestService } from 'src/common/testing/console-logger';
 import { UserService } from './users.service';
 
 const USER = { id: 3, public_id: '22222222-2222-4222-8222-222222222222' };
@@ -22,10 +23,9 @@ const build = (moderation: { is_allowed: boolean; reason?: string }) => {
   const service = new UserService(
     {} as never, // userRepository
     {} as never, // eventEmitter
-    { info: jest.fn(), warn: jest.fn(), error: jest.fn() } as never, // logService
     {} as never, // mailService
     helpers as never,
-    {} as never, // requestService
+    consoleRequestService(), // requestService
     {} as never, // notifyNewUserMail
     aiService as never,
     {} as never, // profileStatusService

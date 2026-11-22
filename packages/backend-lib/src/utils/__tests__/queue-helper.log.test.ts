@@ -14,6 +14,7 @@ jest.mock('../critical-alert-mail', () => ({ criticalAlertMail: jest.fn().mockRe
 import fs from 'node:fs';
 import path from 'node:path';
 import { QueueHelper } from '../queue-helper';
+import type { LogTraceCarrier } from '../job-trace';
 
 const carriedId = (opts: any): string | null => {
   const raw = opts?.telemetry?.metadata;
@@ -32,6 +33,12 @@ describe('AC-19: QueueHelper forwards the trailing log config', () => {
     await QueueHelper.createMailJob({ name: 'ERROR500MAIL', payload: { message: 'm', options: {} } } as any, undefined, { id: 'T' });
     const [, , opts] = add.mock.calls[0];
     expect(opts.telemetry.metadata).toContain('"id":"T"');
+  });
+
+  it('AC-8: a LogTraceCarrier (service, id, globalContext) is accepted and its id is carried', async () => {
+    const carrier: LogTraceCarrier = { service: 'api', id: () => 'CARRIED', globalContext: () => ({ path: '/x' }) };
+    await QueueHelper.createMailJob({ name: 'ERROR500MAIL', payload: { message: 'm', options: {} } } as any, undefined, carrier);
+    expect(carriedId(add.mock.calls[0][2])).toBe('CARRIED');
   });
 
   it('AC-19: without a log config no trace id is attached', async () => {
@@ -59,14 +66,14 @@ describe('AC-19: QueueHelper forwards the trailing log config', () => {
     expect(jobs.map((j) => carriedId(j.opts))).toEqual(['BULK', 'BULK']);
   });
 
-  it('AC-19: every enqueueing static method declares a trailing `log: Partial<LogConfig> = {}`', () => {
+  it('AC-8: every enqueueing static method declares a trailing `log: LogTraceCarrier = {}`', () => {
     const source = fs.readFileSync(path.join(__dirname, '..', 'queue-helper.ts'), 'utf8');
     const methods = source.split(/\n\s+static /).slice(1);
     const enqueuing = methods.filter((m) => /enqueueJobs?\(/.test(m));
     expect(enqueuing.length).toBeGreaterThan(15);
     for (const m of enqueuing) {
       const name = m.match(/^(?:async )?(\w+)/)?.[1];
-      expect({ name, hasLog: /log: Partial<LogConfig> = \{\}/.test(m) }).toEqual({ name, hasLog: true });
+      expect({ name, hasLog: /log: LogTraceCarrier = \{\}/.test(m) }).toEqual({ name, hasLog: true });
       expect({ name, forwarded: /enqueueJobs?\([\s\S]*?\blog\b/.test(m) }).toEqual({ name, forwarded: true });
     }
   });

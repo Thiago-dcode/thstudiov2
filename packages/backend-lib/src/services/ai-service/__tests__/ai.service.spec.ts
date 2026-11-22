@@ -2,11 +2,10 @@ import { AiService } from '../ai.service';
 import type { LLMService } from '@repo/backend-lib/services/llm-service';
 import type { MediaMetadataPromptCategory } from '@repo/common-lib/types/ai';
 
-jest.mock('@repo/backend-lib/config/logging', () => {
-  const actual = jest.requireActual('@repo/backend-lib/config/logging');
+// AiService imports the logger relatively, so this is the module it gets.
+jest.mock('../../../config/logging', () => {
+  const actual = jest.requireActual('../../../config/logging');
   const logger: Record<string, unknown> = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn() };
-  logger.name = () => logger;
-  logger.channel = () => logger;
   return { ...actual, logService: { api: () => logger, worker: () => logger, dbcli: () => logger, web: () => logger, lib: () => logger } };
 });
 jest.mock('@repo/backend-lib/utils', () => ({

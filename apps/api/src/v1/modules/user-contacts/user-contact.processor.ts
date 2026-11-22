@@ -11,14 +11,10 @@ import { UserService } from '../users/users.service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NewContactMail } from './mails/new-contact.mail';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
-import { apiLogConfig, createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger, apiTraceCarrier } from 'src/common/services/request.service';
 
 @Processor(USER_CONTACTS_QUEUE)
 export class UserContactProcessor extends GlobalProcessor {
-  private readonly logger = createApiLogger({
-    channel: 'user-contacts',
-  });
-
   constructor(
     private readonly userContactsRepository: UserContactsRepository,
     private readonly userService: UserService,
@@ -43,7 +39,7 @@ export class UserContactProcessor extends GlobalProcessor {
   // ==================== JOB HANDLERS ====================
 
   private async createUserContact(data: CreateUserContactInput) {
-    const log = this.logger.name('create-user-contact');
+    const log = apiLogger('user-contacts', { operation: 'create-user-contact' });
     try {
 
       log.info(`Creating user contact: ${data.contact_email} -> ${data.user_id}`,);
@@ -58,7 +54,7 @@ export class UserContactProcessor extends GlobalProcessor {
         await this.mailService.sendAsync(
           this.newContactMail.setData(artist, data, artist.language),
           undefined,
-          apiLogConfig(),
+          apiTraceCarrier(),
         );
 
         log.info(`Enqueing user notification`);
@@ -68,7 +64,7 @@ export class UserContactProcessor extends GlobalProcessor {
           user_id: contact.user_id,
           entity_id: contact.id,
           read_at: null,
-        }, apiLogConfig());
+        }, apiTraceCarrier());
       } else {
         log.warn(`Artist with ID ${data.user_id} not found, skipping email.`);
       }

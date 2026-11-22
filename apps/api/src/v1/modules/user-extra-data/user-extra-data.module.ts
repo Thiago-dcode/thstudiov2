@@ -6,8 +6,6 @@ import { UserExtraDataProcessor } from './user-extra-data.processor';
 import { PlansModule } from '../plans/plans.module';
 import { UserStorageRequestModule } from '../user-storage-requests/user-storage-request.module';
 import { USER_METRICS_QUEUE } from '@repo/common-lib/constants/queues';
-import { LogService } from '@repo/backend-lib/services/log-service';
-import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [
@@ -19,14 +17,6 @@ import { createApiLogger } from 'src/common/utils/api-logger';
     UserExtraDataService,
     UserExtraDataRepository,
     UserExtraDataProcessor,
-    {
-      provide: LogService,
-      useFactory: () => {
-        return createApiLogger({
-          channel: 'user-extra-data',
-        });
-      },
-    },
   ],
   exports: [UserExtraDataRepository, UserExtraDataService],
 })

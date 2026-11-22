@@ -22,7 +22,7 @@ import {
 } from '@repo/common-lib/constants/queues';
 import { Throttle } from '@nestjs/throttler';
 import { currentRequestId } from 'src/common/services/request-storage';
-import { apiLogConfig, createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger, apiTraceCarrier } from 'src/common/services/request.service';
 
 @Throttle({
   short: { ttl: 1000, limit: 50 },
@@ -31,10 +31,7 @@ import { apiLogConfig, createApiLogger } from 'src/common/utils/api-logger';
 })
 @Controller('webhooks')
 export class WebhooksController {
-  private readonly logger = createApiLogger({
-    channel: 'webhooks',
-    name: 'receive-stripe-webhook',
-  });
+  private readonly logger = apiLogger('webhooks', { operation: 'receive-stripe-webhook' });
 
   constructor(
     @InjectQueue(STRIPE_WEBHOOKS_QUEUE) private stripeQueue: Queue,
@@ -85,7 +82,7 @@ export class WebhooksController {
     const webhookRequestId = currentRequestId();
     const refs = stripeEventRefs(event);
     const traceId = StripeService.traceIdFromMetadata(refs.metadata, event.created) ?? webhookRequestId;
-    const log = createApiLogger({ channel: 'webhooks', name: 'receive-stripe-webhook', id: traceId });
+    const log = apiLogger('webhooks', { operation: 'receive-stripe-webhook', traceId });
 
     const jobId = `stripe-${event.id}`;
     // Stripe retries deliveries; BullMQ would silently drop the duplicate add, so say so.
@@ -108,7 +105,7 @@ export class WebhooksController {
       removeOnComplete: true,
       attempts: 5,
       backoff: { type: 'exponential', delay: 1000 },
-    }, { ...apiLogConfig(), id: traceId });
+    }, apiTraceCarrier(traceId));
 
     return { received: true };
   }

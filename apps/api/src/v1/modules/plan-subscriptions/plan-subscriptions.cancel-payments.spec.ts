@@ -22,9 +22,9 @@ describe('PlanSubscriptionsService.cancelPayments', () => {
     jest.clearAllMocks();
     planSubscriptionsRepository.findActiveSubscription.mockResolvedValue(null);
     service = new PlanSubscriptionsService(
-      logger as never,
       planSubscriptionsRepository as never,
       {} as never,
+      { log: () => logger } as never,
       {} as never,
       {} as never,
       {} as never,
@@ -58,8 +58,8 @@ describe('PlanSubscriptionsService.cancelPayments', () => {
       stripe_subscription_cancelled: true,
       stripe_customer_deleted: true,
       paypal_cancelled: false,
+      operation: 'hard-delete',
     });
-    expect(calls[0][2]).toEqual({ operation: 'hard-delete' });
     expect(JSON.stringify(calls)).not.toMatch(/@/);
   });
 
@@ -95,8 +95,7 @@ describe('PlanSubscriptionsService.cancelPayments', () => {
     expect(paypalCancel).toHaveBeenCalledWith('I-123', 'Account deleted');
     expect(logger.critical).toHaveBeenCalledWith(
       'PayPal subscription of deleted user could not be cancelled; check it manually',
-      expect.objectContaining({ paypal_subscription_id: 'I-123' }),
-      expect.objectContaining({ operation: 'hard-delete' }),
+      expect.objectContaining({ paypal_subscription_id: 'I-123', operation: 'hard-delete' }),
     );
   });
 });

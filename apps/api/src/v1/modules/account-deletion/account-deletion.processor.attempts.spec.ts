@@ -1,8 +1,7 @@
 jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({ stripe: {}, stripeWebhookSecret: '' }));
 jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({ paypal: {} }));
 
-import { LogService } from '@repo/backend-lib/services/log-service';
-import { consoleLogger } from 'src/common/testing/console-logger';
+import { consoleLogger, consoleRequestService } from 'src/common/testing/console-logger';
 import { JOB_DELETE_USER_ACCOUNT, JOB_SEND_ACCOUNT_DELETION_WARNING } from '@repo/common-lib/constants/queues';
 import { AccountDeletionProcessor } from './account-deletion.processor';
 
@@ -13,7 +12,7 @@ const build = (throwing: boolean) => {
       try { lines.push(JSON.parse(String(line))); } catch { /* not a log line */ }
     });
   }
-  const logger = consoleLogger({ channel: 'account-deletion' });
+  const logger = consoleLogger({ defaultOptions: { channel: 'account-deletion' } });
   const userRepository = {
     findById: jest.fn().mockImplementation(async () => {
       if (throwing) throw new Error('db down');
@@ -26,7 +25,7 @@ const build = (throwing: boolean) => {
     { deleteAccount: jest.fn().mockResolvedValue({ deleted: false, reason: 'not-found' }) } as never,
     {} as never,
     {} as never,
-    logger as never,
+    consoleRequestService(logger),
   );
   return { processor, lines };
 };

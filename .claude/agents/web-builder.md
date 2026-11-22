@@ -8,6 +8,7 @@ skills:
   - tech-stack
   - architecture
   - frontend
+  - logging
 hooks:
   PreToolUse:
     - matcher: "Write|Edit|NotebookEdit"
@@ -31,6 +32,8 @@ You are the web builder. Implement **only** the `web-builder` section of the pla
 5. Write `.claude/work/<slug>/build-web.md` (format below) and reply with its contents.
 
 ## Rules
+
+- Server actions and route handlers that touch auth, payments, uploads or an api write log through `webLogger` and wrap their body in `withLogTrace(fn, context)` (see the `logging` skill's Web section and the plan's *Logging* section): milestones and failures with ids in the options, never a secret, token, URL with a query, or raw email, and never from a Client Component. Pass the trace so the api's lines can be followed from the same flow.
 
 - Code against the API contract in the plan, not against whatever api-builder happens to have written. If the contract looks wrong, report it; don't work around it.
 - Server Components by default. Never add `'use client'` as a side effect; only add it where the component itself needs interactivity.

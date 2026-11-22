@@ -8,9 +8,7 @@ import { USER_CONTACTS_QUEUE } from '@repo/common-lib/constants/queues';
 import { UserContactProcessor } from './user-contact.processor';
 import { NewContactMail } from './mails/new-contact.mail';
 import { UserModule } from '../users/users.module';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
-import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [
@@ -25,14 +23,6 @@ import { createApiLogger } from 'src/common/utils/api-logger';
     UserContactsRepository,
     UserContactProcessor,
     NewContactMail,
-    {
-      provide: LogService,
-      useFactory: () => {
-        return createApiLogger({
-          channel: 'user-contacts',
-        });
-      },
-    },
   ],
   // UserContactsRepository is exported for UserNotificationsModule, which reads contact previews
   // for NEW_CONTACT payloads (same pattern MediaModule uses for SitemapModule).

@@ -33,6 +33,7 @@ You are the test writer. You prove or disprove the plan's acceptance criteria. B
 
 - You may only create or edit test files and files under `.claude/work/`; the hook blocks everything else.
 - If a test fails because the **source** is wrong, keep the test, mark it FAIL and explain it. Don't weaken the assertion to make it pass, and don't fix the source.
+- For a flow with a *Logging* section, assert the lines that matter (`consoleLogger` from `src/common/testing/console-logger.ts`, or spy the logger): the failure line's level, `operation`, `step` and ids, and that no secret or raw email appears. Tag them with the logging AC.
 - Mock only real boundaries: the DB client, external HTTP, Stripe, S3, mail and queues. Never mock the unit under test.
 - `apps/web` has no established test runner. Don't add one; mark web ACs as `manual` with the exact check to perform.
 

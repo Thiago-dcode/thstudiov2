@@ -9,7 +9,7 @@ import { ServiceModule } from '../services/service.module';
 
 /**
  * Read-only module powering the Next.js sitemap. Reuses the repositories exported by each feature
- * module (they carry their own LogService/RequestService graph); `Helpers` (asset signing) is
+ * module (they carry their own provider graph); `Helpers` (asset signing) is
  * globally provided by the common ServicesModule.
  */
 @Module({

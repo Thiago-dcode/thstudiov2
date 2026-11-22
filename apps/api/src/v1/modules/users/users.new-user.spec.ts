@@ -11,7 +11,6 @@ jest.mock('@repo/backend-lib/utils', () => ({
   },
 }));
 
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { runWithTraceId } from 'src/common/services/request-storage';
 import { consoleLogger } from 'src/common/testing/console-logger';
 import { UserService } from './users.service';
@@ -27,8 +26,7 @@ const build = () => {
       try { lines.push(JSON.parse(String(line))); } catch { /* not a log line */ }
     });
   }
-  const logService = consoleLogger({ channel: 'users' });
-  const nameSpy = jest.spyOn(logService, 'name');
+  const logService = consoleLogger({ defaultOptions: { channel: 'users' } });
   const userRepository = {
     updateById: jest.fn().mockResolvedValue({}),
     findByIdCompact: jest.fn().mockResolvedValue({ ...event.user, name: 'Fresh Name', language: 'ES' }),
@@ -39,10 +37,9 @@ const build = () => {
   const service = new UserService(
     userRepository as never,
     eventEmitter as never,
-    logService as unknown as LogService,
     mailService as never,
     { deleteManyCached: jest.fn().mockResolvedValue(undefined) } as never,
-    { user: { id: 9 } } as never,
+    { user: { id: 9 }, log: () => logService, traceCarrier: () => ({ service: 'api' }) } as never,
     welcomeMail as never,
     {} as never,
     { create: jest.fn().mockResolvedValue(undefined) } as never,
@@ -50,7 +47,7 @@ const build = () => {
     {} as never,
     {} as never,
   );
-  return { service, lines, nameSpy, userRepository, eventEmitter, welcomeMail };
+  return { service, lines, userRepository, eventEmitter, welcomeMail };
 };
 
 const customer = { id: 'cus_new', object: 'customer', email: EMAIL, phone: '+34600000000', address: { line1: 'Street 1' } };
@@ -131,13 +128,6 @@ describe('UserService.handleNewUserEvent logging', () => {
     const [failed] = lines.filter((l) => l.message === 'New user onboarding failed');
     expect(failed.level).toBe('ERROR');
     expect(failed.extraInfo).toMatchObject({ step: 'free-plan' });
-  });
-
-  it('AC-21: the shared logger is never renamed', async () => {
-    mockStripe.customers.create.mockResolvedValue(customer);
-    const { service, nameSpy } = build();
-    await service.handleNewUserEvent(event as never);
-    expect(nameSpy).not.toHaveBeenCalled();
   });
 
   it('the welcome mail gets the user reloaded with its profile name, not the core event user', async () => {

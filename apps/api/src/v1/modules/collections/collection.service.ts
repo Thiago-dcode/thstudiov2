@@ -22,7 +22,6 @@ import { PUBLIC_ENTITY_FILTERS } from "src/common/utils/public-entity";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from "@repo/common-lib/constants/events";
 import { ArtistPublicPagesChangedEvent } from "../edge-cache/events/artist-public-pages-changed.event";
-import { apiLogConfig } from 'src/common/utils/api-logger';
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -183,7 +182,7 @@ export class CollectionService {
         }),
     );
     await this.invalidateHighlightCountCache(request.user_id);
-    await QueueHelper.createComputeUserMetricsJob(request.user_id, apiLogConfig());
+    await QueueHelper.createComputeUserMetricsJob(request.user_id, this.requestService.traceCarrier());
     await QueueHelper.createGenerateSingleEntityMetadataJob(
       {
         entity: 'collection',
@@ -191,7 +190,7 @@ export class CollectionService {
         user_id: collection.user_id,
       },
       { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
-      apiLogConfig(),
+      this.requestService.traceCarrier(),
     );
     this.eventEmitter.emit(
       ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
@@ -267,7 +266,7 @@ export class CollectionService {
 
     await this.collectionRepository.delete(id);
     await this.invalidateHighlightCountCache(collection.user_id);
-    await QueueHelper.createComputeUserMetricsJob(collection.user_id, apiLogConfig());
+    await QueueHelper.createComputeUserMetricsJob(collection.user_id, this.requestService.traceCarrier());
     this.eventEmitter.emit(
       ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
       new ArtistPublicPagesChangedEvent(collection.user_id),

@@ -10,8 +10,8 @@ describe('ContentReportService', () => {
   const mailService = { sendAsync: jest.fn() };
   const adminMail = { setReport: jest.fn((report) => ({ admin: report.id })) };
   const receivedMail = { setReport: jest.fn((report, lang) => ({ received: report.id, lang })) };
-  const requestService = { language: 'ES' };
   const logger = { info: jest.fn() };
+  const requestService = { language: 'ES', log: () => logger, traceCarrier: () => ({ service: 'api' }) };
 
   const service = new ContentReportService(
     repository as never,
@@ -19,7 +19,6 @@ describe('ContentReportService', () => {
     adminMail as never,
     receivedMail as never,
     requestService as never,
-    logger as never,
   );
 
   const request = {

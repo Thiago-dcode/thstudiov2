@@ -4,8 +4,6 @@ import { CategoriesService } from './categories.service';
 import { CategoriesRepository } from './categories.repository';
 import { CategoryTranslationsRepository } from './category-translations.repository';
 import { CategoryTranslationsService } from './category-translations.service';
-import { LogService } from '@repo/backend-lib/services/log-service';
-import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   controllers: [CategoriesController],
@@ -14,14 +12,6 @@ import { createApiLogger } from 'src/common/utils/api-logger';
     CategoryTranslationsService,
     CategoriesRepository,
     CategoriesService,
-    {
-      provide: LogService,
-      useFactory: () => {
-        return createApiLogger({
-          channel: 'categories',
-        });
-      },
-    },
   ],
   exports: [CategoriesService, CategoryTranslationsService],
 })

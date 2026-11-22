@@ -1,7 +1,6 @@
 import { Processor } from '@nestjs/bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Job } from 'bullmq';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { isFinalAttempt } from '@repo/backend-lib/utils';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import {
@@ -26,7 +25,8 @@ import { serviceCacheKeys } from '../user-services/user-service.service';
 import { SubscriptionChangedMail } from './mails/subscription-changed.mail';
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
-import { apiLogConfig } from 'src/common/utils/api-logger';
+import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 /** Job payload enriched by the webhook processor with the previous plan's identity, used to detect upgrade vs downgrade. */
 export type SubscriptionChangesJobData = BaseUser & {
@@ -54,8 +54,10 @@ const rowsChanged = (result: unknown): boolean => {
 
 @Processor(PLAN_SUBSCRIPTIONS_QUEUE)
 export class PlanSubscriptionProcessor extends GlobalProcessor {
+  private readonly logger: ApiLogger;
+
   constructor(
-    private readonly logger: LogService,
+    private readonly requestService: RequestService,
     private readonly planService: PlansService,
     private readonly userExtraDataService: UserExtraDataService,
     private readonly helpers: Helpers,
@@ -64,12 +66,13 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
     private readonly eventEmitter: EventEmitter2,
   ) {
     super();
+    this.logger = this.requestService.log('plan-subscriptions', { operation: 'on-subscription-changes' });
   }
 
   // ==================== JOB PROCESSOR ====================
 
   async process(job: Job): Promise<any> {
-    // Start/finish lines and the trace come from GlobalProcessor; the module config names the op.
+    // Start/finish lines and the trace come from GlobalProcessor; the logger's default operation names the op.
     switch (job.name) {
       case JOB_ON_SUBSCRIPTION_CHANGES:
         return await this.onSubscriptionChanges(job);
@@ -316,7 +319,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
           data.language,
         ),
         undefined,
-        apiLogConfig(),
+        this.requestService.traceCarrier(),
       );
 
       return { success: true };

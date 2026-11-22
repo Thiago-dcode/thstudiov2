@@ -1,6 +1,6 @@
 import { Processor } from '@nestjs/bullmq';
 import { MailService } from '@repo/backend-lib/services/mail-service';
-import { LogService, maskEmail } from '@repo/backend-lib/services/log-service';
+import { maskEmail } from '@repo/backend-lib/services/log-service';
 import {
   JOB_CREATE_WAIT_LIST_ENTRY,
   JOB_INVITE_WAIT_LIST_BATCH,
@@ -32,7 +32,8 @@ import { WaitListWelcomeMail } from './mails/wait-list-welcome.mail';
 import { WAIT_LIST_SHOWCASE_PATH } from './wait-list.constants';
 import { WaitListRepository } from './wait-list.repository';
 import type { WaitList } from '@repo/common-lib/types/wait-list';
-import { apiLogConfig } from 'src/common/utils/api-logger';
+import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 type PreparedWaitListInvite = {
   entry: WaitList;
@@ -44,6 +45,8 @@ type PreparedWaitListInvite = {
 export class WaitListProcessor extends GlobalProcessor {
   private static readonly INVITATION_EXPIRES_IN_DAYS = 7;
 
+  private readonly logger: ApiLogger;
+
   constructor(
     private readonly waitListRepository: WaitListRepository,
     private readonly invitationLinkService: InvitationLinkService,
@@ -54,9 +57,10 @@ export class WaitListProcessor extends GlobalProcessor {
     private readonly waitListWelcomeMail: WaitListWelcomeMail,
     private readonly waitListValidatedMail: WaitListValidatedMail,
     private readonly waitListAdminNotificationMail: WaitListAdminNotificationMail,
-    private readonly logger: LogService,
+    private readonly requestService: RequestService,
   ) {
     super();
+    this.logger = this.requestService.log('wait-list');
   }
 
   async process(job: Job): Promise<unknown> {
@@ -162,7 +166,7 @@ export class WaitListProcessor extends GlobalProcessor {
         {
           jobId: `wait-list-validate-${waitList.id}`,
         },
-        apiLogConfig(),
+        this.requestService.traceCarrier(),
       );
 
       await this.waitListRepository.updateById(waitList.id, {
@@ -221,7 +225,7 @@ export class WaitListProcessor extends GlobalProcessor {
       {
         jobId: `wait-list-validated-mail-${waitList.id}`,
       },
-      apiLogConfig(),
+      this.requestService.traceCarrier(),
     );
 
     await this.waitListRepository.updateById(waitList.id, {
@@ -261,7 +265,7 @@ export class WaitListProcessor extends GlobalProcessor {
           // while the 1h resend throttle keeps repeat signups from flooding the admin inbox.
           jobId: `wait-list-admin-notify-${waitList.id}`,
         },
-        apiLogConfig(),
+        this.requestService.traceCarrier(),
       );
 
       this.logger.info(`Wait list admin notification queued: ${emailLog}`, {
@@ -379,7 +383,7 @@ export class WaitListProcessor extends GlobalProcessor {
         const mailJob = await this.mailService.sendBatchAsync(
           preparedInvites.map((invite) => invite.mailable),
           undefined,
-          apiLogConfig(),
+          this.requestService.traceCarrier(),
         );
 
         if (!mailJob) {

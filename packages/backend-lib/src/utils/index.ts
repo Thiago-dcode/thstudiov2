@@ -45,9 +45,11 @@ export {
     enqueueJobs,
     runJobWithLogs,
     jobLogConfig,
+    jobLogContext,
     jobTraceId,
     isFinalAttempt,
     logPermanentJobFailure,
     redactJobData,
 } from './job-trace';
+export type { LogTraceCarrier } from './job-trace';
 export { withTimeout } from './with-timeout';

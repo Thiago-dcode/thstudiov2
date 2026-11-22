@@ -1,12 +1,14 @@
 const mockLog = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
 const mockCreate = jest.fn();
+const mockFactoryCalls: { service: string | null; cfg: Record<string, unknown> }[] = [];
 
 jest.mock('../../../config/logging', () => {
   const actual = jest.requireActual('../../../config/logging');
   // Every factory hands its service and overrides to one mock, as the real ones build one config.
-  const create = () => mockLog;
-  const factory = (service: string | null) => (overrides: Record<string, unknown> = {}) =>
-    (create as (buffer: unknown, cfg: any) => unknown)(undefined, { service, ...overrides });
+  const factory = (service: string | null) => (overrides: Record<string, unknown> = {}) => {
+    mockFactoryCalls.push({ service, cfg: overrides });
+    return mockLog;
+  };
   return {
     ...actual,
     logService: { api: factory('api'), worker: factory('worker'), dbcli: factory('dbcli'), web: factory('web'), lib: factory(null) },
@@ -35,6 +37,10 @@ const okResponse = (over: Record<string, unknown> = {}) => ({
 });
 
 describe('OpenAILLMService logging', () => {
+  it('AC-5: the LLM logger is a lib logger on channel ai, operation llm-call', () => {
+    expect(mockFactoryCalls).toEqual([{ service: null, cfg: { defaultOptions: { channel: 'ai', operation: 'llm-call' } } }]);
+  });
+
   beforeEach(() => {
     Object.values(mockLog).forEach((fn) => fn.mockReset());
     mockCreate.mockReset();

@@ -1,7 +1,10 @@
 import type Redis from "ioredis";
 import { LogBuffer } from "./log.buffer";
 import { LogDriver } from "../drivers/log.driver";
-import { LogEntry } from "../types";
+import { LogContext, LogObjectEntry } from "../types";
+
+/** One stored list item: the context the driver needs plus the built entry. Data only. */
+type StoredLog<E> = { logContext: LogContext; entry: E };
 
 export const DEFAULT_LOG_REDIS_KEY = 'logs:pending';
 
@@ -19,7 +22,7 @@ const TRIM_WARNING_EVERY_MS = 60_000;
 const SERVICE_PATTERN = /^[a-z0-9-]+$/;
 
 /**
- * Keeps the pending entries in one Redis list (`key`), each one a JSON `LogEntry`: data only,
+ * Keeps the pending entries in one Redis list (`key`), each one a JSON `{ logContext, entry }`: data only,
  * never code. Every service pushes to the same list and the worker's scheduled flush writes them
  * all, so lines survive a restart. Share a key only between processes whose driver writes to the
  * same place.
@@ -27,14 +30,14 @@ const SERVICE_PATTERN = /^[a-z0-9-]+$/;
  * `redis` may be a factory: it is called once, on the first `add`/`length`/`flush`, so building
  * the buffer at import opens nothing.
  */
-export class RedisLogBuffer extends LogBuffer {
+export class RedisLogBuffer<E extends LogObjectEntry> extends LogBuffer<E> {
     /** Pushes sent but not yet acknowledged. `flush()` waits for them, so it always sees them. */
     private pushing = new Set<Promise<unknown>>();
     private client: Redis | null = null;
     private lastTrimWarning = 0;
 
     constructor(
-        logDriver: LogDriver,
+        logDriver: LogDriver<E>,
         private readonly redis: Redis | (() => Redis),
         private readonly key: string = DEFAULT_LOG_REDIS_KEY,
         private readonly maxLength: number = DEFAULT_LOG_REDIS_MAX_LENGTH,
@@ -48,10 +51,14 @@ export class RedisLogBuffer extends LogBuffer {
         return this.client;
     }
 
-    add(entry: LogEntry): void {
+    add(logContext: LogContext, entry: E): void {
         let json: string;
         try {
-            json = JSON.stringify(entry);
+            // Never store `logOptions`: they are the caller's raw, unredacted data (passwords, tokens),
+            // and only the built `entry` was redacted. The driver needs the rest of the context.
+            // A function `id` is dropped by JSON; the built entry already holds the resolved one.
+            const { logOptions: _unredacted, ...storable } = logContext;
+            json = JSON.stringify({ logContext: storable, entry } satisfies StoredLog<E>);
         } catch (error) {
             console.error('LogBuffer: a log line could not be serialised', error);
             return;
@@ -68,7 +75,7 @@ export class RedisLogBuffer extends LogBuffer {
             // Redis is down: write the line now rather than lose it. If the push did land (a
             // timeout after the server applied it) the line is written twice; never zero times.
             console.error('LogBuffer: Redis push failed, writing the line directly', error);
-            return this.write(entry);
+            return this.write(logContext, entry);
         });
         this.pushing.add(push);
         void push.finally(() => this.pushing.delete(push));
@@ -112,8 +119,8 @@ export class RedisLogBuffer extends LogBuffer {
             const result = await this.getClient().multi().lrange(this.key, 0, -1).del(this.key).exec();
             const [error, items] = result?.[0] ?? [null, []];
             if (error) throw error;
-            const entries = (items as string[]).flatMap((item) => parseEntry(item));
-            await Promise.all(entries.map((entry) => this.write(entry)));
+            const stored = (items as string[]).flatMap((item) => parseEntry<E>(item));
+            await Promise.all(stored.map(({ logContext, entry }) => this.write(logContext, entry)));
         })().catch((error: unknown) => {
             console.error('LogBuffer: Redis flush failed, the lines stay queued', error);
         });
@@ -122,8 +129,8 @@ export class RedisLogBuffer extends LogBuffer {
     }
 }
 
-/** A stored line back to an entry. Anything that isn't a log entry is reported and skipped. */
-function parseEntry(item: string): LogEntry[] {
+/** A stored line back to its context and entry. Anything that isn't one is reported and skipped. */
+function parseEntry<E extends LogObjectEntry>(item: string): StoredLog<E>[] {
     let value: unknown;
     try {
         value = JSON.parse(item);
@@ -131,18 +138,29 @@ function parseEntry(item: string): LogEntry[] {
         console.error('LogBuffer: skipping a malformed stored log line', error);
         return [];
     }
-    if (!isLogEntry(value)) {
+    if (!isStoredLog(value)) {
         console.error('LogBuffer: skipping a stored value that is not a log entry');
         return [];
     }
-    return [value];
+    // JSON turned the context's `timestamp` into a string: the driver gets a Date again.
+    const logContext = { ...value.logContext, timestamp: new Date(value.logContext.timestamp) } as LogContext;
+    if (Number.isNaN(logContext.timestamp.getTime())) {
+        console.error('LogBuffer: skipping a stored log line with an invalid timestamp');
+        return [];
+    }
+    return [{ logContext, entry: value.entry as E }];
 }
 
-function isLogEntry(value: unknown): value is LogEntry {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
-    const entry = value as Record<string, unknown>;
-    return typeof entry.service === 'string' && SERVICE_PATTERN.test(entry.service)
-        && typeof entry.timestamp === 'string'
-        && typeof entry.level === 'string'
-        && typeof entry.message === 'string';
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** The context is what the driver reads (`service` is a folder name), so that is what is checked. */
+function isStoredLog(value: unknown): value is { logContext: Record<string, any>; entry: Record<string, unknown> } {
+    if (!isRecord(value) || !isRecord(value.logContext) || !isRecord(value.entry)) return false;
+    const context = value.logContext;
+    return typeof context.service === 'string' && SERVICE_PATTERN.test(context.service)
+        && typeof context.timestamp === 'string'
+        && typeof context.level === 'string'
+        && typeof context.message === 'string';
 }

@@ -13,8 +13,7 @@ import { compressConfig, s3StorageConfig } from "@repo/backend-lib/config/storag
 import { AiService } from "@repo/backend-lib/services/ai-service";
 import { FactoryLLMService } from "@repo/backend-lib/services/llm-service";
 import { openAiLLMConfig } from "@repo/backend-lib/config/llm";
-import { LogConfig, LogService } from "@repo/backend-lib/services/log-service";
-import { logConfig, logService } from "@repo/backend-lib/config/logging";
+import { workerLogger, workerTraceCarrier, type WorkerLogger } from "../logging";
 import {
     compressionLevelToQuality,
     CompressService,
@@ -45,7 +44,7 @@ import {
 import { MediaRepository } from "@repo/database/repositories/media";
 import { UserExtraDataRepository } from "@repo/database/repositories/user-extra-data";
 import { PlansRepository } from "@repo/database/repositories/plans";
-import { QueueHelper, jobLogConfig, jobTraceId } from "@repo/backend-lib/utils";
+import { QueueHelper, type LogTraceCarrier } from "@repo/backend-lib/utils";
 import { bytesToMB, mbToBytes } from "@repo/common-lib/utils/bytes";
 import { DEFAULT_COMPRESSION_LVL } from "@repo/common-lib/constants/enums";
 import {
@@ -73,12 +72,10 @@ export class MediaProcessor {
         private readonly mediaRepository: MediaRepository,
         private readonly userExtraDataRepository: UserExtraDataRepository,
         private readonly plansRepository: PlansRepository,
-        private readonly logger: LogService,
+        private readonly logFor: (operation: string) => WorkerLogger,
     ) { }
 
     static async handle(job: Job): Promise<void> {
-        // The job's own logger, with the trace id of whoever enqueued it (the upload request).
-        const logger = logService.worker({ channel: 'media', id: jobTraceId(job) });
         const instance = new MediaProcessor(
             job,
             FactoryStorageService.create(s3StorageConfig),
@@ -87,7 +84,8 @@ export class MediaProcessor {
             MediaRepository.instance(),
             UserExtraDataRepository.instance(),
             PlansRepository.instance(),
-            logger,
+            // The job's own logger per flow, with the trace id of whoever enqueued it (the upload request).
+            (operation) => workerLogger('media', job, { operation }),
         );
         switch (job.name) {
             case JOB_PROCESS_MEDIA:
@@ -107,9 +105,9 @@ export class MediaProcessor {
         }
     }
 
-    /** The worker log config with this job's trace id: pass it to every enqueue, so the trace carries on. */
-    private traceLog(): Partial<LogConfig> {
-        return jobLogConfig(this.job, logConfig.worker);
+    /** The worker carrier with this job's trace id: pass it to every enqueue, so the trace carries on. */
+    private traceLog(): LogTraceCarrier {
+        return workerTraceCarrier(this.job);
     }
 
     /**
@@ -117,7 +115,7 @@ export class MediaProcessor {
      * decides whether Cloudflare is called at all). Best-effort: the edge TTL is the fallback, so a
      * failed enqueue must not fail or retry media work that already finished.
      */
-    private async requestEdgePurge(userId: number, log: ReturnType<LogService['name']>) {
+    private async requestEdgePurge(userId: number, log: WorkerLogger) {
         try {
             await QueueHelper.createPurgeArtistEdgeCacheJob({ user_id: userId }, this.traceLog());
         } catch (error) {
@@ -140,7 +138,7 @@ export class MediaProcessor {
     private async markFailed(
         data: Media,
         reason: string,
-        log: ReturnType<LogService['name']>,
+        log: WorkerLogger,
         options?: { deletePaths?: string[] },
     ) {
         await this.mediaRepository.updateById(data.id, {
@@ -473,7 +471,7 @@ export class MediaProcessor {
      * touched until the new thumbnail is safely written.
      */
     async regenerateThumbnail() {
-        const log = this.logger.name('regenerate-thumbnail');
+        const log = this.logFor('regenerate-thumbnail');
         const { media_id }: RegenerateMediaThumbnailJobInput = this.job.data;
 
         const media = await this.mediaRepository.findOneByColumn('id', media_id);
@@ -602,7 +600,7 @@ export class MediaProcessor {
      * by `moderateContent` as any other is, so the strike rules still apply.
      */
     async setVideoThumbnail() {
-        const log = this.logger.name('set-video-thumbnail');
+        const log = this.logFor('set-video-thumbnail');
         try {
             await this.applyVideoThumbnail(log);
         } catch (error) {
@@ -622,7 +620,7 @@ export class MediaProcessor {
         }
     }
 
-    private async applyVideoThumbnail(log: ReturnType<LogService['name']>) {
+    private async applyVideoThumbnail(log: WorkerLogger) {
         const { media_id, thumbnail_time_seconds }: SetVideoThumbnailJobInput = this.job.data;
 
         const media = await this.mediaRepository.findOneByColumn('id', media_id);
@@ -796,7 +794,7 @@ export class MediaProcessor {
      * this one is still an orphan and goes too.
      */
     async deleteReplacedObject() {
-        const log = this.logger.name('delete-replaced-object');
+        const log = this.logFor('delete-replaced-object');
         const { media_id, path }: DeleteReplacedMediaObjectJobInput = this.job.data;
 
         const media = await this.mediaRepository.findOneByColumn('id', media_id);
@@ -819,7 +817,7 @@ export class MediaProcessor {
     }
 
     async processMedia() {
-        const log = this.logger.name('create');
+        const log = this.logFor('create');
         const { media, generate_metadata }: MediaJobDto = this.job.data;
         const extension = MediaHelper.outputExtension(media.media_type);
         const sourcePath = media.url;

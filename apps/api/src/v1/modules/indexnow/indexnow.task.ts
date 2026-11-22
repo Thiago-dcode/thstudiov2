@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { IndexNowService } from './indexnow.service';
 import { CRON_LOCK_TTL, runCronExclusive } from 'src/common/utils/cron-lock';
-import { createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger } from 'src/common/services/request.service';
 
 /**
  * Hourly IndexNow submission of the public pages changed in the last hour.
@@ -17,9 +17,7 @@ import { createApiLogger } from 'src/common/utils/api-logger';
 export class IndexNowTask {
   private static readonly WINDOW_MS = 65 * 60 * 1000;
 
-  private readonly logger = createApiLogger({
-    channel: 'indexnow',
-  });
+  private readonly logger = apiLogger('indexnow');
 
   constructor(private readonly indexNowService: IndexNowService) {}
 
@@ -38,13 +36,12 @@ export class IndexNowTask {
           warmed_images: result.warmedImages,
           duration_ms: result.durationMs,
         };
-        if (result.httpStatus === 200 || result.httpStatus === 202) this.logger.info('IndexNow submitted', extra, op);
-        else this.logger.warn('IndexNow submitted', extra, op);
+        if (result.httpStatus === 200 || result.httpStatus === 202) this.logger.info('IndexNow submitted', { ...extra, ...op });
+        else this.logger.warn('IndexNow submitted', { ...extra, ...op });
       } catch (error) {
         this.logger.error(
           'IndexNow submission failed',
-          { error_message: error instanceof Error ? error.message : 'Unknown error' },
-          op,
+          { error_message: error instanceof Error ? error.message : 'Unknown error', ...op },
         );
       }
     });

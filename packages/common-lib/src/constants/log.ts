@@ -61,5 +61,8 @@ export const LOG_CHANNELS = [
     'webhooks',
 ] as const;
 
+/** The apps that write lines through their own logger factory (`logService.<service>`). */
+export const LOG_SERVICES = ['api', 'worker', 'dbcli', 'web'] as const;
+
 /** Lowercase kebab segments, at most one `.` sub-channel. No `/`: a channel is not a path. */
 export const LOG_CHANNEL_PATTERN = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)?$/;

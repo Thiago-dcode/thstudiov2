@@ -8,10 +8,10 @@ import { BenefitRepository } from '../benefits/benefit.repository';
 import { InvitationLinkMail } from './mails/invitation-link.mail';
 import { InvitationLinkRepository } from './invitation-link.repository';
 import { IndexInvitationLinkRequest } from './requests/index-invitation-link.request';
-import { createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger } from 'src/common/services/request.service';
 
 /** Invitation audit. Never the code or the recipient email: the link id identifies it. */
-const invitationLog = createApiLogger({ channel: 'invitation-links', name: 'create' });
+const invitationLog = apiLogger('invitation-links', { operation: 'create' });
 
 @Injectable()
 export class InvitationLinkService {

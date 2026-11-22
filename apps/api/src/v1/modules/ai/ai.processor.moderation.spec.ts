@@ -6,7 +6,6 @@ jest.mock('@repo/backend-lib/utils', () => ({
 }));
 
 import { logService } from '@repo/backend-lib/config/logging';
-import type { LogService } from '@repo/backend-lib/services/log-service';
 import { consoleLogger } from 'src/common/testing/console-logger';
 import { JOB_RECORD_MEDIA_MODERATION } from '@repo/common-lib/constants/queues';
 import { PERMANENT_BAN_THRESHOLD, STRIKES_TO_BAN } from '@repo/common-lib/constants/limits';
@@ -52,7 +51,6 @@ const build = (extra: { account_strikes: number; ban_count: number }, row: Recor
     {} as never,
     {} as never,
     {} as never,
-    consoleLogger({ channel: 'ai' }) as unknown as LogService,
     { emit: jest.fn() } as never,
   );
   return { processor, lines, deps };

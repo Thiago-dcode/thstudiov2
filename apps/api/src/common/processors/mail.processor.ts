@@ -12,7 +12,7 @@ import type { Error500MailPayload } from '@repo/common-lib/types/mail';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { maskEmailAddresses } from '@repo/backend-lib/services/log-service';
 import { isFinalAttempt } from '@repo/backend-lib/utils';
-import { createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger } from 'src/common/services/request.service';
 import { Error500Mail } from 'src/common/mails/error-500.mail';
 
 /** The provider's id for a sent message (Resend `data.id`, nodemailer `messageId`). Never the response. */
@@ -31,7 +31,7 @@ const mailErrorFields = (error: unknown) => ({
 @Processor(MAIL_QUEUE)
 export class MailProcessor extends GlobalProcessor {
   /** Final send failures log `critical` (admin alert); a failed alert mail logs `error` only (no recursion). */
-  private readonly logger = createApiLogger({ channel: 'mail' });
+  private readonly logger = apiLogger('mail');
 
   constructor(
     private readonly mailService: MailService,
@@ -62,19 +62,19 @@ export class MailProcessor extends GlobalProcessor {
       const result = await this.mailService.send(
         new Error500Mail(this.viewService, data.message, data.options, undefined, data.subject),
       );
-      this.logger.info(
-        'Alert mail sent',
-        { provider_message_id: providerMessageId(result), duration_ms: Date.now() - startedAt },
-        { operation: 'error-500-mail' },
-      );
+      this.logger.info('Alert mail sent', {
+        provider_message_id: providerMessageId(result),
+        duration_ms: Date.now() - startedAt,
+        operation: 'error-500-mail',
+      });
       return result;
     } catch (error) {
       // Never `critical`: that would enqueue another alert mail for the failing alert mail.
-      this.logger.error(
-        'Alert mail send failed',
-        { ...mailErrorFields(error), duration_ms: Date.now() - startedAt },
-        { operation: 'error-500-mail' },
-      );
+      this.logger.error('Alert mail send failed', {
+        ...mailErrorFields(error),
+        duration_ms: Date.now() - startedAt,
+        operation: 'error-500-mail',
+      });
       throw error;
     }
   }
@@ -83,15 +83,12 @@ export class MailProcessor extends GlobalProcessor {
     const startedAt = Date.now();
     try {
       const result = await this.mailService.sendRaw(data);
-      this.logger.info(
-        'Mail sent',
-        {
-          recipient_count: Array.isArray(data.to) ? data.to.length : 1,
-          provider_message_id: providerMessageId(result),
-          duration_ms: Date.now() - startedAt,
-        },
-        { operation: 'send-mail' },
-      );
+      this.logger.info('Mail sent', {
+        recipient_count: Array.isArray(data.to) ? data.to.length : 1,
+        provider_message_id: providerMessageId(result),
+        duration_ms: Date.now() - startedAt,
+        operation: 'send-mail',
+      });
       return result;
     } catch (error) {
       this.logSendFailure(job, 'send-mail', { ...mailErrorFields(error), duration_ms: Date.now() - startedAt });
@@ -103,11 +100,11 @@ export class MailProcessor extends GlobalProcessor {
     const startedAt = Date.now();
     try {
       const result = await this.mailService.sendBatchRaw(data);
-      this.logger.info(
-        'Batch mail sent',
-        { count: data.length, duration_ms: Date.now() - startedAt },
-        { operation: 'send-batch-mail' },
-      );
+      this.logger.info('Batch mail sent', {
+        count: data.length,
+        duration_ms: Date.now() - startedAt,
+        operation: 'send-batch-mail',
+      });
       return result;
     } catch (error) {
       this.logSendFailure(job, 'send-batch-mail', {
@@ -122,9 +119,9 @@ export class MailProcessor extends GlobalProcessor {
   /** Alerts on the final attempt only; earlier attempts are retried and logged `error`. */
   private logSendFailure(job: Job, operation: string, fields: Record<string, unknown>) {
     if (isFinalAttempt(job)) {
-      this.logger.critical('Mail send failed permanently', { ...fields, will_retry: false }, { operation });
+      this.logger.critical('Mail send failed permanently', { ...fields, will_retry: false, operation });
     } else {
-      this.logger.error('Mail send failed', { ...fields, will_retry: true }, { operation });
+      this.logger.error('Mail send failed', { ...fields, will_retry: true, operation });
     }
   }
 }

@@ -7,7 +7,7 @@ import {
   STRIPE_WEBHOOKS_QUEUE,
 } from '@repo/common-lib/constants/queues';
 import { maskEmailAddresses } from '@repo/backend-lib/services/log-service';
-import { createApiLogger } from '../utils/api-logger';
+import { apiLogger } from '../services/request.service';
 import { Job, JobType, Queue } from 'bullmq';
 import { displayHost } from '../utils';
 import { CRON_LOCK_TTL, getLockClient, runCronExclusive } from '../utils/cron-lock';
@@ -168,7 +168,7 @@ const toSeconds = (ms: number | null) => (ms === null ? null : Math.round(ms / 1
  */
 @Injectable()
 export class QueueStuckJobsTask {
-  private readonly logger = createApiLogger({ channel: 'queue-health' });
+  private readonly logger = apiLogger('queue-health');
   private readonly queues: Queue[];
 
   constructor(
@@ -196,11 +196,11 @@ export class QueueStuckJobsTask {
         await this.checkStuck(queue);
         await this.checkFailed(queue);
       } catch (error) {
-        this.logger.error(
-          'Queue health check failed',
-          { queue: queue.name, error_message: error instanceof Error ? error.message : String(error) },
-          { operation: 'stuck-jobs' },
-        );
+        this.logger.error('Queue health check failed', {
+          queue: queue.name,
+          error_message: error instanceof Error ? error.message : String(error),
+          operation: 'stuck-jobs',
+        });
       }
     }
   }
@@ -234,10 +234,11 @@ export class QueueStuckJobsTask {
     };
 
     if (await this.inStuckCooldown(queue.name)) {
-      this.logger.warn('Queue still stuck; alert in cooldown', extraInfo, { operation: 'stuck-jobs' });
+      this.logger.warn('Queue still stuck; alert in cooldown', { ...extraInfo, operation: 'stuck-jobs' });
       return;
     }
-    this.logger.critical(`Queue "${queue.name}" has stuck jobs (${hostLabel()})`, extraInfo, {
+    this.logger.critical(`Queue "${queue.name}" has stuck jobs (${hostLabel()})`, {
+      ...extraInfo,
       operation: 'stuck-jobs',
     });
   }
@@ -296,8 +297,8 @@ export class QueueStuckJobsTask {
           failed_reason: maskEmailAddresses(String(job.failedReason ?? '')).slice(0, FAILED_REASON_MAX_LENGTH),
         })),
         ...environment(),
+        operation: 'failed-jobs',
       },
-      { operation: 'failed-jobs' },
     );
   }
 }

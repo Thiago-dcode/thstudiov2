@@ -4,7 +4,7 @@ import { getConfigValue } from '@repo/common-lib/config/utils';
 import os from 'node:os';
 import { logBuffer } from '@repo/backend-lib/config/logging';
 import { withTimeout } from '@repo/backend-lib/utils';
-import { createApiLogger } from '../utils/api-logger';
+import { apiLogger } from '../services/request.service';
 import { displayHost } from '../utils';
 import { getLockClient } from '../utils/cron-lock';
 import { ApiHealthService } from './api-health.service';
@@ -38,7 +38,7 @@ export const WATCHDOG_ALERT_SETTLE_MS = 5_000;
  */
 @Injectable()
 export class ConsumerWatchdog implements OnApplicationBootstrap {
-  private readonly logger = createApiLogger({ channel: 'health' });
+  private readonly logger = apiLogger('health');
   private readonly instanceId = `${replica()}:${process.pid}`;
   private startedAt: number;
   private consecutiveFailures = 0;
@@ -83,11 +83,10 @@ export class ConsumerWatchdog implements OnApplicationBootstrap {
       await this.evaluate();
     } catch (error) {
       this.consecutiveFailures = 0;
-      this.logger.error(
-        'Consumer watchdog tick failed',
-        { error_message: error instanceof Error ? error.message : String(error) },
-        { operation: 'consumer-watchdog' },
-      );
+      this.logger.error('Consumer watchdog tick failed', {
+        error_message: error instanceof Error ? error.message : String(error),
+        operation: 'consumer-watchdog',
+      });
     }
   }
 
@@ -99,8 +98,7 @@ export class ConsumerWatchdog implements OnApplicationBootstrap {
         this.noConsumersReported = true;
         this.logger.critical(
           `API replica has no queue consumers (${displayHost(getConfigValue('app').url)})`,
-          { replica: replica() },
-          { operation: 'consumer-watchdog' },
+          { replica: replica(), operation: 'consumer-watchdog' },
         );
       }
       this.consecutiveFailures = 0;
@@ -119,15 +117,12 @@ export class ConsumerWatchdog implements OnApplicationBootstrap {
     }
 
     this.consecutiveFailures++;
-    this.logger.error(
-      'Queue consumer down',
-      {
-        consecutive_failures: this.consecutiveFailures,
-        restart_after: WATCHDOG_FAILURES_BEFORE_RESTART,
-        consumers: summarize(failing),
-      },
-      { operation: 'consumer-watchdog' },
-    );
+    this.logger.error('Queue consumer down', {
+      consecutive_failures: this.consecutiveFailures,
+      restart_after: WATCHDOG_FAILURES_BEFORE_RESTART,
+      consumers: summarize(failing),
+      operation: 'consumer-watchdog',
+    });
     if (this.consecutiveFailures < WATCHDOG_FAILURES_BEFORE_RESTART) {
       return;
     }
@@ -145,8 +140,8 @@ export class ConsumerWatchdog implements OnApplicationBootstrap {
         consumers: summarize(failing),
         consecutive_failures: this.consecutiveFailures,
         restart: !isLocal,
+        operation: 'consumer-watchdog',
       },
-      { operation: 'consumer-watchdog' },
     );
 
     if (isLocal) {

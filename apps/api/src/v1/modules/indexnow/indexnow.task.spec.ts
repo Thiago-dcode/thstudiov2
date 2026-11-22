@@ -7,11 +7,11 @@ jest.mock('src/common/utils/cron-lock', () => ({
 }));
 
 import { logService } from '@repo/backend-lib/config/logging';
-import type { LogService } from '@repo/backend-lib/services/log-service';
+import type { ApiLogger } from 'src/common/services/request.service';
 import { IndexNowTask } from './indexnow.task';
 
 const build = (result: unknown | Error) => {
-  jest.spyOn(logService, 'api').mockReturnValue(mockLog as unknown as LogService);
+  jest.spyOn(logService, 'api').mockReturnValue(mockLog as unknown as ApiLogger);
   const service = {
     submitChangedSince: result instanceof Error ? jest.fn().mockRejectedValue(result) : jest.fn().mockResolvedValue(result),
   };
@@ -26,10 +26,9 @@ describe('IndexNowTask logging', () => {
     const task = build({ status: 'submitted', urls: 12, httpStatus: 200, warmedImages: 3, durationMs: 250 });
     await task.submitRecentChanges();
     expect(mockLog.info).toHaveBeenCalledTimes(1);
-    const [message, extra, fields] = mockLog.info.mock.calls[0];
+    const [message, extra] = mockLog.info.mock.calls[0];
     expect(message).toBe('IndexNow submitted');
-    expect(extra).toEqual({ urls: 12, http_status: 200, warmed_images: 3, duration_ms: 250 });
-    expect(fields).toEqual({ operation: 'submit' });
+    expect(extra).toEqual({ urls: 12, http_status: 200, warmed_images: 3, duration_ms: 250, operation: 'submit' });
   });
 
   it('AC-33: a 202 is info too', async () => {
@@ -59,6 +58,6 @@ describe('IndexNowTask logging', () => {
     await task.submitRecentChanges();
     expect(mockLog.error).toHaveBeenCalledTimes(1);
     expect(mockLog.error.mock.calls[0][0]).toBe('IndexNow submission failed');
-    expect(mockLog.error.mock.calls[0][1]).toEqual({ error_message: 'network down' });
+    expect(mockLog.error.mock.calls[0][1]).toEqual({ error_message: 'network down', operation: 'submit' });
   });
 });

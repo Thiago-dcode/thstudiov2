@@ -7,9 +7,9 @@ import type { Invoice as StripeInvoice } from 'stripe-types/Invoices';
 import type { PaymentIntent as StripePaymentIntent } from 'stripe-types/PaymentIntents';
 import type { PaymentMethod as StripePaymentMethod } from 'stripe-types/PaymentMethods';
 import type { Subscription as StripeSubscription } from 'stripe-types/Subscriptions';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { enqueueJob, isFinalAttempt } from '@repo/backend-lib/utils';
-import { apiLogConfig } from 'src/common/utils/api-logger';
+import { RequestService } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 import { runWithTraceId } from 'src/common/services/request-storage';
 import { StripeService } from 'src/common/services/stripe.service';
 import type Stripe from 'stripe';
@@ -44,7 +44,7 @@ type EventLog = {
 };
 
 /** `logger` with the event's ids in every line's extraInfo. Per event: the logger is shared. */
-const withIds = (logger: LogService, ids: StripeEventRefIds): EventLog => ({
+const withIds = (logger: ApiLogger, ids: StripeEventRefIds): EventLog => ({
   info: (message, extra) => void logger.info(message, { ...ids, ...extra }),
   warn: (message, extra) => void logger.warn(message, { ...ids, ...extra }),
   error: (message, extra) => void logger.error(message, { ...ids, ...extra }),
@@ -54,16 +54,20 @@ const withIds = (logger: LogService, ids: StripeEventRefIds): EventLog => ({
 
 @Processor(STRIPE_WEBHOOKS_QUEUE)
 export class WebhookProcessor extends GlobalProcessor {
+  private readonly logger: ApiLogger;
+
   constructor(
     private readonly planSubscriptionService: PlanSubscriptionsService,
     private readonly planPriceService: PlanPricesService,
     private readonly userService: UserService,
     private readonly userBenefitService: UserBenefitService,
     private readonly helpers: Helpers,
-    private readonly logger: LogService,
+    private readonly requestService: RequestService,
     @InjectQueue(PLAN_SUBSCRIPTIONS_QUEUE) private readonly subscriptionQueue: Queue,
   ) {
     super();
+    // Keeps the operation the module-provided logger used to carry.
+    this.logger = this.requestService.log('webhooks', { operation: 'stripe-webhook' });
   }
 
   async process(job: Job<StripeEvent>): Promise<void> {
@@ -369,7 +373,7 @@ export class WebhookProcessor extends GlobalProcessor {
         removeOnComplete: true,
         attempts: 3,
         backoff: { type: 'exponential', delay: 1000 },
-      }, apiLogConfig())])
+      }, this.requestService.traceCarrier())])
   }
 
   /**
@@ -418,7 +422,7 @@ export class WebhookProcessor extends GlobalProcessor {
         removeOnComplete: true,
         attempts: 3,
         backoff: { type: 'exponential', delay: 1000 },
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
     } else {
       log.info('Stripe webhook event ignored', { reason: 'not_current_subscription' });
     }

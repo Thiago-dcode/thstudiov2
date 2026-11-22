@@ -1,4 +1,4 @@
-import { logBuffer, logConfig, setLogProcessService } from '@repo/backend-lib/config/logging';
+import { logBuffer, setLogProcessService } from '@repo/backend-lib/config/logging';
 import { config } from '@repo/common-lib/config';
 import { MEDIA_THUMBNAIL_QUEUE } from '@repo/common-lib/constants/queues';
 import { DatabaseConfig } from '@repo/common-lib/types/database';
@@ -7,6 +7,7 @@ import { Worker } from 'bullmq';
 import express from 'express';
 import { logPermanentJobFailure, withTimeout } from '@repo/backend-lib/utils';
 import { jobResolver, runWorkerJob } from './job-runner';
+import { workerTraceCarrier } from './logging';
 import { Connection, scheduleDatabaseBackup, scheduleLogFlush, withQueue } from './schedulers';
 
 // Before anything logs: every line of this process, backend-lib's own included, goes under `worker/`.
@@ -51,7 +52,7 @@ const createWorkers = (connection: Connection) =>
             },
         );
         // The worker had no permanent-failure line at all; this is the same one api jobs get.
-        worker.on('failed', (job, error, prev) => void logPermanentJobFailure(job, error, prev, logConfig.worker));
+        worker.on('failed', (job, error, prev) => void logPermanentJobFailure(job, error, prev, workerTraceCarrier(job)));
         return worker;
     });
 

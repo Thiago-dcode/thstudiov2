@@ -4,7 +4,6 @@ import { Job } from 'bullmq';
 import { LlmTokensUsageRepository } from './llm-tokens-usage.repository';
 import { MediaModerationRepository } from './media-moderation.repository';
 import { AiService } from '@repo/backend-lib/services/ai-service';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { UserAiCreditsEndedMail } from '../user-extra-data/mails/user-metrics-ended';
@@ -49,13 +48,12 @@ import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
-import { apiLogConfig, createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger, apiTraceCarrier } from 'src/common/services/request.service';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 @Processor(AI_QUEUE)
 export class AiProcessor extends GlobalProcessor {
-  private readonly logger = createApiLogger({
-    channel: 'ai',
-  });
+  private readonly logger = apiLogger('ai');
 
   constructor(
     private readonly llmTokensUsageRepository: LlmTokensUsageRepository,
@@ -97,7 +95,7 @@ export class AiProcessor extends GlobalProcessor {
   // ==================== JOB HANDLERS ====================
 
   private async recordLlmUsage(usageData: CreateLlmTokensUsageInput) {
-    const log = this.logger.name('llm-tokens-usage');
+    const log = apiLogger('ai', { operation: 'llm-tokens-usage' });
     try {
       const usage = await this.llmTokensUsageRepository.create(usageData);
       log.info(
@@ -133,7 +131,7 @@ export class AiProcessor extends GlobalProcessor {
         }
       }
 
-      await QueueHelper.createComputeUserMetricsJob(usageData.user_id, apiLogConfig());
+      await QueueHelper.createComputeUserMetricsJob(usageData.user_id, apiTraceCarrier());
 
       return usage;
     } catch (error) {
@@ -159,8 +157,7 @@ export class AiProcessor extends GlobalProcessor {
     } catch (error) {
       this.logger.error(
         'Failed to record moderation',
-        { user_id: moderationData.user_id, error_message: error instanceof Error ? error.message : 'Unknown error' },
-        fields,
+        { user_id: moderationData.user_id, error_message: error instanceof Error ? error.message : 'Unknown error', ...fields },
       );
       throw error;
     }
@@ -174,8 +171,8 @@ export class AiProcessor extends GlobalProcessor {
         is_allowed: moderation.is_allowed,
         severity: moderation.severity,
         ...(mediaId ? { media_id: mediaId } : {}),
+        ...fields,
       },
-      fields,
     );
 
     try {
@@ -189,8 +186,7 @@ export class AiProcessor extends GlobalProcessor {
         const totalStrikes = extraData.account_strikes + 1;
         this.logger.warn(
           'Content rejected by moderation',
-          { user_id: moderationData.user_id, moderation_id: moderation.id, severity: moderation.severity, account_strikes: totalStrikes },
-          fields,
+          { user_id: moderationData.user_id, moderation_id: moderation.id, severity: moderation.severity, account_strikes: totalStrikes, ...fields },
         );
 
         if (totalStrikes >= STRIKES_TO_BAN) {
@@ -224,8 +220,7 @@ export class AiProcessor extends GlobalProcessor {
           ]);
           this.logger.warn(
             'Account ban applied',
-            { user_id: moderationData.user_id, ban_count: newBanCount, ban_lift: banLift.toISOString(), permanent: isPermanentBan },
-            fields,
+            { user_id: moderationData.user_id, ban_count: newBanCount, ban_lift: banLift.toISOString(), permanent: isPermanentBan, ...fields },
           );
 
           const user = await this.userService.findOneCompacted(moderationData.user_id);
@@ -233,11 +228,11 @@ export class AiProcessor extends GlobalProcessor {
             await this.mailService.send(
               this.userAccountBannedMail.setUser(user, user.language),
             );
-            this.logger.info('Account banned email sent', { user_id: moderationData.user_id, ban_count: newBanCount }, fields);
+            this.logger.info('Account banned email sent', { user_id: moderationData.user_id, ban_count: newBanCount, ...fields });
           }
         }
 
-        await QueueHelper.createComputeUserMetricsJob(moderationData.user_id, apiLogConfig());
+        await QueueHelper.createComputeUserMetricsJob(moderationData.user_id, apiTraceCarrier());
       }
 
 
@@ -245,8 +240,7 @@ export class AiProcessor extends GlobalProcessor {
     } catch (error) {
       this.logger.error(
         'Moderation recorded but applying it failed',
-        { user_id: moderationData.user_id, moderation_id: moderation.id, error_message: error instanceof Error ? error.message : 'Unknown error' },
-        fields,
+        { user_id: moderationData.user_id, moderation_id: moderation.id, error_message: error instanceof Error ? error.message : 'Unknown error', ...fields },
       );
     }
     return moderation;
@@ -254,7 +248,7 @@ export class AiProcessor extends GlobalProcessor {
 
   /** Batch job: find due rows for an entity type and generate metadata for each inline. */
   private async generateDueEntityMetadata(payload: GenerateEntityMetadataPayload) {
-    const log = this.logger.name(`batch-${payload.entity}-metadata`);
+    const log = apiLogger('ai', { operation: `batch-${payload.entity}-metadata` });
 
     let dueRows: { id: number; user_id: number }[] = [];
     switch (payload.entity) {
@@ -291,7 +285,7 @@ export class AiProcessor extends GlobalProcessor {
       await QueueHelper.createGenerateSingleEntityMetadataJob(
         { entity: payload.entity, id: row.id, user_id: row.user_id },
         undefined,
-        apiLogConfig(),
+        apiTraceCarrier(),
       );
     }
 
@@ -302,7 +296,7 @@ export class AiProcessor extends GlobalProcessor {
   /** Single-entity job: generate + persist SEO for one portfolio/collection/service/user. */
   private async generateSingleEntityMetadata(
     payload: GenerateSingleEntityMetadataPayload,
-    log: LogService = this.logger.name(`single-${payload.entity}-metadata`),
+    log: ApiLogger = apiLogger('ai', { operation: `single-${payload.entity}-metadata` }),
   ) {
     const { entity, id, user_id } = payload;
 
@@ -318,7 +312,7 @@ export class AiProcessor extends GlobalProcessor {
           const { translations } = await this.aiService.generatePortfolioMetadata(portfolio, artist, {
             portfolio_id: id,
             user_id,
-          }, apiLogConfig());
+          }, apiTraceCarrier());
           if (!this.hasSeo(translations)) {
             log.warn(`No metadata generated for portfolio [${id}], leaving unstamped to retry next run`);
             return { skipped: true };
@@ -340,7 +334,7 @@ export class AiProcessor extends GlobalProcessor {
           const { translations } = await this.aiService.generateCollectionMetadata(collection, artist, {
             collection_id: id,
             user_id,
-          }, apiLogConfig());
+          }, apiTraceCarrier());
           if (!this.hasSeo(translations)) {
             log.warn(`No metadata generated for collection [${id}], leaving unstamped to retry next run`);
             return { skipped: true };
@@ -362,7 +356,7 @@ export class AiProcessor extends GlobalProcessor {
           const { translations } = await this.aiService.generateServiceMetadata(service, artist, {
             service_id: id,
             user_id,
-          }, apiLogConfig());
+          }, apiTraceCarrier());
           if (!this.hasSeo(translations)) {
             log.warn(`No metadata generated for service [${id}], leaving unstamped to retry next run`);
             return { skipped: true };
@@ -382,7 +376,7 @@ export class AiProcessor extends GlobalProcessor {
             log.warn(`User profile [${id}] not found or missing name/profession, skipping`);
             return { skipped: true };
           }
-          const { translations } = await this.aiService.generateUserMetadata(profile, { user_id }, apiLogConfig());
+          const { translations } = await this.aiService.generateUserMetadata(profile, { user_id }, apiTraceCarrier());
           if (!this.hasSeo(translations)) {
             log.warn(`No metadata generated for user [${id}], leaving unstamped to retry next run`);
             return { skipped: true };

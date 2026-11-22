@@ -34,13 +34,12 @@ import type { LocationInput } from '@repo/common-lib/types/location';
 import { LocationService } from '../locations/location.service';
 import { TempUploadService } from 'src/common/services/temp-upload.service';
 import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
-import { apiLogConfig, createApiLogger } from 'src/common/utils/api-logger';
+import type { ApiLogger } from 'src/common/services/request.service';
 
 @Injectable()
 export class MediaService {
-  private readonly logger = createApiLogger({
-    channel: 'media',
-  });
+  private readonly logger: ApiLogger;
+
   constructor(
     private readonly mediaRepository: MediaRepository,
     private readonly userService: UserService,
@@ -50,7 +49,9 @@ export class MediaService {
     private readonly eventEmitter: EventEmitter2,
     private readonly locationService: LocationService,
     private readonly tempUploads: TempUploadService,
-  ) { }
+  ) {
+    this.logger = this.requestService.log('media');
+  }
 
   /** The owner's public pages show this media (or its absence): purge their edge cache. */
   private emitArtistPagesChanged(userId: number): void {
@@ -76,7 +77,7 @@ export class MediaService {
     try {
       return (await this.locationService.resolve(location)).id;
     } catch (error) {
-      this.logger.name('location').error(
+      this.requestService.log('media', { operation: 'location' }).error(
         `Could not resolve location "${location.place_id}": ${error instanceof Error ? error.message : 'Unknown error'}`,
         error,
       );
@@ -229,7 +230,7 @@ export class MediaService {
       user_id: media.user_id,
       entity_id: media.id,
       read_at: null,
-    }, apiLogConfig());
+    }, this.requestService.traceCarrier());
   }
 
   /**
@@ -244,7 +245,7 @@ export class MediaService {
     reason: string,
     options?: { deleteUpload?: { userPublicId: string; uploadId: string } },
   ): Promise<void> {
-    const log = this.logger.name('create');
+    const log = this.requestService.log('media', { operation: 'create' });
     try {
       await this.mediaRepository.updateById(media.id, {
         status: 'FAILED',
@@ -296,7 +297,7 @@ export class MediaService {
     userPublicId: string;
     generate_metadata?: boolean;
   }): Promise<void> {
-    const log = this.logger.name('create');
+    const log = this.requestService.log('media', { operation: 'create' });
     // The DTO only carries the bare uuid; `TempUploadService` rebuilds the key under THIS user's
     // own prefix, so a uuid stolen from another session has nothing to claim.
     const upload = { userPublicId, uploadId };
@@ -386,7 +387,7 @@ export class MediaService {
       await QueueHelper.createProcessMediaJob({
         media: stored,
         generate_metadata,
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
       log.info('Enqueued process-media job', {
         media_id: media.id,
         public_id: media.public_id,
@@ -413,7 +414,7 @@ export class MediaService {
     thumbnail_time_seconds,
     ...data
   }: CreateMediaAsyncRequest) {
-    const log = this.logger.name('create');
+    const log = this.requestService.log('media', { operation: 'create' });
     log.info('Starting async media create', {
       user_id: data.user_id,
       original_name,
@@ -585,8 +586,8 @@ export class MediaService {
     try {
       await this.storageService.deleteDirectory(directory);
     } catch (error) {
-      this.logger
-        .name('delete')
+      this.requestService
+        .log('media', { operation: 'delete' })
         .error(
           `Could not remove storage for stale media [${media.id}] at ${directory}: ${error instanceof Error ? error.message : 'Unknown error'}`,
           error,
@@ -603,9 +604,9 @@ export class MediaService {
       user_id: media.user_id,
       entity_id: media.id,
       read_at: null,
-    }, apiLogConfig());
+    }, this.requestService.traceCarrier());
 
-    await QueueHelper.createComputeUserMetricsJob(media.user_id, apiLogConfig());
+    await QueueHelper.createComputeUserMetricsJob(media.user_id, this.requestService.traceCarrier());
     const stillHasMedia = await this.mediaRepository.exists({
       user_id: media.user_id,
     });
@@ -634,7 +635,7 @@ export class MediaService {
       throw new UnauthorizedException();
     }
 
-    const log = this.logger.name('delete');
+    const log = this.requestService.log('media', { operation: 'delete' });
     const deleted: number[] = [];
     const errors: DeleteManyMediaError[] = [];
     for (const id of ids) {
@@ -932,7 +933,7 @@ export class MediaService {
         media_id: id,
         user_id: userId,
         data,
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
 
       this.logger.info(`Update media job enqueued: media [${id}]`, {
         media_id: id,
@@ -981,7 +982,7 @@ export class MediaService {
     await QueueHelper.createSetVideoThumbnailJob({
       media_id: id,
       thumbnail_time_seconds,
-    }, apiLogConfig());
+    }, this.requestService.traceCarrier());
     // The worker purges again once the new cover is stored; this one is coalesced with it when the
     // extraction finishes inside the debounce window.
     this.emitArtistPagesChanged(userId);

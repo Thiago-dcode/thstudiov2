@@ -1,8 +1,7 @@
 jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({ stripe: {}, stripeWebhookSecret: '' }));
 
 import { BadRequestException } from '@nestjs/common';
-import { LogService } from '@repo/backend-lib/services/log-service';
-import { consoleLogger } from 'src/common/testing/console-logger';
+import { consoleLogger, consoleRequestService } from 'src/common/testing/console-logger';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 import { UserService } from './users.service';
 
@@ -24,10 +23,9 @@ const build = (moderation: { is_allowed: boolean; reason?: string }, optimizeFai
   const service = new UserService(
     {} as never,
     {} as never,
-    consoleLogger({ channel: 'users' }) as unknown as LogService,
     {} as never,
     helpers as never,
-    {} as never,
+    consoleRequestService(consoleLogger({ defaultOptions: { channel: 'users' } })),
     {} as never,
     { moderateContent: jest.fn().mockResolvedValue({ moderation }) } as never,
     {} as never,

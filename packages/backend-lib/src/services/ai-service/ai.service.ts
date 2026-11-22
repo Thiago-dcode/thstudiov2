@@ -2,8 +2,8 @@ import { LLMCompletionResponse, LLMService } from '@repo/backend-lib/services/ll
 import { MAX_TAGS_MEDIA, MAX_TECHNIQUES_MEDIA } from '@repo/common-lib/constants/limits';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { openAiLLMConfig } from '@repo/backend-lib/config/llm';
-import { LogConfig } from '@repo/backend-lib/services/log-service';
-import { logService } from '@repo/backend-lib/config/logging';
+import type { LogTraceCarrier } from '../../utils/job-trace';
+import { logService, type LibLogger } from '../../config/logging';
 import {
   ContentModerationFields,
   GenerateEntityMetadataResponse,
@@ -212,8 +212,13 @@ const SEO_STOPWORDS = new Set([
 ]);
 
 export class AiService {
-  /** Failures log `critical` here, which is what mails the admins (no separate error logger). */
-  private readonly logger = logService.lib({ channel: 'ai' });
+  /**
+   * A logger for one operation (its `operation` default). Failures log `critical` here, which is
+   * what mails the admins (no separate error logger). Built per call: never mutate a shared one.
+   */
+  private logFor(operation: string): LibLogger {
+    return logService.lib({ defaultOptions: { channel: 'ai', operation } });
+  }
 
   constructor(
     private readonly llmService: LLMService,
@@ -246,10 +251,10 @@ export class AiService {
     meta: { media_id: number; user_id: number; media_type: EnumType<'MEDIA_TYPE'> | null | undefined },
     notes?: MediaArtistNotes,
     selectedCategories: MediaMetadataPromptCategory[] = [],
-    log: Partial<LogConfig> = {},
+    log: LogTraceCarrier = {},
   ): Promise<GenerateMediaMetadataResponse> {
     try {
-      this.logger.name('generate-media-metadata').warn('Starting to generate metadata', {
+      this.logFor('generate-media-metadata').warn('Starting to generate metadata', {
         mediaUrl,
         categories,
         meta
@@ -418,7 +423,7 @@ ${categoryLines.join(', AND\n')}.
         translations = this.buildMediaTranslations(parsed.translations);
         matchesExpectedResponse = translations.some((t) => !!(t.seo_title || t.seo_description));
       } catch (err) {
-        this.logger.name('generate-media-metadata').warn('AI returned invalid JSON', {
+        this.logFor('generate-media-metadata').warn('AI returned invalid JSON', {
           media_id: meta.media_id,
           user_id: meta.user_id,
           response_text: result.text,
@@ -434,14 +439,12 @@ ${categoryLines.join(', AND\n')}.
       }, log);
 
       const response = { seo_filename: seoFilename, category_ids: categoryIds, translations, usage: result.usage };
-      this.logger
-        .name('generate-media-metadata')
+      this.logFor('generate-media-metadata')
         .info('Successfully generated media metadata for user ' + meta.user_id, { response });
 
       return response;
     } catch (error) {
-      this.logger
-        .name('generate-media-metadata')
+      this.logFor('generate-media-metadata')
         .critical(
           `Failed to generate media metadata for media_id [${meta.media_id}] and user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
           error instanceof Error ? error : undefined,
@@ -459,7 +462,7 @@ ${categoryLines.join(', AND\n')}.
     portfolio: FullPortfolio,
     artist: ArtistSeoContext,
     meta: { portfolio_id: number; user_id: number },
-    log: Partial<LogConfig> = {},
+    log: LogTraceCarrier = {},
   ): Promise<GenerateEntityMetadataResponse> {
     const context = {
       artist: artistIdentity(artist),
@@ -497,7 +500,7 @@ ${categoryLines.join(', AND\n')}.
     collection: FullCollection,
     artist: ArtistSeoContext,
     meta: { collection_id: number; user_id: number },
-    log: Partial<LogConfig> = {},
+    log: LogTraceCarrier = {},
   ): Promise<GenerateEntityMetadataResponse> {
     const context = {
       artist: artistIdentity(artist),
@@ -523,7 +526,7 @@ ${categoryLines.join(', AND\n')}.
     service: FullService,
     artist: ArtistSeoContext,
     meta: { service_id: number; user_id: number },
-    log: Partial<LogConfig> = {},
+    log: LogTraceCarrier = {},
   ): Promise<GenerateEntityMetadataResponse> {
     const context = {
       artist,
@@ -554,7 +557,7 @@ ${categoryLines.join(', AND\n')}.
   public async generateUserMetadata(
     profile: UserProfile,
     meta: { user_id: number },
-    log: Partial<LogConfig> = {},
+    log: LogTraceCarrier = {},
   ): Promise<GenerateEntityMetadataResponse> {
     const context = {
       artist: {
@@ -589,9 +592,9 @@ ${categoryLines.join(', AND\n')}.
    * @param url one image, or the frames sampled from one video — several frames still produce a
    * single verdict, a single usage record and a single moderation job.
    */
-  public async moderateContent(url: string | string[], meta: { user_id: number }, log: Partial<LogConfig> = {}) {
+  public async moderateContent(url: string | string[], meta: { user_id: number }, log: LogTraceCarrier = {}) {
     try {
-      this.logger.name('moderate-content').warn('Starting to moderate content', {
+      this.logFor('moderate-content').warn('Starting to moderate content', {
         // Inline frames (an animated GIF's) are logged by size, not as kilobytes of base64.
         url: (Array.isArray(url) ? url : [url]).map((u) =>
           u.startsWith('data:') ? `data URL (${u.length} chars)` : u,
@@ -602,8 +605,7 @@ ${categoryLines.join(', AND\n')}.
         await this._moderateContent(url);
 
       if (parseError) {
-        this.logger
-          .name('moderate-content')
+        this.logFor('moderate-content')
           .warn('AI returned invalid JSON', {
             user_id: meta.user_id,
             response_text: text,
@@ -629,8 +631,7 @@ ${categoryLines.join(', AND\n')}.
         throw new Error('Content moderation returned no usable verdict');
       }
 
-      this.logger
-        .name('moderate-content')
+      this.logFor('moderate-content')
         .info('Successfully moderated content', {
           user_id: meta.user_id,
           is_allowed: moderation.is_allowed,
@@ -653,8 +654,7 @@ ${categoryLines.join(', AND\n')}.
         usage,
       };
     } catch (error) {
-      this.logger
-        .name('moderate-content')
+      this.logFor('moderate-content')
         .critical(
           `Failed to moderate content for user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
           error instanceof Error ? error : undefined,
@@ -803,7 +803,7 @@ ${categoryLines.join(', AND\n')}.
       entity_id_key: 'portfolio_id' | 'collection_id' | 'service_id' | 'user_id';
     };
     /** The caller's log config: the usage job carries its trace id. */
-    log: Partial<LogConfig>;
+    log: LogTraceCarrier;
   }): Promise<GenerateEntityMetadataResponse> {
     const { entityLabel, logName, usageType, extraInfo, context, meta, log } = params;
 
@@ -842,7 +842,7 @@ ${categoryLines.join(', AND\n')}.
         translations = this.buildEntityTranslations(parsed.translations);
         matchesExpectedResponse = translations.some((t) => !!(t.seo_title || t.seo_description));
       } catch (err) {
-        this.logger.name(logName).warn('AI returned invalid JSON', {
+        this.logFor(logName).warn('AI returned invalid JSON', {
           [meta.entity_id_key]: meta.entity_id,
           user_id: meta.user_id,
           response_text: result.text,
@@ -857,14 +857,12 @@ ${categoryLines.join(', AND\n')}.
         matches_expected_response: matchesExpectedResponse,
       }, log);
 
-      this.logger
-        .name(logName)
+      this.logFor(logName)
         .info(`Successfully generated ${entityLabel} metadata for user ${meta.user_id}`, { translations, result });
 
       return { translations, usage: result.usage };
     } catch (error) {
-      this.logger
-        .name(logName)
+      this.logFor(logName)
         .critical(
           `Failed to generate ${entityLabel} metadata for ${meta.entity_id_key} [${meta.entity_id}] and user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
           error instanceof Error ? error : undefined,
@@ -940,7 +938,7 @@ ${categoryLines.join(', AND\n')}.
     user_id: number;
     usage_type: EnumType<'LLM_USAGE_TYPE'>;
     matches_expected_response: boolean;
-  }, log: Partial<LogConfig>): Promise<void> {
+  }, log: LogTraceCarrier): Promise<void> {
     if (!params.tokens) return;
     await QueueHelper.createLlmUsageJob({
       tokens: params.tokens,

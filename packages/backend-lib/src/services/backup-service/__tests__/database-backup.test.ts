@@ -1,6 +1,4 @@
 const logger = {
-  name: jest.fn(),
-  id: jest.fn(),
   info: jest.fn(),
   success: jest.fn(),
   warn: jest.fn(),
@@ -8,18 +6,18 @@ const logger = {
   critical: jest.fn(),
   flush: jest.fn(),
 };
-logger.name.mockReturnValue(logger);
-logger.id.mockReturnValue(logger);
 logger.flush.mockResolvedValue(undefined);
+const mockLibConfigs: Record<string, any>[] = [];
 
 const execFileMock = jest.fn();
 
 jest.mock('../../../config/logging', () => {
   const actual = jest.requireActual('../../../config/logging');
   // Every factory hands its service and overrides to one mock, as the real ones build one config.
-  const create = jest.fn(() => logger);
-  const factory = (service: string | null) => (overrides: Record<string, unknown> = {}) =>
-    (create as (buffer: unknown, cfg: any) => unknown)(undefined, { service, ...overrides });
+  const factory = (service: string | null) => (overrides: Record<string, unknown> = {}) => {
+    if (service === null) mockLibConfigs.push(overrides);
+    return logger;
+  };
   return {
     ...actual,
     logService: { api: factory('api'), worker: factory('worker'), dbcli: factory('dbcli'), web: factory('web'), lib: factory(null) },
@@ -43,9 +41,17 @@ import { backup } from '../database-backup';
 describe('database backup alerting', () => {
   beforeEach(() => {
     Object.values(logger).forEach((fn) => fn.mockClear());
-    logger.name.mockReturnValue(logger);
-    logger.id.mockReturnValue(logger);
+    mockLibConfigs.length = 0;
     execFileMock.mockReset();
+  });
+
+  it('AC-5: the backup logger is a lib logger on channel backup, operation backup, with a <op>-<ms> run id', async () => {
+    execFileMock.mockImplementation((...args: unknown[]) => {
+      const cb = args[args.length - 1] as (err: Error | null) => void;
+      cb(new Error('pg_dump: connection refused'));
+    });
+    await expect(backup({} as any)).rejects.toThrow();
+    expect(mockLibConfigs).toEqual([{ defaultOptions: { channel: 'backup', operation: 'backup' }, id: expect.stringMatching(/^backup-\d+$/) }]);
   });
 
   it('AC-26: a pg_dump failure logs critical (not error), rethrows and never flushes', async () => {

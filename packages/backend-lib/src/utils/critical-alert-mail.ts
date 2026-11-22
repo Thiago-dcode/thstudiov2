@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import { config } from '@repo/common-lib/config';
 import { JOB_ERROR_500_MAIL } from '@repo/common-lib/constants/queues';
-import type { LogCallback, LogEntry } from '../services/log-service/types';
 import type { MailJob } from '@repo/common-lib/types/mail';
+import type { LogEntry } from '../config/logging';
 import { QueueHelper } from './queue-helper';
 
 /** Mails per process per throttle window, across all fingerprints. A burst of distinct failures stops here. */
@@ -21,7 +21,7 @@ let capWarned = false;
  * The request path and replica are not: a scanner burst hits hundreds of paths with one failure.
  */
 function fingerprintOf(entry: LogEntry): string {
-    return `${entry.service}|${entry.channel}|${entry.operation ?? ''}|${entry.status_code ?? ''}|${entry.message}`;
+    return `${entry.service}|${entry.channel ?? ''}|${entry.operation ?? ''}|${entry.status_code ?? ''}|${entry.message}`;
 }
 
 function isThrottled(fingerprint: string, now: number, throttleMs: number): boolean {
@@ -69,10 +69,10 @@ export function resetCriticalAlertThrottle(): void {
 
 /**
  * One throttled admin alert mail per distinct failure. Used by `emailCritical`, the log callback
- * set in `config/logging.ts`. It gets the redacted entry that went to disk, and never logs through
+ * set in `config/logging.ts`, with the line as written (already redacted). It never logs through
  * a LogService (no alert recursion).
  */
-export const criticalAlertMail: LogCallback = async (entry) => {
+export async function criticalAlertMail(entry: LogEntry): Promise<void> {
     if (!config().app.sendErrorEmails) return;
 
     const throttleMs = Math.max(0, config().app.errorEmailThrottleMinutes) * 60 * 1000;
@@ -101,7 +101,7 @@ export const criticalAlertMail: LogCallback = async (entry) => {
     const { service, replica, channel, operation, id, status_code, timestamp, request, extraInfo, message } = entry;
     // Collapsed first: a multi-line error message (stack, SQL) would otherwise break the header.
     const subjectMessage = message.replace(/\s+/g, ' ').trim().slice(0, 80);
-    const subject = `CRITICAL [${service}] ${channel}${operation ? '/' + operation : ''}: ${subjectMessage}`;
+    const subject = `CRITICAL [${service}]${channel ? ' ' + channel : ''}${operation ? '/' + operation : ''}: ${subjectMessage}`;
 
     const job: MailJob = {
         name: JOB_ERROR_500_MAIL,
@@ -142,4 +142,4 @@ export const criticalAlertMail: LogCallback = async (entry) => {
         // Swallow: a failed alert must never bubble up and re-trigger a critical line.
         console.error('criticalAlertMail: failed to enqueue the alert mail', error);
     }
-};
+}

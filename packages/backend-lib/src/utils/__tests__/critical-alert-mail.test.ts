@@ -9,7 +9,7 @@ jest.mock('@repo/common-lib/config', () => ({
 jest.mock('../queue-helper', () => ({ QueueHelper: { createMailJob } }));
 
 import { JOB_ERROR_500_MAIL } from '@repo/common-lib/constants/queues';
-import type { LogEntry } from '../../services/log-service/types';
+import type { LogEntry } from '../../config/logging';
 import { CRITICAL_ALERT_MAX_PER_WINDOW, criticalAlertMail, resetCriticalAlertThrottle } from '../critical-alert-mail';
 
 const entry = (over: Partial<LogEntry> = {}): LogEntry => ({

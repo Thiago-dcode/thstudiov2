@@ -32,6 +32,7 @@ Also run `test` / `lint` / `build` on other touched packages (`@repo/common-lib`
 - Touched join queries follow collision-prevention.
 - Touched code compiles.
 - If a middle change (not a typo fix): test, lint, and build all passed.
+- If the change has a side effect (auth, payments, queue, mail, delete): its flow logs per the `logging` skill checklist, with no secrets and no duplicate of the framework's lines.
 - If a queue/processor was requested: helper method exists, no raw `queue.add()`.
 - If a migration was requested: `dbcli` created it and schema/types match the table.
 

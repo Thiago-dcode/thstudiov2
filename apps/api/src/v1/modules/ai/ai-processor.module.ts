@@ -17,8 +17,6 @@ import { CollectionModule } from '../collections/collection.module';
 import { ServiceModule } from '../services/service.module';
 import { AddressModule } from '../addresses/address.module';
 import { AI_QUEUE } from '@repo/common-lib/constants/queues';
-import { LogService } from '@repo/backend-lib/services/log-service';
-import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [
@@ -41,14 +39,6 @@ import { createApiLogger } from 'src/common/utils/api-logger';
     MediaModerationRepository,
     UserAiCreditsEndedMail,
     UserAccountBannedMail,
-    {
-      provide: LogService,
-      useFactory: () => {
-        return createApiLogger({
-          channel: 'ai',
-        });
-      },
-    },
   ],
 })
 export class AiProcessorModule {}

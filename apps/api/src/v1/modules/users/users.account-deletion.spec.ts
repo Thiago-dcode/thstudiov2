@@ -51,7 +51,11 @@ describe('UserService — account deletion / deactivation', () => {
     );
   const logger = { info: jest.fn() };
   const logService = { name: jest.fn(() => logger), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
-  const requestService: { user: unknown } = { user: null };
+  const requestService: { user: unknown; log: () => typeof logService; traceCarrier: () => unknown } = {
+    user: null,
+    log: () => logService,
+    traceCarrier: () => ({ service: 'api' }),
+  };
   // Redis stand-in: the deletion code lives in the cache.
   const cache = new Map<string, unknown>();
   const helpers = {
@@ -83,7 +87,6 @@ describe('UserService — account deletion / deactivation', () => {
     service = new UserService(
       userRepository as never,
       eventEmitter as never,
-      logService as never,
       mailService as never,
       helpers as never,
       requestService as never,
@@ -167,8 +170,10 @@ describe('UserService — account deletion / deactivation', () => {
       expect(cache.has(CACHE_KEY_ACCOUNT_DELETION_CODE_COOLDOWN(7))).toBe(false);
       expect(logService.error).toHaveBeenCalledWith(
         'Failed to send account deletion code',
-        expect.not.objectContaining({ error_message: expect.stringContaining('ana@example.com') }),
-        expect.objectContaining({ operation: 'account-deletion' }),
+        expect.objectContaining({
+          operation: 'account-deletion',
+          error_message: expect.not.stringContaining('ana@example.com'),
+        }),
       );
     });
   });

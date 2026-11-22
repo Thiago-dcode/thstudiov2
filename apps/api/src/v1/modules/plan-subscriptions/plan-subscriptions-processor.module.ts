@@ -5,9 +5,7 @@ import { PlanSubscriptionProcessor } from './plan-subscription.processor';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { PlansModule } from '../plans/plans.module';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { SubscriptionChangedMail } from './mails/subscription-changed.mail';
-import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [
@@ -19,15 +17,6 @@ import { createApiLogger } from 'src/common/utils/api-logger';
   providers: [
     PlanSubscriptionProcessor,
     SubscriptionChangedMail,
-    {
-      provide: LogService,
-      useFactory: () => {
-        return createApiLogger({
-          channel: 'plan-subscriptions',
-          name: 'on-subscription-changes',
-        });
-      },
-    },
   ],
 })
 export class PlanSubscriptionsProcessorModule {}

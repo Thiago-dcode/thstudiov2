@@ -3,14 +3,10 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
 import { CRON_LOCK_TTL, runCronExclusive } from 'src/common/utils/cron-lock';
-import { apiLogConfig, createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger, apiTraceCarrier } from 'src/common/services/request.service';
 
 @Injectable()
 export class AiTask {
-  private readonly logger = createApiLogger({
-    channel: 'ai',
-  });
-
   constructor(
     private readonly userExtraDataRepository: UserExtraDataRepository,
   ) {}
@@ -21,7 +17,7 @@ export class AiTask {
   })
   async handleAiCreditsReset() {
     await runCronExclusive('ai-credits-reset', CRON_LOCK_TTL.daily, async () => {
-      const log = this.logger.name('ai-credits-reset');
+      const log = apiLogger('ai', { operation: 'ai-credits-reset' });
       const today = new Date();
 
       try {
@@ -79,7 +75,7 @@ export class AiTask {
   })
   async handlePortfolioTask() {
     await runCronExclusive('portfolio-task', CRON_LOCK_TTL.daily, async () => {
-      await QueueHelper.createGenerateEntityMetadataJob({ entity: 'portfolio' }, apiLogConfig());
+      await QueueHelper.createGenerateEntityMetadataJob({ entity: 'portfolio' }, apiTraceCarrier());
     });
   }
 
@@ -89,7 +85,7 @@ export class AiTask {
   })
   async handleCollectionTask() {
     await runCronExclusive('collection-task', CRON_LOCK_TTL.daily, async () => {
-      await QueueHelper.createGenerateEntityMetadataJob({ entity: 'collection' }, apiLogConfig());
+      await QueueHelper.createGenerateEntityMetadataJob({ entity: 'collection' }, apiTraceCarrier());
     });
   }
 
@@ -99,7 +95,7 @@ export class AiTask {
   })
   async handleServiceTask() {
     await runCronExclusive('service-task', CRON_LOCK_TTL.daily, async () => {
-      await QueueHelper.createGenerateEntityMetadataJob({ entity: 'service' }, apiLogConfig());
+      await QueueHelper.createGenerateEntityMetadataJob({ entity: 'service' }, apiTraceCarrier());
     });
   }
 
@@ -109,7 +105,7 @@ export class AiTask {
   })
   async handleUserTask() {
     await runCronExclusive('user-task', CRON_LOCK_TTL.daily, async () => {
-      await QueueHelper.createGenerateEntityMetadataJob({ entity: 'user' }, apiLogConfig());
+      await QueueHelper.createGenerateEntityMetadataJob({ entity: 'user' }, apiTraceCarrier());
     });
   }
 }

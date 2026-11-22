@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { consoleRequestService } from 'src/common/testing/console-logger';
 import { RATE_LIMIT_ERROR, UnrecoverableError } from 'bullmq';
 import { EDGE_HTML_MAX_STALE_MS } from '@repo/common-lib/constants/edge-cache';
 import { EDGE_CACHE_QUEUE, JOB_PURGE_ARTIST_EDGE_CACHE } from '@repo/common-lib/constants/queues';
@@ -32,7 +33,7 @@ const build = ({
 } = {}) => {
   const logger = buildLogger();
   // The real prefix builder: the processor's output shape is what is under test.
-  const edgeCacheService = new EdgeCacheService(logger as never);
+  const edgeCacheService = new EdgeCacheService(consoleRequestService(logger as never));
   jest.spyOn(edgeCacheService, 'purgeTarget').mockReturnValue(target);
   const purgePrefixes = jest.spyOn(edgeCacheService, 'purgePrefixes').mockResolvedValue(undefined);
   const userRepository = {
@@ -54,7 +55,7 @@ const build = ({
     edgeCacheService,
     userRepository as never,
     usernameHistoryRepository as never,
-    logger as never,
+    consoleRequestService(logger as never),
     ledger as never,
     queue as never,
   );
@@ -98,8 +99,7 @@ describe('EdgeCacheProcessor', () => {
         expect(logger.info).toHaveBeenCalledTimes(1);
         expect(logger.info).toHaveBeenCalledWith(
           "Edge purge skipped",
-          expect.objectContaining({ reason }),
-          expect.anything(),
+          expect.objectContaining({ reason, operation: 'purge' }),
         );
       },
     );
@@ -283,8 +283,7 @@ describe('EdgeCacheProcessor', () => {
       expect(sentPrefixes(purgePrefixes).join()).not.toMatch(/\.\.|a b/);
       expect(logger.warn).toHaveBeenCalledWith(
         "Edge purge dropped invalid usernames",
-        expect.objectContaining({ dropped: 2 }),
-        expect.anything(),
+        expect.objectContaining({ dropped: 2, operation: 'purge' }),
       );
     });
 
@@ -320,8 +319,7 @@ describe('EdgeCacheProcessor', () => {
 
     expect(logger.info).toHaveBeenCalledWith(
       "Edge purge completed",
-      expect.objectContaining({ names: 2, prefixes: 6, requests: 1, duration_ms: expect.any(Number) }),
-      expect.anything(),
+      expect.objectContaining({ names: 2, prefixes: 6, requests: 1, duration_ms: expect.any(Number), operation: 'purge' }),
     );
     const logged = JSON.stringify([logger.info.mock.calls, logger.warn.mock.calls, logger.error.mock.calls]);
     expect(logged).not.toContain(TOKEN);

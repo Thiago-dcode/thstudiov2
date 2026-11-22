@@ -1,7 +1,6 @@
 import { Processor } from '@nestjs/bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Job } from 'bullmq';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import {
   JOB_INVALIDATE_MEDIA_SEO_CACHE,
@@ -17,14 +16,14 @@ import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
 import { MediaRepository } from './media.repository';
 import { MediaService } from './media.service';
-import { apiLogConfig } from 'src/common/utils/api-logger';
+import { RequestService } from 'src/common/services/request.service';
 
 @Processor(MEDIA_UPDATE_QUEUE)
 export class MediaProcessor extends GlobalProcessor {
   constructor(
     private readonly mediaService: MediaService,
     private readonly mediaRepository: MediaRepository,
-    private readonly logger: LogService,
+    private readonly requestService: RequestService,
     private readonly eventEmitter: EventEmitter2,
   ) {
     super();
@@ -45,7 +44,7 @@ export class MediaProcessor extends GlobalProcessor {
   }
 
   private async handleUpdateMedia(input: UpdateMediaJobInput) {
-    const log = this.logger.name(JOB_UPDATE_MEDIA);
+    const log = this.requestService.log('media', { operation: JOB_UPDATE_MEDIA });
 
     try {
       const result = await this.mediaService.updateForUser(
@@ -67,7 +66,7 @@ export class MediaProcessor extends GlobalProcessor {
         user_id: input.user_id,
         entity_id: input.media_id,
         read_at: null,
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
       this.eventEmitter.emit(
         ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
         new ArtistPublicPagesChangedEvent(input.user_id),
@@ -85,7 +84,7 @@ export class MediaProcessor extends GlobalProcessor {
         user_id: input.user_id,
         entity_id: input.media_id,
         read_at: null,
-      }, apiLogConfig());
+      }, this.requestService.traceCarrier());
 
       log.error(
         `Failed to update media [${input.media_id}] (user ${input.user_id}) - ${error instanceof Error ? error.message : 'Unknown error'}`,

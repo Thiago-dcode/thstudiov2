@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { ConfigService } from '@nestjs/config';
-import type { LogService } from '@repo/backend-lib/services/log-service';
+import type { ApiLogger } from 'src/common/services/request.service';
 import type { UserAuth } from '@repo/common-lib/types/auth';
 import { RequestService } from 'src/common/services/request.service';
 import { requestStorage } from 'src/common/services/request-storage';
@@ -15,7 +15,7 @@ type Fake = { info: jest.Mock; warn: jest.Mock; error: jest.Mock };
 
 const setup = () => {
   const fake: Fake = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
-  const create = jest.spyOn(logService, 'api').mockReturnValue(fake as unknown as LogService);
+  const create = jest.spyOn(logService, 'api').mockReturnValue(fake as unknown as ApiLogger);
   const flush = jest.spyOn(logBuffer, 'flush');
   const requestService = new RequestService(requestStorage);
   const config = { get: jest.fn().mockReturnValue('app-token') } as unknown as ConfigService;
@@ -61,10 +61,10 @@ describe('RequestMiddleware', () => {
     expect(create).toHaveBeenCalledTimes(1);
     // `logService.api` is the spy: the service is the factory's.
     const [cfg = {}] = create.mock.calls[0];
-    expect(cfg.channel).toBe(ACCESS_LOG_CHANNEL);
+    expect(cfg.defaultOptions?.channel).toBe(ACCESS_LOG_CHANNEL);
     expect(ACCESS_LOG_CHANNEL).toBe('api.access');
     expect(typeof cfg.id).toBe('function');
-    expect(typeof cfg.request).toBe('function');
+    expect(typeof cfg.globalContext).toBe('function');
     expect(requestService.requestId).toBeNull();
   });
 
@@ -86,7 +86,7 @@ describe('RequestMiddleware', () => {
     let log: any;
     const req = makeReq({ originalUrl: '/v1/auth/verify?token=abc', route: { path: '/v1/auth/verify' } });
     await middleware.use(req, makeRes(), () => {
-      log = requestService.log;
+      log = requestService.logContext;
     });
     expect(JSON.stringify(log)).not.toContain('abc');
     expect(log.path).toBe('/v1/auth/verify');
@@ -285,7 +285,7 @@ describe('RequestMiddleware', () => {
 
     const seen: any[] = [];
     fake.info.mockImplementation(() => {
-      seen.push({ id: (binding.id as () => string | null)(), request: (binding.request as () => any)() });
+      seen.push({ id: (binding.id as () => string | null)(), request: (binding.globalContext as () => any)() });
     });
     // Close from outside any store, in the opposite order.
     resB.emit('close');
@@ -347,21 +347,21 @@ describe('RequestMiddleware secret path params', () => {
     ['/api/v1/wait-list/invitation/SECRETP', '/api/v1/wait-list/invitation/:code', { code: 'SECRETP' }, '/api/v1/wait-list/invitation/:code'],
   ];
 
-  it.each(SECRET_ROUTES)('AC-19: %s never exposes the secret in requestService.log or the access line', async (url, template, params, masked) => {
+  it.each(SECRET_ROUTES)('AC-19: %s never exposes the secret in requestService.logContext or the access line', async (url, template, params, masked) => {
     const { middleware, fake, create, requestService } = setup();
     const binding = create.mock.calls[0][0]!;
     const res = makeRes({ statusCode: 200 });
     const req = makeReq({ originalUrl: url, route: { path: template }, params });
     let logDuringRequest: any;
     await middleware.use(req, res, () => {
-      logDuringRequest = requestService.log;
+      logDuringRequest = requestService.logContext;
     });
     expect(JSON.stringify(logDuringRequest)).not.toContain('SECRETP');
     expect(logDuringRequest.path).toBe(masked);
 
     let resolved: any;
     fake.info.mockImplementation(() => {
-      resolved = (binding.request as () => any)();
+      resolved = (binding.globalContext as () => any)();
     });
     res.emit('close');
     expect(fake.info).toHaveBeenCalledTimes(1);
@@ -379,7 +379,7 @@ describe('RequestMiddleware secret path params', () => {
     });
     let log: any;
     await middleware.use(req, makeRes(), () => {
-      log = requestService.log;
+      log = requestService.logContext;
     });
     expect(JSON.stringify(log)).not.toMatch(/a%2Bb|a\+b/);
   });
@@ -389,10 +389,10 @@ describe('RequestMiddleware secret path params', () => {
     const req = makeReq({ originalUrl: '/api/v1/email-preferences/SECRETP/token' });
     const seen: any[] = [];
     await middleware.use(req, makeRes(), () => {
-      seen.push(requestService.log);
+      seen.push(requestService.logContext);
       req.route = { path: '/api/v1/email-preferences/:token/token' };
       req.params = { token: 'SECRETP' };
-      seen.push(requestService.log);
+      seen.push(requestService.logContext);
     });
     expect(seen[0].path).toBeNull();
     expect(seen[1].path).toBe('/api/v1/email-preferences/:token/token');
@@ -406,7 +406,7 @@ describe('RequestMiddleware secret path params', () => {
     await run(middleware, makeReq({ originalUrl: '/api/v1/leak/SECRETP?token=SECRETQ' }), res);
     let resolved: any;
     fake.warn.mockImplementation(() => {
-      resolved = (binding.request as () => any)();
+      resolved = (binding.globalContext as () => any)();
     });
     res.emit('close');
     expect(resolved.path).toBeNull();
@@ -422,7 +422,7 @@ describe('RequestMiddleware secret path params', () => {
     });
     let log: any;
     await middleware.use(req, makeRes(), () => {
-      log = requestService.log;
+      log = requestService.logContext;
     });
     expect(JSON.stringify(log)).not.toContain('SECRETP');
   });
@@ -434,12 +434,12 @@ describe('RequestMiddleware secret path params', () => {
     const req = makeReq({ originalUrl: '/api/v1/media/5?x=1', route: { path: '/api/v1/media/:id' }, params: { id: '5' } });
     let log: any;
     await middleware.use(req, res, () => {
-      log = requestService.log;
+      log = requestService.logContext;
     });
     expect(log.path).toBe('/api/v1/media/5');
     let resolved: any;
     fake.info.mockImplementation(() => {
-      resolved = (binding.request as () => any)();
+      resolved = (binding.globalContext as () => any)();
     });
     res.emit('close');
     expect(resolved.path).toBe('/api/v1/media/5');

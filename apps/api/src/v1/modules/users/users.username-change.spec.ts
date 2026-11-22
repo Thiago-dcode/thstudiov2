@@ -53,15 +53,14 @@ const build = (user: Partial<typeof baseUser> = {}) => {
     findRedirect: jest.fn().mockResolvedValue({ username: 'newname' }),
   };
   const helpers = { deleteManyCached: jest.fn().mockResolvedValue(undefined), cacheRemember: jest.fn() };
-  const logService = { name: jest.fn().mockReturnThis(), error: jest.fn(), info: jest.fn() };
+  const logService = { error: jest.fn(), info: jest.fn() };
   const eventEmitter = { emit: jest.fn() };
   const service = new UserService(
     userRepository as never,
     eventEmitter as never,
-    logService as never,
     {} as never, // mailService
     helpers as never,
-    { user: { id: current.id } } as never, // requestService
+    { user: { id: current.id }, log: () => logService, traceCarrier: () => ({ service: 'api' }) } as never, // requestService
     {} as never, // notifyNewUserMail
     {} as never, // aiService
     {} as never, // profileStatusService
@@ -235,10 +234,7 @@ describe('UserService.handleNewUserEvent', () => {
 
     expect(logService.error).toHaveBeenCalledWith(
       'Username cache clear failed for new user',
-      expect.objectContaining({ error_name: 'Error' }),
-      expect.objectContaining({ operation: 'new-user' }),
+      expect.objectContaining({ error_name: 'Error', operation: 'new-user' }),
     );
-    // Per-call operation: the shared DI logger is never renamed.
-    expect(logService.name).not.toHaveBeenCalled();
   });
 });

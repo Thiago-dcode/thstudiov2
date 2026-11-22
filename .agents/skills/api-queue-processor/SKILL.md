@@ -34,7 +34,7 @@ Job payload type in `packages/common-lib/src/types/<entity>.ts` only if the work
 
 ## QueueHelper method
 
-Add a static method on `QueueHelper` that takes a trailing `log: LogConfig = {}` and forwards it to `enqueueJob(queue, name, data, opts, log)`, so the job carries the caller's trace id. Default options unless `queue-helper.ts` documents a special case:
+Add a static method on `QueueHelper` that takes a trailing `carrier?: LogTraceCarrier` and forwards it to `enqueueJob(queue, name, data, opts, carrier)`, so the job carries the caller's trace id and context. Default options unless `queue-helper.ts` documents a special case:
 
 ```ts
 {
@@ -65,14 +65,10 @@ imports: [
 ],
 providers: [
   <Entity>Processor,
-  {
-    provide: LogService,
-    useFactory: () => createApiLogger({ channel: '<entity>' }),
-  },
 ],
 ```
 
-`createApiLogger` (`src/common/utils/api-logger.ts`) gives the logger the api service, the critical mail and the current request/job trace id. No log queue to register: the worker flushes the shared log buffer (see the `logging` skill). If the module already registers the queue and logger, only add the new job constant, helper method, and `switch` case.
+There is no logger provider: inject `RequestService` and build the logger in the method, `const log = this.requestService.log('<channel>', { operation: JOB_<ACTION> })` (channel from `LOG_CHANNELS`). Inside a job it reads the job's trace id (the enqueuer's) per line. No log queue to register: the worker flushes the shared log buffer (see the `logging` skill). If the module already registers the queue, only add the new job constant, helper method, and `switch` case.
 
 ## Enqueue and consume
 
@@ -81,7 +77,7 @@ Service: `@InjectQueue(<ENTITY>_QUEUE)`, call the helper, return immediately.
 ```ts
 @InjectQueue(WAIT_LIST_QUEUE) private readonly waitListQueue: Queue
 
-await QueueHelper.createWaitListEntryJob({ email, language }, apiLogConfig());
+await QueueHelper.createWaitListEntryJob({ email, language }, this.requestService.traceCarrier());
 ```
 
 Processor: `@Processor(<ENTITY>_QUEUE)`, extend `GlobalProcessor`, `switch (job.name)`, rethrow so BullMQ retries. Unknown job names throw. Never flush logs (no `finally` for it): `GlobalProcessor` runs the job in its own trace (the enqueuer's id) with start/completed lines, and the worker writes the lines. For a final-attempt check use `isFinalAttempt(job)`.
@@ -100,15 +96,15 @@ export class WaitListProcessor extends GlobalProcessor {
 }
 ```
 
-`GlobalProcessor` already logs permanent failures. Do not duplicate that. The processor owns persistence races, emails, and other side effects.
+`GlobalProcessor` already logs job start, completion, each retry and the permanent failure. Do not duplicate that: don't log `started`/`completed` for the job itself, and don't `log.error(...)` and rethrow just to report the failure. Log the processor's own milestones (a side effect done, a branch taken, a skipped step) with ids in the options. The processor owns persistence races, emails, and other side effects.
 
 ## Processor-only checklist
 
 - [ ] Queue + job constants (new job on an existing queue is enough)
 - [ ] Job payload type if needed
-- [ ] `QueueHelper` method with a trailing `log: LogConfig = {}` (never raw `queue.add`); callers pass `apiLogConfig()`
+- [ ] `QueueHelper` method with a trailing `carrier?: LogTraceCarrier` (never raw `queue.add`); callers pass `requestService.traceCarrier()` (`apiTraceCarrier()` outside DI)
 - [ ] Processor on `GlobalProcessor` with a `job.name` case
-- [ ] Module `registerQueue` + processor provider + `createApiLogger({ channel })` logger (skip if already present)
+- [ ] Module `registerQueue` + processor provider (skip if already present); the processor logs through `requestService.log(channel, { operation })`, no logger provider
 - [ ] An enqueue call only if something must produce the job (service, task, or another processor)
 
 ## After implementing

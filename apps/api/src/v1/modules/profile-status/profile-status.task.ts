@@ -1,7 +1,7 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { ProfileStatusService } from './profile-status.service';
 import { CRON_LOCK_TTL, runCronExclusive } from 'src/common/utils/cron-lock';
-import { createApiLogger } from 'src/common/utils/api-logger';
+import { apiLogger } from 'src/common/services/request.service';
 
 /**
  * One-shot backfill on API boot: sync every user's profile_status flags from
@@ -14,10 +14,6 @@ import { createApiLogger } from 'src/common/utils/api-logger';
 export class ProfileStatusTask implements OnApplicationBootstrap {
   private static hasRun = false;
 
-  private readonly logger = createApiLogger({
-    channel: 'profile-status',
-  });
-
   constructor(private readonly profileStatusService: ProfileStatusService) {}
 
   async onApplicationBootstrap() {
@@ -26,7 +22,7 @@ export class ProfileStatusTask implements OnApplicationBootstrap {
 
     // Every API replica boots this; one run per deploy is enough.
     await runCronExclusive('profile-status-backfill', CRON_LOCK_TTL.boot, async () => {
-      const log = this.logger.name('backfill');
+      const log = apiLogger('profile-status', { operation: 'backfill' });
       try {
         log.info('Starting profile_status backfill from live user data');
         const affected = await this.profileStatusService.backfillAll();

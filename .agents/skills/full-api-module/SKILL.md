@@ -28,6 +28,7 @@ Do not scaffold a full CRUD module, queue, processor, or mailer because a neighb
 | Service | `.agents/skills/api-service/SKILL.md` | Orchestrating a use-case |
 | Queue + processor | `.agents/skills/api-queue-processor/SKILL.md` | Processor, job, or async side effects |
 | Mail | `.agents/skills/api-mail/SKILL.md` | Sending email |
+| Logging | `.agents/skills/logging/SKILL.md` | Any service, processor, webhook or cron with a side effect (always, with the service/queue recipe) |
 | Join queries | `.agents/skills/api-join-queries/SKILL.md` | A select joins tables |
 | Collision prevention | `.agents/skills/collision-prevention/SKILL.md` | Joined columns / formatters (required with join queries) |
 | Verification | `.agents/skills/api-verification/SKILL.md` | After a middle change (not a typo fix) |
@@ -51,6 +52,7 @@ Hard rules (always):
 - Controllers stay thin. Services orchestrate. Repositories own DB access.
 - Load `.agents/skills/collision-prevention/SKILL.md` before any join query.
 - Create and run migrations only through `dbcli`. Never hand-author files in `packages/database/src/migrations/`, and never run a `.ts` migration directly.
+- Every service method or processor with a side effect logs its milestones and failures (load `.agents/skills/logging/SKILL.md`): `requestService.log(channel, { operation })` built once, ids in the options, `traceCarrier()` on every `QueueHelper` call. Don't log what the framework already logs (access line, exception filter, job start/completed) and don't log-then-throw the same 4xx.
 - If it is a middle change, not just a typo fix, it must run test, lint, and build and pass all of them. Follow `.agents/skills/api-verification/SKILL.md`.
 
 Reference module: `apps/api/src/v1/modules/wait-list/`. Copy structure from it; do not copy unused files (processor, mails, tasks) unless that recipe was requested.

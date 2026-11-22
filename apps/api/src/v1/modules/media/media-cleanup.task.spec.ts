@@ -23,7 +23,7 @@ jest.mock('@repo/backend-lib/utils', () => ({
   },
 }));
 
-import type { LogService } from '@repo/backend-lib/services/log-service';
+import type { RequestService } from 'src/common/services/request.service';
 import type { Media } from '@repo/common-lib/types/media';
 import { MediaCleanupTask } from './media-cleanup.task';
 import type { MediaRepository } from './media.repository';
@@ -42,12 +42,12 @@ const createTask = (candidates: StaleMedia[], stillStale = true) => {
     },
   };
   const scoped = { info: () => undefined, error: () => undefined };
-  const logger = { name: () => scoped };
+  const requestService = { log: () => scoped };
 
   const task = new MediaCleanupTask(
     repository as unknown as MediaRepository,
     service as unknown as MediaService,
-    logger as unknown as LogService,
+    requestService as unknown as RequestService,
   );
   return { task, deleteCalls };
 };

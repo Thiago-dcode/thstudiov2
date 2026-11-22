@@ -2,6 +2,7 @@
 jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({ stripe: {}, stripeWebhookSecret: '' }));
 jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({ paypal: {} }));
 
+import { consoleRequestService } from 'src/common/testing/console-logger';
 import {
   JOB_DELETE_USER_ACCOUNT,
   JOB_SEND_ACCOUNT_DELETION_WARNING,
@@ -47,7 +48,7 @@ describe('AccountDeletionProcessor', () => {
       userService as never,
       mailService as never,
       warningMail as never,
-      logger as never,
+      consoleRequestService(logger as never),
     );
   });
 

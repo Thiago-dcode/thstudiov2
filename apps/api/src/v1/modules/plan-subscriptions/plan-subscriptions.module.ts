@@ -7,8 +7,6 @@ import { PlansModule } from '../plans/plans.module';
 import { PaymentMethodsService } from '../utils/payment-methods.service';
 import { UserBenefitModule } from '../user-benefit/user-benefit.module';
 import { UserModule } from '../users/users.module';
-import { LogService } from '@repo/backend-lib/services/log-service';
-import { createApiLogger } from 'src/common/utils/api-logger';
 
 @Module({
   imports: [
@@ -22,14 +20,6 @@ import { createApiLogger } from 'src/common/utils/api-logger';
     PlanSubscriptionsService, 
     PlanSubscriptionsRepository,
     PaymentMethodsService,
-    {
-      provide: LogService,
-      useFactory: () => {
-        return createApiLogger({
-          channel: 'plan-subscriptions',
-        });
-      },
-    },
   ],
   exports: [PlanSubscriptionsService],
 })

@@ -14,7 +14,7 @@ import { S3StorageConfig, StorageWriteInput } from "./types";
 import { logService } from '../../config/logging';
 
 /** Failures and destructive/bulk ops only: puts and gets are summarised by the business lines. */
-const storageLog = logService.lib({ channel: "storage" });
+const storageLog = logService.lib({ defaultOptions: { channel: "storage" } });
 
 /** AWS SDK error fields worth keeping; never the request, credentials or response body. */
 const awsErrorFields = (error: unknown) => {
@@ -248,8 +248,7 @@ export class S3StorageService extends StorageService {
 
             storageLog.info(
                 'Storage directory deleted',
-                { bucket: this.config.bucket, prefix, objects_deleted: objectsDeleted, batches, duration_ms: Date.now() - startedAt },
-                { operation: 'delete-directory' },
+                { bucket: this.config.bucket, prefix, objects_deleted: objectsDeleted, batches, duration_ms: Date.now() - startedAt, operation: 'delete-directory' },
             );
             return true;
         } catch (error) {
@@ -360,8 +359,7 @@ export class S3StorageService extends StorageService {
         if (!(await source.delete(fromPath))) {
             storageLog.warn(
                 'Storage promote left its source behind',
-                { source_bucket: source.bucket, key: fromPath },
-                { operation: 'promote' },
+                { source_bucket: source.bucket, key: fromPath, operation: 'promote' },
             );
         }
         return true;
@@ -377,8 +375,7 @@ export class S3StorageService extends StorageService {
     ): void {
         storageLog.error(
             message,
-            { bucket: this.config.bucket, ...fields, ...awsErrorFields(error), duration_ms: Date.now() - startedAt },
-            { operation },
+            { bucket: this.config.bucket, ...fields, ...awsErrorFields(error), duration_ms: Date.now() - startedAt, operation },
         );
     }
 

@@ -1,10 +1,12 @@
 const mockLog = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+const mockFactoryCalls: { service: string | null; cfg: Record<string, unknown> }[] = [];
 jest.mock('../../../config/logging', () => {
   const actual = jest.requireActual('../../../config/logging');
   // Every factory hands its service and overrides to one mock, as the real ones build one config.
-  const create = () => mockLog;
-  const factory = (service: string | null) => (overrides: Record<string, unknown> = {}) =>
-    (create as (buffer: unknown, cfg: any) => unknown)(undefined, { service, ...overrides });
+  const factory = (service: string | null) => (overrides: Record<string, unknown> = {}) => {
+    mockFactoryCalls.push({ service, cfg: overrides });
+    return mockLog;
+  };
   return {
     ...actual,
     logService: { api: factory('api'), worker: factory('worker'), dbcli: factory('dbcli'), web: factory('web'), lib: factory(null) },
@@ -34,6 +36,10 @@ const awsError = (name = 'AccessDenied', status = 403) =>
   });
 
 describe('S3StorageService logging', () => {
+  it('AC-5: the storage logger is a lib logger on channel storage, with the operation set per line', () => {
+    expect(mockFactoryCalls).toEqual([{ service: null, cfg: { defaultOptions: { channel: 'storage' } } }]);
+  });
+
   beforeEach(() => {
     Object.values(mockLog).forEach((fn) => fn.mockReset());
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -45,11 +51,12 @@ describe('S3StorageService logging', () => {
     send.mockRejectedValue(awsError());
     await expect(storage.delete('users/u/a.webp')).resolves.toBe(false);
     expect(mockLog.error).toHaveBeenCalledTimes(1);
-    const [message, extra, fields] = mockLog.error.mock.calls[0];
+    const [message, extra, ...rest] = mockLog.error.mock.calls[0];
+    expect(rest).toEqual([]);
     expect(message).toBe('Storage delete failed');
     expect(extra).toMatchObject({ bucket: 'media-bucket', key: 'users/u/a.webp', error_name: 'AccessDenied' });
     expect(typeof extra.duration_ms).toBe('number');
-    expect(fields).toEqual({ operation: 'delete' });
+    expect(extra.operation).toBe('delete');
   });
 
   it('AC-31: AWS status and request id are captured when present', async () => {
@@ -74,10 +81,11 @@ describe('S3StorageService logging', () => {
       .mockResolvedValueOnce({});
     await expect(storage.deleteDirectory('p/')).resolves.toBe(true);
     expect(mockLog.info).toHaveBeenCalledTimes(1);
-    const [message, extra, fields] = mockLog.info.mock.calls[0];
+    const [message, extra, ...rest] = mockLog.info.mock.calls[0];
+    expect(rest).toEqual([]);
     expect(message).toBe('Storage directory deleted');
     expect(extra).toMatchObject({ bucket: 'media-bucket', prefix: 'p/', objects_deleted: 3, batches: 2 });
-    expect(fields).toEqual({ operation: 'delete-directory' });
+    expect(extra.operation).toBe('delete-directory');
   });
 
   it('AC-31: deleteDirectory failing returns false with an error line and the partial counts', async () => {

@@ -10,7 +10,6 @@ jest.mock('src/common/utils/user-lock', () => ({
   withUserLock: jest.fn(async (_key: string, _ttl: number, fn: () => Promise<unknown>) => fn()),
 }));
 
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { consoleLogger } from 'src/common/testing/console-logger';
 import { hash } from '@repo/common-lib/utils/hash';
 import { UserService } from './users.service';
@@ -36,8 +35,7 @@ const build = async () => {
       try { lines.push(JSON.parse(String(line))); } catch { /* not a log line */ }
     });
   }
-  const logService = consoleLogger({ channel: 'users' });
-  const nameSpy = jest.spyOn(logService, 'name');
+  const logService = consoleLogger({ defaultOptions: { channel: 'users' } });
   const user = { ...baseUser, password: await hash(OLD_PASSWORD) };
   const userRepository = {
     findById: jest.fn().mockResolvedValue(user),
@@ -58,7 +56,6 @@ const build = async () => {
   const service = new UserService(
     userRepository as never,
     eventEmitter as never,
-    logService as unknown as LogService,
     {} as never,
     {
       deleteManyCached: jest.fn().mockResolvedValue(undefined),
@@ -72,7 +69,7 @@ const build = async () => {
       }),
       deleteCached: jest.fn().mockResolvedValue(undefined),
     } as never,
-    { user: { id: user.id, token: TOKEN } } as never,
+    { user: { id: user.id, token: TOKEN }, log: () => logService, traceCarrier: () => ({ service: 'api' }) } as never,
     {} as never,
     {} as never,
     {} as never,
@@ -80,7 +77,7 @@ const build = async () => {
     {} as never,
     usernameHistory as never,
   );
-  return { service, userRepository, nameSpy };
+  return { service, userRepository };
 };
 
 const audit = (message: string) => lines.filter((l) => l.channel === 'users' && l.message === message);
@@ -134,8 +131,8 @@ describe('UserService audit lines', () => {
     expect(line.extraInfo.user_id).toBe(8);
   });
 
-  it('AC-27: deletion request and cancel use a per-call operation and leave the shared logger unrenamed', async () => {
-    const { service, nameSpy } = await build();
+  it('AC-27: deletion request and cancel use a per-call operation', async () => {
+    const { service } = await build();
     await service.requestDeletion(5, { code: DELETION_CODE, cancel_subscription: true } as never);
     await service.cancelDeletion(5);
     const [requested] = audit('Account deletion requested');
@@ -143,10 +140,6 @@ describe('UserService audit lines', () => {
     expect(requested.operation).toBe('account-deletion');
     expect(requested.extraInfo).toEqual({ user_id: 5, cancel_subscription: true });
     expect(cancelled.operation).toBe('account-deletion');
-    expect(nameSpy).not.toHaveBeenCalled();
-    // The next line from the same logger has no leaked operation.
-    const logger = consoleLogger({ channel: 'users' });
-    void logger;
     expect(JSON.stringify(lines)).not.toMatch(new RegExp(`${DELETION_CODE}|${EMAIL}`));
   });
 

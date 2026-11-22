@@ -11,7 +11,6 @@ jest.mock('@repo/common-lib/config/utils', () => ({
 }));
 
 import type { MailService } from '@repo/backend-lib/services/mail-service';
-import type { LogService } from '@repo/backend-lib/services/log-service';
 import type { WaitList } from '@repo/common-lib/types/wait-list';
 import type { WaitListFollowUpMail } from './mails/wait-list-follow-up.mail';
 import type { WaitListReminderMail } from './mails/wait-list-reminder.mail';
@@ -50,7 +49,7 @@ const createTask = (dueFollowUps: Partial<WaitList>[] = [], dueInviteCount = 0) 
     {} as WaitListReminderMail,
     followUpMail as unknown as WaitListFollowUpMail,
     mailService as unknown as MailService,
-    logger as unknown as LogService,
+    { log: () => logger, traceCarrier: () => ({ service: 'api' }) } as never,
   );
 
   const argsOf = (method: string) => calls.filter((call) => call.method === method).map((call) => call.args);
