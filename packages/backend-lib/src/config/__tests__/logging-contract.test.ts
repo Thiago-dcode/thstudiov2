@@ -273,12 +273,15 @@ describe('logging contract outside the api (source scan)', () => {
       const callers = webSource.filter((f) => /\bwithLogTrace\s*\(/.test(read(f)) && rel(f) !== 'apps/web/src/lib/logging/logger.ts');
       expect(callers.map(rel).sort()).toEqual([
         'apps/web/src/app/api/oauth2/[provider]/callback/route.ts',
+        'apps/web/src/lib/server-actions/module-actions.server.ts',
         'apps/web/src/modules/auth/server-actions/Oauth2Initiate.action.ts',
       ]);
       const route = read(join(ROOT, 'apps/web/src/app/api/oauth2/[provider]/callback/route.ts'));
       expect(route).toContain("/api/oauth2/[provider]/callback");
       expect(route).toMatch(/kind:\s*['"]route['"]/);
       expect(read(join(ROOT, 'apps/web/src/modules/auth/server-actions/Oauth2Initiate.action.ts'))).toMatch(/kind:\s*['"]action['"]/);
+      // the shared sortable-module actions (sort + status) pass the action context on both calls
+      expect(read(join(ROOT, 'apps/web/src/lib/server-actions/module-actions.server.ts')).match(/kind:\s*['"]action['"]/g)).toHaveLength(2);
     });
 
     it('the web logger reads its id and its context per line from the trace store', () => {
