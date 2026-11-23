@@ -15,7 +15,7 @@
     "@repo/backend-lib": "workspace:*",
     "@repo/common-lib": "workspace:*",
     "@repo/database": "workspace:*",
-    "bullmq": "^6.7.6",
+    "bullmq": "^6.7.8",
     "express": "^5.3.0",
     "ioredis": "^5.11.1"
   },

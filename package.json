@@ -27,7 +27,7 @@
     "i": "^0.3.7",
     "prettier": "^3.10.1",
     "rimraf": "^6.1.4",
-    "turbo": "^2.11.11",
+    "turbo": "^2.11.13",
     "typescript": "^7.0.2"
   },
   "packageManager": "pnpm@12.15.0",
