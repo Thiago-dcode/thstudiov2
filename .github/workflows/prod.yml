@@ -175,7 +175,7 @@ jobs:
           allowed-ips: ${{ vars.WG_ALLOWED_IPS }}
 
       - name: SSH deploy
-        uses: Thiago-dcode/gh-actions/.github/actions/ssh-deploy@738138213ed2142b61418c3e06c10a4e51ddaa0b # v2
+        uses: Thiago-dcode/gh-actions/.github/actions/ssh-deploy@9610307e5f3ff7fa16bb6be2dd34fe39fd95943c # v2
         with:
           deploy-script: ${{ secrets.SSH_DEPLOY_DIR }}/infrastructure/scripts/deploy-app.sh
           deploy-args: prod
