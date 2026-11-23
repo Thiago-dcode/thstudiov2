@@ -105,7 +105,11 @@ export default async function Home({
     getTranslations("seo"),
     isDirectoryOpen(),
   ]);
-  const sections = isLandingV2() ? SECTIONS_V2 : SECTIONS;
+  const v2 = isLandingV2();
+  const sections = v2 ? SECTIONS_V2 : SECTIONS;
+  const rendered = sections.map(({ id, Component }, index) => (
+    <Component key={id} id={id} nextSectionId={sections[index + 1]?.id} />
+  ));
   return (
     <>
       {/* One connected graph: the brand, the site and this page (they were two unrelated scripts). */}
@@ -120,9 +124,15 @@ export default async function Home({
           { directoryOpen },
         )}
       />
-      {sections.map(({ id, Component }, index) => (
-        <Component key={id} id={id} nextSectionId={sections[index + 1]?.id} />
-      ))}
+      {v2 ? (
+        // v2 lets the sections breathe: a wide gap between each (a section that renders nothing
+        // leaves no gap). v1 keeps its original spacing.
+        <div className="flex flex-col gap-24 tablet:gap-32 laptop:gap-40">
+          {rendered}
+        </div>
+      ) : (
+        rendered
+      )}
     </>
   );
 }
