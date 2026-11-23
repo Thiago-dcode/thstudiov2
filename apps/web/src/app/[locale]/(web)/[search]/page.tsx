@@ -4,6 +4,7 @@ import type { Pagination } from "@repo/common-lib/types/response";
 import type { ArtistIndexRequest } from "@repo/common-lib/types/user";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { AppPagination } from "@repo/ui/components/custom/app-pagination";
+import { EDITORIAL_LABEL_CLASS } from "@repo/ui/components/custom/editorial";
 import { cn } from "@repo/ui/lib/utils";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -251,7 +252,7 @@ export default async function SearchPage({
                     the sibling error/empty branches — an h5 here skipped three levels. */}
                 <h2
                   id="search-results-heading"
-                  className="text-sm font-medium tracking-wide text-text-muted"
+                  className={EDITORIAL_LABEL_CLASS}
                 >
                   {/* Pluralization handled by next-intl in the translation key */}
                   {search === "portfolios"

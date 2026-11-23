@@ -8,7 +8,7 @@ import { serverEnv } from "@/env/server";
  * It reads a deploy-wide flag, never the visitor, so it is safe in edge-cached HTML.
  */
 export async function CtaMicrocopy({ className }: { className?: string }) {
-  const t = await getTranslations("landingV2.microcopy");
+  const t = await getTranslations("landing.microcopy");
   const registrationIsClosed = serverEnv.REGISTRATION_IS_CLOSED === 1;
 
   return (

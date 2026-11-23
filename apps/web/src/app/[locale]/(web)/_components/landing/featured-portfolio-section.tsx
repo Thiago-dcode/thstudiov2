@@ -2,6 +2,7 @@ import {
   buildPortfolioItemsFromFullPortfolio,
   extractMediaFromPortfolioItems,
 } from "@repo/common-lib/utils/portfolio";
+import { editorialHeadlineClass } from "@repo/ui/components/custom/editorial";
 import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { PortfolioGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
@@ -11,14 +12,33 @@ import { getGalleryLabels } from "@/lib/gallery-labels";
 import portfolioService from "@/modules/portfolios/portfolio.service";
 import { NextSectionArrow } from "./next-section-arrow";
 import { reportSectionError } from "./section-error";
-import { type LandingSectionProps, WebSection } from "./web-section";
+import {
+  EDITORIAL_LINK_CLASS,
+  editorialNumber,
+  type LandingSectionProps,
+  WebSection,
+} from "./web-section";
 
+const LAYOUT_KEYS = {
+  MASONRY: "masonry",
+  UNIFORM: "uniform",
+  COLUMN_BASE: "columns",
+} as const;
+
+/**
+ * The featured portfolio: a static, keyword-bearing h2 ("a photography portfolio made on
+ * A11STUDIO") with the portfolio's own title as the h3 under it, a line of real facts and a way into
+ * the full portfolio.
+ */
 export async function FeaturedPortfolioSection({
   id,
   nextSectionId,
+  index,
 }: LandingSectionProps) {
-  const t = await getTranslations("landing.featuredPortfolio");
-  const portfolioResponse = await portfolioService.getFeatured();
+  const [t, portfolioResponse] = await Promise.all([
+    getTranslations("landing.featuredPortfolio"),
+    portfolioService.getFeatured(),
+  ]);
   reportSectionError("featured-portfolio", portfolioResponse);
   const portfolio = portfolioResponse.data;
 
@@ -29,47 +49,56 @@ export async function FeaturedPortfolioSection({
 
   if (!portfolioItems.length) return null;
 
+  const username = portfolio.artist.username;
+  const portfolioHref = portfolio.slug
+    ? `/artists/${encodeURIComponent(username)}/portfolios/${encodeURIComponent(portfolio.slug)}`
+    : null;
+  const layoutKey = portfolio.layout
+    ? LAYOUT_KEYS[portfolio.layout.name]
+    : undefined;
+  const facts = [
+    layoutKey ? t(`layouts.${layoutKey}`) : null,
+    t("works", { count: mediaItems.length }),
+  ].filter(Boolean);
+
   return (
     <WebSection
       id={id}
       className="overflow-hidden max-w-(--breakpoint-ultrawide) max-h-[200svh] mx-auto"
     >
       <WebSection.Container className="pt-24">
-        <div className="flex w-full flex-col  gap-2">
-          <div className="flex flex-col   w-full">
-            <div className="flex flex-col items-start justify-start ">
-              <h2 className="line-clamp-2 laptop:line-clamp-1 text-xl!">
-                {portfolio.title}
-              </h2>
-              {/* <p className=" line-clamp-3 text-text-muted max-w-5xl text-base!">
-                {portfolio.description}
-              </p> */}
-              {/* h3, not h4: the section heading above is an h2, and skipping a level breaks the
-                  document outline crawlers read. */}
-              <h3 className="text-end pt-2 text-text text-sm!">
-                {t("by")}:{" "}
-                <Link
-                  href={`/artists/${portfolio.artist.username}`}
-                  className="font-medium hover:text-text text-text-muted "
-                  aria-label={t("viewProfile", {
-                    username: portfolio.artist.username,
-                  })}
-                >
-                  @{portfolio.artist.username}
-                </Link>
-              </h3>
-            </div>
-            {/* <div className="hidden laptop:flex items-center self-end">
-              <WebSection.ActionLink
-                href={`/artists/${portfolio.artist.username}/portfolios`}
-                className="bg-bg/10 backdrop-blur-sm text-end text-lg!"
+        <div className="flex w-full flex-col gap-10 laptop:gap-14">
+          {/* Same opening as the other homepage sections (hairline, label, serif headline), with the
+              portfolio's credit set like a caption in the right column. */}
+          <header className="mx-3 flex flex-col gap-8 border-t border-border pt-6 tablet:mx-6 tablet:flex-row tablet:items-end tablet:justify-between laptop:pt-8">
+            <div className="flex max-w-4xl flex-col gap-6">
+              <WebSection.Label
+                qualifier={index ? editorialNumber(index) : undefined}
               >
-                {t("exploreMore")}
-              </WebSection.ActionLink>
-            </div> */}
-          </div>
+                {t("badge")}
+              </WebSection.Label>
+              <h2 className={editorialHeadlineClass("section")}>
+                {t("title")}
+              </h2>
+            </div>
+            <div className="flex max-w-sm flex-col gap-3 tablet:items-end tablet:text-right">
+              <h3 className="line-clamp-2 font-serif! text-xl! font-normal! italic leading-snug!">
+                {portfolio.title}
+              </h3>
+              <p className="text-sm! text-text-muted">
+                {t("by")}{" "}
+                <Link
+                  href={`/artists/${encodeURIComponent(username)}`}
+                  className="text-text underline decoration-border-em underline-offset-4 transition-colors hover:decoration-text"
+                >
+                  @{username}
+                </Link>
+              </p>
+              <WebSection.Label>{facts.join(" · ")}</WebSection.Label>
+            </div>
+          </header>
 
-          <div className=" flex flex-col m-auto overflow-hidden size-full">
+          <div className="flex flex-col m-auto overflow-hidden size-full">
             <GalleryProvider
               labels={await getGalleryLabels()}
               items={mediaItems.map((m) => ({
@@ -97,6 +126,16 @@ export async function FeaturedPortfolioSection({
           className="featured-portfolio-fade pointer-events-none"
           aria-hidden
         />
+        {portfolioHref ? (
+          <div className="absolute inset-x-0 bottom-24 flex justify-center">
+            <WebSection.ActionLink
+              href={portfolioHref}
+              className={EDITORIAL_LINK_CLASS}
+            >
+              {t("viewFull")}
+            </WebSection.ActionLink>
+          </div>
+        ) : null}
         <NextSectionArrow nextSectionId={nextSectionId} />
       </div>
       <style>{`

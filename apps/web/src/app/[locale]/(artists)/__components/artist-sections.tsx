@@ -3,6 +3,7 @@ import {
   MAX_HIGHLIGHT_PORTFOLIOS,
   MAX_HIGHLIGHT_SERVICES,
 } from "@repo/common-lib/constants/highlights";
+import { editorialHeadlineClass } from "@repo/ui/components/custom/editorial";
 import {
   Accordion,
   AccordionContent,
@@ -40,27 +41,18 @@ const SectionHeader = ({
   viewAllLabel: string;
   viewAllAriaLabel: string;
 }) => (
-  <div className="mb-6 flex items-center justify-between phone-lg:mb-8 tablet:mb-10">
-    <div className="flex items-center gap-3 phone-lg:gap-4">
-      <span
-        className="h-px w-5 bg-text phone-lg:w-8 opacity-50"
-        aria-hidden="true"
-      />
+  // Editorial opening: a hairline, the serif section title, a quiet "view all" on the right.
+  <div className="mb-8 flex items-end justify-between gap-6 border-t border-border pt-6 tablet:mb-12">
+    <div className="flex items-center">
       {/* h2: these are the top-level sections of the artist profile, whose only other heading is
           the h1 in the identity block. As h3 they skipped a level on the flagship entity page. */}
-      <h2 className="text-lg! font-serif! font-normal! tracking-wider text-text uppercase">
-        {title}
-      </h2>
-      <span
-        className="h-px w-5 bg-text phone-lg:w-8 opacity-50"
-        aria-hidden="true"
-      />
+      <h2 className={editorialHeadlineClass("sub")}>{title}</h2>
     </div>
     {href && (
       <Link
         href={href}
         aria-label={viewAllAriaLabel}
-        className="group inline-flex items-center gap-1.5 text-xs tracking-[0.15em]  uppercase transition-colors duration-300 hover:text-text"
+        className="group inline-flex min-h-11 items-center gap-1.5 text-xs uppercase tracking-[0.24em] text-text-muted transition-colors duration-300 hover:text-text"
       >
         <span className="hidden phone:inline">{viewAllLabel}</span>
         <ArrowRight
@@ -73,7 +65,7 @@ const SectionHeader = ({
 );
 
 const SectionListContainer = ({ children }: { children: ReactNode }) => (
-  <div className="grid grid-cols-2 tablet:grid-cols-3 gap-6 tablet-lg:grid-cols-4 laptop:grid-cols-5 tablet-lg:gap-12">
+  <div className="grid grid-cols-2 gap-x-6 gap-y-10 tablet:grid-cols-3 tablet-lg:grid-cols-4 tablet-lg:gap-x-10 tablet-lg:gap-y-14 laptop:grid-cols-5">
     {children}
   </div>
 );
@@ -90,7 +82,7 @@ const ViewAllLink = ({
   <Link
     href={href}
     aria-label={label}
-    className="mt-4 inline-flex items-center gap-1.5 text-xs tracking-[0.15em] text-text-muted/70 uppercase transition-colors duration-300 hover:text-text"
+    className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-xs uppercase tracking-[0.24em] text-text-muted transition-colors duration-300 hover:text-text"
   >
     {text} <ArrowRight className="size-3" aria-hidden="true" />
   </Link>
@@ -106,7 +98,7 @@ const EmptyState = ({
   cta: string;
 }) => (
   <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-5 px-6 text-center">
-    <p className="font-serif text-lg text-text-muted ">{title}</p>
+    <p className="font-serif! text-xl! italic text-text-muted">{title}</p>
     <p className="text-sm text-text-muted/70">{subtitle}</p>
     <ArtistContactDialog>
       <button

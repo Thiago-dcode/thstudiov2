@@ -1,3 +1,9 @@
+import {
+  EDITORIAL_PROSE_LINK_CLASS,
+  EditorialHeader,
+  EditorialLabel,
+  editorialHeadlineClass,
+} from "@repo/ui/components/custom/editorial";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -35,31 +41,28 @@ export default async function FaqsPage({
   const items = t.raw("items") as FaqItem[];
 
   return (
-    <div className="mx-auto w-full max-w-(--screen-desktop) px-6 py-16 tablet:px-10 tablet:py-24">
+    <div className="mx-auto w-full max-w-6xl px-5 py-20 tablet:px-10 tablet:py-28">
       <JsonLd data={buildFaqPageJsonLd(items, locale)} />
 
-      <header className="max-w-2xl space-y-4">
-        <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
-          {t("page.hero.label")}
-        </p>
-        <h1 className="font-serif text-3xl font-semibold tracking-tight text-text tablet:text-4xl">
-          {t("page.hero.title")}
-        </h1>
-        <p className="text-sm leading-relaxed text-text-muted">
-          {t("page.hero.lead")}
-        </p>
-      </header>
+      <EditorialHeader
+        as="h1"
+        label={t("page.hero.label")}
+        title={t("page.hero.title")}
+        standfirst={t("page.hero.lead")}
+      />
 
-      <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-16">
+      {/* Same 12-column rhythm as the opening: the index sits under the label, answers under
+          the headline. */}
+      <div className="mt-16 grid grid-cols-1 gap-10 laptop:mt-24 laptop:grid-cols-12 laptop:gap-x-10">
         {/* Aside nav — jump to any question by its id. */}
-        <aside className="hidden lg:block">
+        <aside className="hidden laptop:col-span-3 laptop:block">
           <nav
             aria-label={t("page.navLabel")}
             className="sticky top-24 space-y-3"
           >
-            <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
+            <EditorialLabel className="mb-5">
               {t("page.navLabel")}
-            </p>
+            </EditorialLabel>
             <ul className="space-y-1 border-l border-border">
               {items.map((faq) => (
                 <li key={faq.id}>
@@ -75,7 +78,7 @@ export default async function FaqsPage({
           </nav>
         </aside>
 
-        <div className="min-w-0">
+        <div className="min-w-0 max-w-[38rem] laptop:col-span-9">
           {items.map((faq) => (
             <FaqSection key={faq.id} faq={faq} locale={locale} />
           ))}
@@ -84,10 +87,7 @@ export default async function FaqsPage({
             <span>
               {t.rich("stillHaveQuestions", {
                 link: (children) => (
-                  <Link
-                    href="/support"
-                    className="underline underline-offset-4"
-                  >
+                  <Link href="/support" className={EDITORIAL_PROSE_LINK_CLASS}>
                     {children}
                   </Link>
                 ),
@@ -107,12 +107,9 @@ function FaqSection({ faq, locale }: { faq: FaqItem; locale: string }) {
     <section
       id={faq.id}
       aria-labelledby={headingId}
-      className="scroll-mt-28 border-b border-border py-8 first:pt-0"
+      className="scroll-mt-28 border-b border-border py-10 first:pt-0"
     >
-      <h2
-        id={headingId}
-        className="mb-4 font-serif text-xl font-semibold tracking-tight text-text tablet:text-2xl"
-      >
+      <h2 id={headingId} className={`mb-5 ${editorialHeadlineClass("sub")}`}>
         {faq.question}
       </h2>
       <div

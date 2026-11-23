@@ -1,4 +1,8 @@
 import { PLATFORM_CURRENCY_SYMBOL } from "@repo/common-lib/constants/limits";
+import {
+  EDITORIAL_LABEL_CLASS,
+  editorialHeadlineClass,
+} from "@repo/ui/components/custom/editorial";
 import { ArrowRight, Check, Circle, Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -157,14 +161,14 @@ export default async function Page({ params, searchParams }: Props) {
         <div className="md:col-span-7 flex flex-col">
           <header className="pb-8">
             <div className="flex items-start justify-between gap-4">
-              <h1 className="text-3xl font-serif  tracking-tight tablet:text-4xl desktop:text-5xl leading-[1.1]">
+              <h1 className={editorialHeadlineClass("section")}>
                 {service.title}
               </h1>
               {canEdit && (
                 <Link
                   href={`/atelier/services/edit/${service.slug}`}
                   aria-label={tEdit("editService")}
-                  className="mt-1 shrink-0 border border-border/40 p-2 text-text-muted transition-colors hover:border-border hover:text-text"
+                  className="mt-2 inline-flex size-11 shrink-0 items-center justify-center text-text-muted transition-colors hover:text-text"
                 >
                   <Pencil className="size-3.5" />
                 </Link>
@@ -190,7 +194,7 @@ export default async function Page({ params, searchParams }: Props) {
                 {service.features.length > 0 && (
                   <section className="space-y-5">
                     {/* h2 (not h4): the page's only other heading is the h1 service title. */}
-                    <h2 className="font-sans! text-base! font-medium uppercase tracking-wide text-text-muted">
+                    <h2 className={EDITORIAL_LABEL_CLASS}>
                       {t("whatsIncluded")}
                     </h2>
                     <ul className="space-y-3.5">
@@ -209,9 +213,7 @@ export default async function Page({ params, searchParams }: Props) {
 
                 {service.terms.length > 0 && (
                   <section className="space-y-5">
-                    <h2 className="font-sans! text-base! font-medium uppercase tracking-wide text-text-muted">
-                      {t("terms")}
-                    </h2>
+                    <h2 className={EDITORIAL_LABEL_CLASS}>{t("terms")}</h2>
                     <ul className="space-y-3.5">
                       {service.terms.map((term) => (
                         <li
@@ -232,14 +234,14 @@ export default async function Page({ params, searchParams }: Props) {
           {service.portfolio && (
             <div className="mt-auto border-t border-border/40 pt-8 pb-8">
               <div className="space-y-3">
-                <span className="block uppercase tracking-wide text-text-muted">
+                <span className={`block ${EDITORIAL_LABEL_CLASS}`}>
                   {t("relatedPortfolio")}
                 </span>
                 <Link
                   href={`/artists/${username}/portfolios/${service.portfolio.slug}`}
-                  className="group inline-flex items-center gap-4 border border-border/30 px-6 py-2.5 transition-all hover:border-border hover:bg-text/5"
+                  className="group inline-flex items-center gap-4 pt-1"
                 >
-                  <span className="font-serif text-text/90 group-hover:text-text">
+                  <span className="font-serif text-2xl text-text underline decoration-border-em decoration-1 underline-offset-6 transition-colors group-hover:decoration-text">
                     {service.portfolio.title}
                   </span>
                   <ArrowRight className="size-4 shrink-0 text-text-muted transition-transform group-hover:translate-x-1 group-hover:text-text" />

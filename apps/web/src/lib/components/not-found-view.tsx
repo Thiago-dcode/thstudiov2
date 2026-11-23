@@ -1,3 +1,10 @@
+import {
+  EDITORIAL_LABEL_CLASS,
+  EDITORIAL_STANDFIRST_CLASS,
+  EditorialLabel,
+  editorialHeadlineClass,
+} from "@repo/ui/components/custom/editorial";
+import { cn } from "@repo/ui/lib/utils";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -21,15 +28,11 @@ export async function NotFoundView({ locale }: { locale: SupportedLocale }) {
 
   return (
     <section className="mx-auto w-full max-w-xl px-6 py-20 tablet:py-28">
-      <p className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted">
-        {t("eyebrow")}
-      </p>
-      <h1 className="mt-6 font-serif text-3xl tracking-tight text-text tablet:text-4xl">
+      <EditorialLabel>{t("eyebrow")}</EditorialLabel>
+      <h1 className={`mt-8 ${editorialHeadlineClass("section")}`}>
         {t("heading")}
       </h1>
-      <p className="mt-4 text-base leading-relaxed text-text-muted">
-        {t("body")}
-      </p>
+      <p className={cn(EDITORIAL_STANDFIRST_CLASS, "mt-6")}>{t("body")}</p>
 
       <Link
         href={prefix || "/"}
@@ -41,13 +44,10 @@ export async function NotFoundView({ locale }: { locale: SupportedLocale }) {
       <div className="mt-14 h-px w-8 bg-border" aria-hidden />
 
       <nav aria-labelledby="not-found-next-steps" className="mt-8">
-        <p
-          id="not-found-next-steps"
-          className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted"
-        >
+        <p id="not-found-next-steps" className={EDITORIAL_LABEL_CLASS}>
           {t("nextSteps")}
         </p>
-        <ul className="mt-4 flex flex-col border-t border-border">
+        <ul className="mt-5 flex flex-col border-t border-border">
           {nextSteps.map((step) => (
             <li key={step.path} className="border-b border-border">
               <Link

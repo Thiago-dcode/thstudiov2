@@ -6,6 +6,8 @@ import { ArtistProfileCard } from "../../[search]/_components/artist-profile-car
 import { NextSectionArrow } from "./next-section-arrow";
 import { reportSectionError } from "./section-error";
 import {
+  EDITORIAL_LINK_CLASS,
+  editorialNumber,
   FULL_SCREEN_MIN_H,
   type LandingSectionProps,
   WebSection,
@@ -14,6 +16,7 @@ import {
 export async function FeaturedArtistsSection({
   id,
   nextSectionId,
+  index,
 }: LandingSectionProps) {
   const [t, usersResponse, directoryOpen] = await Promise.all([
     getTranslations("landing.featuredArtists"),
@@ -30,14 +33,16 @@ export async function FeaturedArtistsSection({
       id={id}
       className={`flex ${FULL_SCREEN_MIN_H} flex-col justify-center`}
     >
-      <WebSection.Container className="py-20">
-        <WebSection.Header
-          badge={t("header.badge")}
+      <WebSection.Container className="max-w-6xl px-5 py-24 tablet:px-10">
+        <WebSection.EditorialHeader
+          className="mb-16 laptop:mb-20"
+          label={t("header.badge")}
+          qualifier={index ? editorialNumber(index) : undefined}
           title={t("header.title")}
-          description={t("header.description")}
+          standfirst={t("header.description")}
         />
 
-        <div className="mx-auto grid w-full max-w-(--screen-laptop) grid-cols-[repeat(auto-fit,min(100%,18rem))] justify-center justify-items-center gap-4">
+        <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-x-8 gap-y-12">
           {artists.map((artist) => (
             <ArtistProfileCard
               key={artist.id}
@@ -48,8 +53,11 @@ export async function FeaturedArtistsSection({
         </div>
 
         {directoryOpen && (
-          <div className="mt-10 flex justify-center">
-            <WebSection.ActionLink href="/artists">
+          <div className="mt-16 flex">
+            <WebSection.ActionLink
+              href="/artists"
+              className={EDITORIAL_LINK_CLASS}
+            >
               {t("browseAll")}
             </WebSection.ActionLink>
           </div>

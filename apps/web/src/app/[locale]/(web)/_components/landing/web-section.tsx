@@ -1,3 +1,7 @@
+import {
+  EditorialHeader,
+  EditorialLabel,
+} from "@repo/ui/components/custom/editorial";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
@@ -48,45 +52,12 @@ function Container({
   );
 }
 
-function Header({
-  badge,
-  title,
-  description,
-  className,
-  descriptionClassName,
-}: {
-  badge: string;
-  title: string;
-  description: string;
-  className?: string;
-  descriptionClassName?: string;
-}) {
-  return (
-    <header
-      className={cn(
-        "mb-12 flex flex-col items-center gap-4 text-center",
-        className,
-      )}
-    >
-      <div className="flex flex-col items-center gap-1.5">
-        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">
-          {badge}
-        </span>
-        <h2 className="text-2xl font-bold leading-tight tracking-tight tablet:text-3xl laptop:text-[2.75rem]">
-          {title}
-        </h2>
-      </div>
-      <p
-        className={cn(
-          "max-w-lg text-base leading-relaxed text-text-muted tablet:text-lg",
-          descriptionClassName,
-        )}
-      >
-        {description}
-      </p>
-    </header>
-  );
-}
+// The editorial primitives live in `@repo/ui` so every public page shares them; re-exported here
+// so landing sections keep one import.
+export {
+  EDITORIAL_LINK_CLASS,
+  editorialNumber,
+} from "@repo/ui/components/custom/editorial";
 
 function ActionLink({
   href,
@@ -165,11 +136,14 @@ function NextSectionLink({
 export type LandingSectionProps = {
   id: string;
   nextSectionId?: string;
+  /** Position in the page's list (hero = 0), for editorial `SECTION / 001` labels. */
+  index?: number;
 };
 
 export const WebSection = Object.assign(Root, {
   Container,
-  Header,
+  Label: EditorialLabel,
+  EditorialHeader,
   ActionLink,
   NextSectionLink,
 });

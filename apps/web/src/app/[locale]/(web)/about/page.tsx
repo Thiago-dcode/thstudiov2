@@ -1,4 +1,15 @@
+import {
+  EDITORIAL_PROSE_CLASS,
+  EDITORIAL_STANDFIRST_CLASS,
+  EDITORIAL_STATEMENT_CLASS,
+  EditorialChapter,
+  EditorialHeader,
+  EditorialRule,
+  editorialHeadlineClass,
+  editorialNumber,
+} from "@repo/ui/components/custom/editorial";
 import { Button } from "@repo/ui/components/shadcn/button";
+import { cn } from "@repo/ui/lib/utils";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
@@ -46,7 +57,7 @@ export default async function AboutPage({
   const socialItems = t.raw("bridge.socialItems") as string[];
 
   return (
-    <article className="mx-auto w-full max-w-3xl px-6 py-20 tablet:px-10 tablet:py-28">
+    <article className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-5 py-20 tablet:gap-20 tablet:px-10 tablet:py-28">
       <JsonLd
         data={buildAboutPageJsonLd(locale, {
           description: tSeo("organizationDescription"),
@@ -54,87 +65,72 @@ export default async function AboutPage({
           pageName: tMeta("title"),
         })}
       />
-      <header className="space-y-4">
-        <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
-          {t("hero.label")}
-        </p>
-        <h1 className="font-serif text-3xl font-semibold tracking-tight text-text tablet:text-4xl">
-          {t("hero.title")}
-        </h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-text-muted">
-          {t("hero.lead")}
-        </p>
-      </header>
+      <EditorialHeader
+        as="h1"
+        label={t("hero.label")}
+        title={t("hero.title")}
+        standfirst={t("hero.lead")}
+      />
 
-      <Section id="what" title={t("what.title")}>
+      <Section id="what" index={1} title={t("what.title")}>
         {whatParagraphs.map((paragraph) => (
           <P key={paragraph}>{paragraph}</P>
         ))}
       </Section>
 
-      <Section id="bridge" title={t("bridge.title")}>
+      <Section id="bridge" index={2} title={t("bridge.title")}>
         <div className="space-y-8">
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-text">
-              {t("bridge.websiteLabel")}
-            </h3>
+            <h3 className={SUBHEAD_CLASS}>{t("bridge.websiteLabel")}</h3>
             <BulletList items={websiteItems} />
           </div>
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-text">
-              {t("bridge.socialLabel")}
-            </h3>
+            <h3 className={SUBHEAD_CLASS}>{t("bridge.socialLabel")}</h3>
             <BulletList items={socialItems} />
           </div>
           <P>{t("bridge.closing")}</P>
         </div>
       </Section>
 
-      <Section id="mission" title={t("mission.title")}>
-        <p className="max-w-2xl text-base font-medium leading-relaxed text-text">
-          {t("mission.statement")}
-        </p>
+      <Section id="mission" index={3} title={t("mission.title")}>
+        <p className={EDITORIAL_STATEMENT_CLASS}>{t("mission.statement")}</p>
         <P>{t("mission.body")}</P>
       </Section>
 
-      <Section id="vision" title={t("vision.title")}>
+      <Section id="vision" index={4} title={t("vision.title")}>
         {visionParagraphs.map((paragraph) => (
           <P key={paragraph}>{paragraph}</P>
         ))}
       </Section>
 
-      <Section id="values" title={t("values.title")}>
+      <Section id="values" index={5} title={t("values.title")}>
         <div className="space-y-8">
           {valueItems.map((item) => (
             <div key={item.title} className="space-y-2">
-              <h3 className="text-sm font-medium text-text">{item.title}</h3>
+              <h3 className={SUBHEAD_CLASS}>{item.title}</h3>
               <P>{item.description}</P>
             </div>
           ))}
         </div>
       </Section>
 
-      <Section id="why" title={t("why.title")}>
+      <Section id="why" index={6} title={t("why.title")}>
         <P>{t("why.intro")}</P>
         <BulletList items={whyItems} />
       </Section>
 
-      <Section id="who" title={t("who.title")}>
-        <p className="text-sm leading-relaxed text-text-muted">
-          {t("who.intro")}
-        </p>
+      <Section id="who" index={7} title={t("who.title")}>
+        <P>{t("who.intro")}</P>
         <BulletList items={whoItems} />
         <P>{t("who.closing")}</P>
       </Section>
 
-      <Section id="philosophy" title={t("philosophy.title")}>
-        <p className="max-w-2xl text-base font-medium leading-relaxed text-text">
-          {t("philosophy.question")}
-        </p>
+      <Section id="philosophy" index={8} title={t("philosophy.title")}>
+        <p className={EDITORIAL_STATEMENT_CLASS}>{t("philosophy.question")}</p>
         <P>{t("philosophy.answer")}</P>
       </Section>
 
-      <Section id="creator" title={t("creator.title")}>
+      <Section id="creator" index={9} title={t("creator.title")}>
         {creatorParagraphs.map((paragraph) => (
           <P key={paragraph}>{paragraph}</P>
         ))}
@@ -142,16 +138,19 @@ export default async function AboutPage({
 
       <section
         aria-labelledby="about-cta-heading"
-        className="mt-16 space-y-4 border-t border-fg-2 pt-16"
+        className="flex flex-col items-center gap-8 py-12 text-center tablet:py-20"
       >
+        <EditorialRule />
         <h2
           id="about-cta-heading"
-          className="text-xl font-semibold tracking-tight text-text tablet:text-2xl"
+          className={editorialHeadlineClass("section")}
         >
           {t("cta.title")}
         </h2>
-        <P>{t("cta.description")}</P>
-        <Button asChild variant="accent" size="sm">
+        <p className={cn(EDITORIAL_STANDFIRST_CLASS, "max-w-lg")}>
+          {t("cta.description")}
+        </p>
+        <Button asChild variant="accent" size="lg">
           <Link href="/auth/register">{t("cta.button")}</Link>
         </Button>
       </section>
@@ -159,45 +158,40 @@ export default async function AboutPage({
   );
 }
 
+/** Small sans subheading inside a chapter (value names, list captions). */
+const SUBHEAD_CLASS =
+  "font-sans! text-base! font-medium! leading-snug! tracking-normal! text-text";
+
 function Section({
   id,
+  index,
   title,
   children,
 }: {
   id: string;
+  index: number;
   title: string;
   children: ReactNode;
 }) {
-  const headingId = `about-${id}-heading`;
-
   return (
-    <section
+    <EditorialChapter
       id={id}
-      aria-labelledby={headingId}
-      className="mt-16 space-y-4 first:mt-16"
+      headingId={`about-${id}-heading`}
+      marker={editorialNumber(index)}
+      title={title}
     >
-      <h2
-        id={headingId}
-        className="text-xl font-semibold tracking-tight text-text tablet:text-2xl"
-      >
-        {title}
-      </h2>
       {children}
-    </section>
+    </EditorialChapter>
   );
 }
 
 function P({ children }: { children: ReactNode }) {
-  return (
-    <p className="max-w-2xl text-sm leading-relaxed text-text-muted">
-      {children}
-    </p>
-  );
+  return <p className={EDITORIAL_PROSE_CLASS}>{children}</p>;
 }
 
 function BulletList({ items }: { items: string[] }) {
   return (
-    <ul className="max-w-2xl list-disc space-y-2 pl-5 text-sm leading-relaxed text-text-muted">
+    <ul className="max-w-[38rem] list-disc space-y-2.5 pl-5 text-base leading-[1.75] text-text-muted marker:text-border-em">
       {items.map((item) => (
         <li key={item}>{item}</li>
       ))}

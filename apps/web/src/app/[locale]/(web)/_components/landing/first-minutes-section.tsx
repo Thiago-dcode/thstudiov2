@@ -1,8 +1,12 @@
 import NextImage from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { NextSectionArrow } from "../landing/next-section-arrow";
-import { type LandingSectionProps, WebSection } from "../landing/web-section";
+import { NextSectionArrow } from "./next-section-arrow";
+import {
+  editorialNumber,
+  type LandingSectionProps,
+  WebSection,
+} from "./web-section";
 
 type Step = {
   time: string;
@@ -51,45 +55,43 @@ function StepDescription({ text }: { text: string }) {
   );
 }
 
+/** The step's time marker, set like the editorial metadata labels. */
+const TIME_CLASS =
+  "shrink-0 text-xs! font-medium tabular-nums uppercase tracking-[0.24em] text-text-muted";
+
 export async function FirstMinutesSection({
   id,
   nextSectionId,
+  index,
 }: LandingSectionProps) {
-  const t = await getTranslations("landingV2.firstMinutes");
+  const t = await getTranslations("landing.firstMinutes");
   const steps = t.raw("steps") as Step[];
 
   return (
     <WebSection id={id} className="overflow-hidden">
-      <WebSection.Container className="flex flex-col gap-12 px-4 py-20 tablet:px-8 tablet:py-24 laptop:gap-16">
-        <header className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
-          <span className="text-xs! font-semibold uppercase tracking-[0.2em] text-text-muted">
-            {t("badge")}
-          </span>
-          <h2 className="font-serif! text-3xl! font-medium! leading-[1.1]! tracking-tight tablet:text-4xl! laptop:text-5xl!">
-            {t("title")}
-          </h2>
-          <p className="max-w-xl text-base! leading-relaxed text-text-muted tablet:text-lg!">
-            {t("lead")}
-          </p>
-        </header>
+      <WebSection.Container className="flex flex-col gap-16 px-5 py-20 tablet:px-10 tablet:py-28 laptop:gap-24">
+        <WebSection.EditorialHeader
+          className="mx-auto w-full max-w-6xl"
+          label={t("badge")}
+          qualifier={index ? editorialNumber(index) : undefined}
+          title={t("title")}
+          standfirst={t("lead")}
+        />
 
         {/* Phones: an accordion (time + title opens the step), only the first open. Native
             <details>, so it works without JavaScript. The zigzag list below takes over from
             tablet up; only one of the two is ever displayed, and the hidden one's lazy images are
             never fetched. */}
         <ol className="flex flex-col border-t border-border tablet:hidden">
-          {steps.map((step, index) => (
+          {steps.map((step, stepIndex) => (
             <li key={step.time} className="border-b border-border">
-              <details open={index === 0} className="group">
+              <details open={stepIndex === 0} className="group">
                 <summary className="flex cursor-pointer list-none items-center gap-4 py-5 [&::-webkit-details-marker]:hidden">
-                  <span
-                    aria-hidden="true"
-                    className="w-12 shrink-0 font-mono text-sm! tabular-nums tracking-widest text-text-muted"
-                  >
+                  <span aria-hidden="true" className={`w-12 ${TIME_CLASS}`}>
                     {step.time}
                   </span>
-                  <h3 className="flex-1 font-serif! text-xl! font-medium! leading-tight!">
-                    <span className="sr-only">{`${index + 1}. `}</span>
+                  <h3 className="flex-1 font-serif! text-xl! font-normal! leading-tight!">
+                    <span className="sr-only">{`${stepIndex + 1}. `}</span>
                     {step.title}
                   </h3>
                   <svg
@@ -124,9 +126,9 @@ export async function FirstMinutesSection({
         </ol>
 
         <ol className="hidden flex-col gap-16 tablet:flex tablet:gap-20 laptop:gap-28">
-          {steps.map((step, index) => {
+          {steps.map((step, stepIndex) => {
             // Steps zigzag: text left / image right, then mirrored.
-            const flip = index % 2 === 1;
+            const flip = stepIndex % 2 === 1;
             return (
               // A fixed-width pair, centred, top-aligned: the text block and a small screenshot
               // sit right next to each other (no gap between them; the text keeps its own padding
@@ -146,10 +148,7 @@ export async function FirstMinutesSection({
                   <div
                     className={`flex items-center gap-4 ${flip ? "tablet:flex-row-reverse" : ""}`}
                   >
-                    <span
-                      aria-hidden="true"
-                      className="shrink-0 font-mono text-sm! tabular-nums tracking-widest text-text-muted"
-                    >
+                    <span aria-hidden="true" className={TIME_CLASS}>
                       {step.time}
                     </span>
 
@@ -157,13 +156,13 @@ export async function FirstMinutesSection({
                   </div>
                   <h3
                     // Stays at 2xl through iPad portrait, where the text column is ~45% of 768px.
-                    className={`font-serif! text-2xl! font-medium! leading-tight! laptop:text-3xl! ${flip ? "tablet:pl-8" : "tablet:pr-8"}`}
+                    className={`font-serif! text-2xl! font-normal! leading-tight! tracking-[-0.01em] laptop:text-3xl! ${flip ? "tablet:pl-8" : "tablet:pr-8"}`}
                   >
-                    <span className="sr-only">{`${index + 1}. `}</span>
+                    <span className="sr-only">{`${stepIndex + 1}. `}</span>
                     {step.title}
                   </h3>
                   <p
-                    className={`text-base! leading-relaxed text-text-muted ${flip ? "tablet:pl-8" : "tablet:pr-8"}`}
+                    className={`max-w-md text-base! leading-relaxed text-text-muted ${flip ? "tablet:ml-auto tablet:pl-8" : "tablet:pr-8"}`}
                   >
                     <StepDescription text={step.description} />
                   </p>
@@ -200,7 +199,7 @@ export async function FirstMinutesSection({
       animation-range: entry 0% entry 25%;
     }
     @keyframes first-minutes-in {
-      from { opacity: 0; transform: translateY(24px); }
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: none; }
     }
   }

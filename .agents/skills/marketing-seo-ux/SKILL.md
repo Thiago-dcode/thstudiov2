@@ -50,6 +50,8 @@ All in `apps/web/src/lib/seo/`:
 - Put social proof (real artists and work) near conversion points. Short, confident, editorial copy with no jargon.
 - Write copy in all three locales through the i18n messages, never hard-coded.
 - For AI search: clear semantic HTML, a logical heading hierarchy, and accurate structured data.
+- Visual treatment of public pages (labels, headlines, layout) follows `a11studio-design` and its editorial kit. A restyle never changes URLs, metadata, canonical/hreflang, JSON-LD or `notFound`/redirect logic.
+- The homepage is one list, `SECTIONS` in `app/[locale]/(web)/page.tsx` (order, anchor ids and `SECTION / 00N` numbering all come from it), with copy in `landing.*`. There is no v1/v2 split or flag; changing the homepage HTML needs a Cloudflare purge of `/`, `/es`, `/pt` after deploy.
 
 ## Where the status lives
 

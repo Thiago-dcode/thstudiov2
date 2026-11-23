@@ -1,4 +1,9 @@
 import { getBenefitMonths } from "@repo/common-lib/utils/wait-list";
+import {
+  EDITORIAL_PROSE_LINK_CLASS,
+  EDITORIAL_STANDFIRST_CLASS,
+  editorialHeadlineClass,
+} from "@repo/ui/components/custom/editorial";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
@@ -67,10 +72,8 @@ export default async function WaitListValidatePage({
   const { benefit } = result.data;
 
   return (
-    <section className="mx-auto flex w-full max-w-xl flex-col gap-4 px-6 py-12 tablet:py-20">
-      <h1 className="text-4xl font-semibold tracking-tight text-text tablet:text-5xl">
-        {t("page.title")}
-      </h1>
+    <section className="mx-auto flex w-full max-w-xl flex-col gap-8 px-5 py-20 tablet:py-28">
+      <h1 className={editorialHeadlineClass("section")}>{t("page.title")}</h1>
 
       <Suspense
         fallback={
@@ -82,9 +85,7 @@ export default async function WaitListValidatePage({
         <WaitListImage />
       </Suspense>
 
-      <p className="text-base leading-relaxed text-text-muted tablet:text-lg">
-        {t("page.description")}
-      </p>
+      <p className={EDITORIAL_STANDFIRST_CLASS}>{t("page.description")}</p>
 
       {benefit && (
         <p className="text-sm! text-text italic">
@@ -102,7 +103,7 @@ export default async function WaitListValidatePage({
         {t("page.showcase.title")}
         <Link
           href={WAIT_LIST_SHOWCASE_PATH}
-          className="inline-flex min-h-11 items-center gap-1.5 font-medium text-text underline underline-offset-4 hover:no-underline"
+          className={`inline-flex min-h-11 items-center gap-1.5 ${EDITORIAL_PROSE_LINK_CLASS}`}
         >
           {t("page.showcase.cta")}
           <ArrowRight className="size-4" aria-hidden />
