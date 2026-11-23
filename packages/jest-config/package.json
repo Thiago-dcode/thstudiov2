@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@jest/globals": "30.5.2",
-    "@nestjs/testing": "^12.5.0",
+    "@nestjs/testing": "^12.5.1",
     "@repo/typescript-config": "workspace:*",
     "@types/jest": "30.0.0",
     "jest": "30.5.2",

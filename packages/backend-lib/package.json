@@ -20,8 +20,8 @@
     "./services/*": "./dist/src/services/*/index.js"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1169.0",
-    "@aws-sdk/s3-request-presigner": "3.1169.0",
+    "@aws-sdk/client-s3": "3.1173.0",
+    "@aws-sdk/s3-request-presigner": "3.1173.0",
     "@paypal/paypal-server-sdk": "^2.5.0",
     "@repo/common-lib": "workspace:*",
     "@types/ejs": "^3.1.5",
@@ -37,12 +37,12 @@
     "image-size": "^2.1.0",
     "install": "^0.13.0",
     "ioredis": "^5.11.1",
-    "nodemailer": "^10.5.0",
-    "openai": "^7.57.0",
+    "nodemailer": "^10.6.0",
+    "openai": "^7.62.0",
     "picocolors": "^1.1.1",
     "pug": "^3.0.4",
     "redis": "^6.3.1",
-    "resend": "^6.38.1",
+    "resend": "^6.39.0",
     "sharp": "0.35.5",
     "stripe": "^22.6.2",
     "uuid": "^14.0.3"
