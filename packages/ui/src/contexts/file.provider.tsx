@@ -56,6 +56,7 @@ export const FileInputProvider = ({ children, allowedMimeTypes, maxFileSizeBytes
     const [files, _setFiles] = useState<FileList>()
     const setFiles = useCallback((files: FileList) => {
         const errors: FileValidationError[] = []
+        const valid: File[] = []
         for (let index = 0; index < files.length; index++) {
             const file = files[index];
             if (!allowedMimeTypes?.includes(file.type as MimeTypes)) {
@@ -65,10 +66,23 @@ export const FileInputProvider = ({ children, allowedMimeTypes, maxFileSizeBytes
             const limit = maxFileSizeBytesFor?.(file) ?? maxFileSizeBytes;
             if (typeof limit === 'number' && file.size > limit) {
                 errors.push({ code: 'too_large', fileName: file.name, limitBytes: limit });
+                continue;
             }
+            valid.push(file)
         }
         setErrors(errors)
-        if (!errors.length) _setFiles(files)
+        if (!errors.length) {
+            _setFiles(files)
+            return
+        }
+        // Keep the good files of a mixed selection: one oversize PNG in a batch of twenty used to
+        // throw the other nineteen away too. The errors still name every file that was left out.
+        // A selection with nothing valid (any single-file pick that fails) changes nothing, as before.
+        if (valid.length && typeof DataTransfer !== 'undefined') {
+            const kept = new DataTransfer()
+            for (const file of valid) kept.items.add(file)
+            _setFiles(kept.files)
+        }
     }, [allowedMimeTypes, maxFileSizeBytes, maxFileSizeBytesFor])
 
     // Memoize the context value to prevent unnecessary re-renders

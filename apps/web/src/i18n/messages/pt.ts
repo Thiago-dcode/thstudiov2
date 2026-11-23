@@ -22,7 +22,7 @@ const messages = {
       definition:
         "A11STUDIO é onde fotógrafos mostram seu trabalho — e onde os clientes vêm para encontrá-los e contratá-los.",
       titlePrefix: "Deixe que sua",
-      titleAccentWords: ["fotografia", "visão", "criação", "arte", "história"],
+      titleAccentWords: ["arte", "visão", "criação", "arte", "história"],
       titleConnector: "se",
       titleDiscoverWords: [
         "compartilhe",
@@ -265,6 +265,158 @@ const messages = {
       },
     },
   },
+  // A home v2 (`SECTIONS_V2`, atrás de `LANDING_V2=1`). A v1 continua lendo `landing`.
+  landingV2: {
+    metadata: {
+      title: "A11STUDIO — Plataforma de portfólios para fotógrafos",
+      description:
+        "Um portfólio de fotografia profissional em minutos. Envie suas fotos: a IA escreve o SEO, nós hospedamos. Grátis para começar, sem cartão.",
+    },
+    hero: {
+      subtitle:
+        "Para fotógrafos que não querem ser influencers. É só trazer sua arte, nós cuidamos do resto.",
+    },
+    microcopy: {
+      earlyAccess: "Acesso antecipado",
+      free: "Grátis para começar · Sem cartão de crédito",
+    },
+    firstMinutes: {
+      badge: "Como funciona",
+      title: "Seus primeiros 15 minutos na A11STUDIO",
+      lead: "De uma pasta de fotos a um portfólio que os clientes conseguem encontrar. Sem código, sem templates, sem hospedagem.",
+      steps: [
+        {
+          time: "00:00",
+          title: "Envie seu melhor trabalho",
+          description:
+            "Até 20 arquivos de uma vez: JPEG, PNG, WebP, GIF ou vídeo. Traga suas 15 a 30 melhores, não tudo.",
+          image: "1.webp",
+          imageAlt:
+            "A janela de envio da A11STUDIO com fotos prontas para enviar",
+        },
+        {
+          time: "06:00",
+          title: "Deixe a A11STUDIO escrever os metadados",
+          description:
+            "Ative os metadados com IA e cada foto ganha um nome de arquivo otimizado, além de título, descrição e texto alternativo em português, inglês e espanhol. Ajuste os textos quando quiser.",
+          image: "3.webp",
+          imageAlt:
+            "Título, descrição e texto alternativo gerados por IA para uma foto",
+        },
+        {
+          time: "10:00",
+          title: "Crie seu portfólio",
+          description:
+            "Escolha suas imagens mais fortes de uma especialidade e um layout: mosaico, uniforme ou colunas. Adicione seus serviços para que os clientes saibam para que te contratar.",
+          image: "4.webp",
+          imageAlt:
+            "O editor de portfólio com layouts em colunas, uniforme e mosaico",
+        },
+        {
+          time: "15:00",
+          title: "Mostre ao mundo",
+          description:
+            "Seu trabalho ganha um endereço próprio, como <link>este</link>: rápido, fácil de achar nos buscadores e um só link para compartilhar onde quiser: sua bio, sua assinatura de e-mail, sua próxima proposta.",
+          image: "5.webp",
+          imageAlt: "Uma coleção de fotografia publicada na A11STUDIO",
+        },
+      ],
+    },
+    valuePillars: {
+      cta: "Traga sua arte",
+      items: [
+        {
+          title: "Só arte",
+          description: "Um espaço só para a {arte}. Sem ruído, sem distrações.",
+        },
+        {
+          title: "Inteligência",
+          description:
+            "A {IA} cuida da parte técnica e chata. Você foca em criar.",
+        },
+        {
+          title: "Foco",
+          description:
+            "Seu único trabalho é compartilhar o seu {melhor}. Nós cuidamos do resto.",
+        },
+        {
+          title: "Especialidade",
+          description:
+            "Um portfólio por {especialidade}. Os clientes veem exatamente para que te contratar.",
+        },
+        {
+          title: "Qualidade",
+          description:
+            "Valorizamos a {qualidade} acima da quantidade: leve o tempo que precisar para enviar sua melhor arte.",
+        },
+        {
+          title: "Direto",
+          description:
+            "Os clientes escrevem para você direto da sua página. {Sem intermediários}.",
+        },
+        {
+          title: "Sem algoritmos",
+          description:
+            "Chega de {esgotamento} por algoritmo. Sem feeds, sem jogos, sem correr atrás de engajamento.",
+        },
+        {
+          title: "Propriedade",
+          description:
+            "Seu trabalho continua sendo {seu}. Todos os direitos sobre cada imagem que você envia.",
+        },
+        {
+          title: "Simplicidade",
+          description:
+            "Tão fácil de {atualizar} quanto um post. Sem código, sem configuração.",
+        },
+        {
+          title: "Ofício",
+          description:
+            "Feito para priorizar a {qualidade}, sempre. Uma grande obra merece uma grande apresentação.",
+        },
+        {
+          title: "Descoberta",
+          description:
+            "Seja encontrado pelos clientes que importam. Visibilidade conquistada pelo {talento}, não por algoritmos.",
+        },
+        {
+          title: "Tempo",
+          description:
+            "Toda a sua energia vai para a sua {arte}, não para as redes sociais.",
+        },
+        {
+          title: "Credibilidade",
+          description:
+            "Uma presença profissional, sem a dor de cabeça técnica. Confiança conquistada desde a primeira {visita}.",
+        },
+        {
+          title: "Elegância",
+          description:
+            "Um espaço minimalista onde a sua arte é a {protagonista}. Nada disputa a atenção.",
+        },
+      ],
+    },
+    featuredPortfolio: {
+      badge: "Feito na A11STUDIO",
+      title: "Um portfólio de fotografia, do jeito que os clientes veem.",
+      by: "Por",
+      works: "{count, plural, one {# obra} other {# obras}}",
+      layouts: {
+        masonry: "Layout em mosaico",
+        uniform: "Layout uniforme",
+        columns: "Layout em colunas",
+      },
+      viewFull: "Ver o portfólio completo",
+    },
+    cta: {
+      badge: "Aqui tem espaço para o seu trabalho",
+      title: "Seja <strike>influencer</strike> artista.",
+      description:
+        "Sem feed para alimentar. Sem algoritmo para agradar. Só o seu melhor trabalho, num lugar à altura dele.",
+      earlyAccessNote:
+        "A A11STUDIO está em acesso antecipado. Fotógrafos que entram pela lista de espera ganham 3 meses grátis no nosso plano mais completo.",
+    },
+  },
   forDiscipline: {
     photographers: {
       metadata: {
@@ -476,9 +628,9 @@ const messages = {
       },
       {
         id: "why-ai",
-        question: "Por que a A11STUDIO usa IA?",
+        question: "O que a IA escreve para as minhas fotos?",
         answer:
-          "Para que você possa focar no que faz de melhor — criar arte. Tudo o que é técnico acontece nos bastidores: nossa IA escreve <strong>títulos, descrições e tags otimizados para SEO</strong>, categoriza suas mídias automaticamente e gera texto alternativo para que buscadores e assistentes de IA te encontrem. Você nunca precisa aprender SEO ou marketing — só <a href='#position-profile'>suba suas melhores peças e complete seu perfil</a>, e deixe que o público certo as descubra.",
+          "Quando você ativa os metadados com IA no envio (ou depois, em qualquer foto), ela analisa a imagem e escreve <strong>um título, uma descrição curta e um texto alternativo literal</strong> em português, inglês e espanhol, além de um nome de arquivo otimizado, até 8 tags de conteúdo e suas disciplinas e estilos. Você pode reescrever o título, a descrição e o texto alternativo quando quiser. Cada imagem usa 1 crédito de IA e cada vídeo 3, só quando a geração funciona; o plano gratuito inclui 20 créditos por mês. Ela nunca escreve sua bio nem publica nada por você. Para dar o melhor material a ela, <a href='/faqs#position-profile'>complete seu perfil</a>.",
       },
       {
         id: "what-is-seo",
@@ -502,13 +654,32 @@ const messages = {
         id: "upload-videos",
         question: "Posso subir vídeos?",
         answer:
-          "Ainda não — por enquanto a A11STUDIO suporta imagens e foi projetada para exibi-las lindamente. O suporte a vídeo está no nosso roadmap para uma versão futura, para que cineastas, animadores e artistas de motion também possam apresentar seu trabalho aqui. Quer ser avisado quando chegar? <a href='/support'>Entre em contato</a>.",
+          "Sim. Além de imagens JPEG, PNG, WebP e GIF (até 25 MB cada), você pode enviar vídeos MP4, MOV e MPEG de até 500 MB e 10 minutos. A A11STUDIO cria um clipe de prévia e deixa você escolher o quadro de capa.",
       },
       {
         id: "is-free",
         question: "A A11STUDIO é gratuita?",
         answer:
-          "Sim. A A11STUDIO oferece um plano gratuito que permite criar seu perfil, montar portfólios e começar a mostrar seu trabalho imediatamente. Os planos premium desbloqueiam recursos extras, como ferramentas com IA, mais armazenamento e personalização avançada — mas você pode começar de graça e fazer upgrade só se precisar.",
+          "Sim, e você não precisa de cartão para começar. O plano gratuito inclui <strong>2 portfólios, 3 coleções, 2 serviços, 1 GB de armazenamento e 20 créditos de IA por mês</strong>: o suficiente para publicar um portfólio profissional completo. Os planos pagos, a partir de 9 € por mês, aumentam esses limites e adicionam compressão de imagens. Você só faz upgrade se precisar de mais espaço.",
+      },
+      {
+        id: "vs-social-media-website-builder",
+        question:
+          "Qual a diferença entre a A11STUDIO e as redes sociais ou um criador de sites?",
+        answer:
+          "As redes sociais são um feed: o post mais novo ganha e um algoritmo decide quem vê. Um criador de sites te dá templates, mas a hospedagem, o layout e o SEO ficam por sua conta. A A11STUDIO fica entre os dois. Você organiza seu melhor trabalho em portfólios por especialidade e coleções por ensaio, lista os serviços que oferece e os clientes falam com você pela sua página. A parte dos buscadores fica com a gente. Você pode continuar postando onde quiser e fazer da A11STUDIO o link da sua bio.",
+      },
+      {
+        id: "google-visibility",
+        question: "Os clientes vão encontrar minhas fotos no Google?",
+        answer:
+          "Suas páginas públicas são feitas para serem encontradas: cada uma tem título, descrição e dados estruturados próprios, e quando seu perfil está completo suas páginas entram no nosso sitemap para os buscadores. Com os metadados com IA ativados, cada foto ainda ganha um título descritivo e texto alternativo. Ninguém pode garantir honestamente um ranking, mas um perfil completo com sua cidade, uma especialidade clara e um trabalho bem descrito te dão a melhor chance. Veja <a href='/faqs#position-profile'>como posicionar seu perfil</a>.",
+      },
+      {
+        id: "ownership",
+        question: "De quem são as fotos que eu envio?",
+        answer:
+          "Suas. Você mantém a propriedade total de tudo o que envia. Nós só recebemos a licença limitada necessária para mostrar seu trabalho na A11STUDIO, e ela termina quando você apaga a obra ou a sua conta. Excluir a conta tem um período de carência de 15 dias, caso você mude de ideia. Os detalhes estão nos nossos <a href='/legal/terms'>termos</a>.",
       },
     ],
     page: {
@@ -2401,6 +2572,10 @@ const messages = {
         dropzoneAddMore: "Adicionar mais arquivos",
         dropzoneRemaining:
           "{remaining} {remaining, plural, one {espaço} other {espaços}} restantes",
+        dropzoneFormats:
+          "JPEG, PNG, WebP, GIF até {imageMb} MB · MP4, MOV, MPEG até {videoMb} MB",
+        dropOverlayTitle: "Solte para adicionar seus arquivos",
+        dropOverlayFull: "Você chegou a {max} arquivos. Envie estes primeiro.",
         compressionLabel: "Compressão",
         upgradeToAdjust: "Faça upgrade do plano para ajustar",
         previewAlt: "Prévia {index}",

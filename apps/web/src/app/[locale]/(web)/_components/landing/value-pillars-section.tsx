@@ -15,8 +15,12 @@ import {
 export async function ValuePillarsSection({
   id,
   nextSectionId,
-}: LandingSectionProps) {
-  const t = await getTranslations("landing.valuePillars");
+  namespace = "landing.valuePillars",
+}: LandingSectionProps & {
+  /** The v2 homepage passes its own copy (same shape: `items` and `cta`). */
+  namespace?: "landing.valuePillars" | "landingV2.valuePillars";
+}) {
+  const t = await getTranslations(namespace);
   const items = t.raw("items") as { title: string; description: string }[];
 
   const valuePillarsMedia = await mediaService.findAllWithUser(

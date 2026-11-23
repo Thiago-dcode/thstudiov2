@@ -1,5 +1,6 @@
 import { SlotMachine } from "@repo/ui/components/custom/slot-machine";
 import { getTranslations } from "next-intl/server";
+import type { ReactNode } from "react";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import { NextSectionArrow } from "../next-section-arrow";
 import {
@@ -16,10 +17,19 @@ import "./hero-section-v2.css";
 const HERO_BLUR_MASK =
   "radial-gradient(ellipse 65% 65% at center, black 0%, black 30%, transparent 100%)";
 
+type HeroSectionV2Props = LandingSectionProps & {
+  /** Replaces `landing.hero.subtitle` (the v2 homepage passes its own copy). */
+  subtitle?: string;
+  /** Quiet line under the CTA (the v2 homepage's "Free to start" microcopy). */
+  footnote?: ReactNode;
+};
+
 export const HeroSectionV2 = async ({
   id,
   nextSectionId,
-}: LandingSectionProps) => {
+  subtitle,
+  footnote,
+}: HeroSectionV2Props) => {
   const t = await getTranslations("landing.hero");
   const accentWords = t.raw("titleAccentWords") as string[];
   const discoverWords = t.raw("titleDiscoverWords") as string[];
@@ -65,9 +75,9 @@ export const HeroSectionV2 = async ({
               <SlotMachine
                 texts={accentWords}
                 itemHeight="1.2em"
-                interval={3000}
+                interval={4000}
                 fitWidth
-                spinDuration={2500}
+                spinDuration={3000}
                 className="text-accent translate-y-[-0.09em]"
               />{" "}
               {t("titleConnector")}
@@ -76,21 +86,29 @@ export const HeroSectionV2 = async ({
               <SlotMachine
                 texts={discoverWords}
                 itemHeight="1.2em"
-                interval={3200}
-                spinDuration={2500}
+                interval={4200}
+                spinDuration={3000}
                 fitWidth
                 className="translate-y-[-0.09em]"
               />
               .
             </span>
           </p>
-          <p className="hero-stagger-2 max-w-2xl font-normal! leading-relaxed text-text-muted text-base! tablet:text-xl! laptop:text-2xl!">
-            {t("subtitle")}
+          <p className="hero-stagger-2 max-w-xl  font-normal! leading-relaxed  text-base! tablet:text-xl! laptop:text-2xl!">
+            {subtitle ?? t("subtitle")}
           </p>
         </div>
 
-        <div className="hero-stagger-4">
+        {/* v1 passes no footnote and keeps its original wrapper exactly. */}
+        <div
+          className={
+            footnote
+              ? "hero-stagger-4 flex flex-col items-center gap-4"
+              : "hero-stagger-4"
+          }
+        >
           <RegistrationCtaButton size="lg" intent="createPortfolio" />
+          {footnote}
         </div>
       </div>
       <NextSectionArrow nextSectionId={nextSectionId} />

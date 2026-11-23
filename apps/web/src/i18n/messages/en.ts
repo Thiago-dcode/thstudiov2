@@ -20,7 +20,7 @@ const messages = {
       definition:
         "A11STUDIO is where photographers show their work — and where clients come to find and hire them.",
       titlePrefix: "Let your",
-      titleAccentWords: ["photos", "vision", "craft", "work", "story"],
+      titleAccentWords: ["art", "vision", "craft", "work", "story"],
       titleConnector: "be",
       titleDiscoverWords: [
         "shared",
@@ -30,7 +30,7 @@ const messages = {
         "discovered",
       ],
       subtitle:
-        "For photographers who don't want to be influencers. Bring your photos, we take care of the rest.",
+        "For Artists who don't want to be influencers. Bring your photos, we take care of the rest.",
       primaryCtaLoggedIn: "Access Atelier",
       primaryCtaLoggedOut: "Start Free Now",
       secondaryCta: "Find artists",
@@ -263,6 +263,157 @@ const messages = {
       },
     },
   },
+  // The v2 homepage (`SECTIONS_V2`, behind `LANDING_V2=1`). v1 keeps reading `landing`.
+  landingV2: {
+    metadata: {
+      title: "A11STUDIO — Portfolio Platform for Photographers",
+      description:
+        "A professional photography portfolio in minutes. Upload your photos; AI writes the SEO, we host it, clients find you. Free to start, no card required.",
+    },
+    hero: {
+      subtitle:
+        "For photographers who don't want to be influencers. Just bring your art, we'll take care of the rest.",
+    },
+    microcopy: {
+      earlyAccess: "Early access",
+      free: "Free to start · No credit card required",
+    },
+    firstMinutes: {
+      badge: "How it works",
+      title: "Your first 15 minutes on A11STUDIO",
+      lead: "From a folder of photos to a portfolio clients can find. No code, no templates, no hosting.",
+      steps: [
+        {
+          time: "00:00",
+          title: "Upload your best work",
+          description:
+            "Up to 20 files at a time: JPEG, PNG, WebP, GIF or video. Bring your strongest 15 to 30, not everything.",
+          image: "1.webp",
+          imageAlt: "The A11STUDIO upload dialog with photos ready to upload",
+        },
+        {
+          time: "06:00",
+          title: "Let A11STUDIO write the metadata",
+          description:
+            "Switch on AI metadata and every photo gets a search-friendly file name, plus a title, description and alt text in English, Spanish and Portuguese. Refine the words whenever you like.",
+          image: "3.webp",
+          imageAlt: "AI-generated title, description and alt text for a photo",
+        },
+        {
+          time: "10:00",
+          title: "Create your portfolio",
+          description:
+            "Choose your strongest images for one specialty and pick a layout: masonry, uniform or columns. Add your services, so clients know what to book you for.",
+          image: "4.webp",
+          imageAlt:
+            "The portfolio editor with column, uniform and masonry layouts",
+        },
+        {
+          time: "15:00",
+          title: "Show it to the world",
+          description:
+            "Your work gets its own address, like <link>this one</link>: fast, search-friendly, and one link to share anywhere: your bio, your email signature, your next pitch.",
+          image: "5.webp",
+          imageAlt: "A published photography collection on A11STUDIO",
+        },
+      ],
+    },
+    valuePillars: {
+      cta: "Bring your art",
+      items: [
+        {
+          title: "Just Art",
+          description:
+            "A place for art, and nothing else. No noise, no distractions.",
+        },
+        {
+          title: "Intelligence",
+          description:
+            "AI quietly handles the boring, technical stuff. You focus on creating.",
+        },
+        {
+          title: "Focus",
+          description:
+            "Your only job is to share your best work. We take care of the rest.",
+        },
+        {
+          title: "Specialty",
+          description:
+            "One portfolio per {specialty}. Clients see exactly what to hire you for.",
+        },
+        {
+          title: "Quality",
+          description:
+            "We value quality over quantity — take your time to upload your best work.",
+        },
+        {
+          title: "Direct",
+          description:
+            "Clients write to you straight from your page. {No middlemen} in between.",
+        },
+        {
+          title: "No Algorithms",
+          description:
+            "No more {algorithm burnout}. No feeds, no games, no chasing engagement.",
+        },
+        {
+          title: "Ownership",
+          description:
+            "Your work stays {yours}. Full rights to every image you upload.",
+        },
+        {
+          title: "Simplicity",
+          description:
+            "As easy to update as a social post. No coding, no configuration.",
+        },
+        {
+          title: "Craftsmanship",
+          description:
+            "Built for quality first, always. Great art deserves great presentation.",
+        },
+        {
+          title: "Discovery",
+          description:
+            "Be found by the clients who matter. Visibility earned by talent, not algorithms.",
+        },
+        {
+          title: "Time",
+          description:
+            "All your energy goes into your {art}, not into social media.",
+        },
+        {
+          title: "Credibility",
+          description:
+            "A professional presence, without the technical hassle. Trusted by clients from the first visit.",
+        },
+        {
+          title: "Elegance",
+          description:
+            "A minimal space where your art takes center stage. Nothing competes for attention.",
+        },
+      ],
+    },
+    featuredPortfolio: {
+      badge: "Made on A11STUDIO",
+      title: "A photography portfolio, as clients see it.",
+      by: "By",
+      works: "{count, plural, one {# work} other {# works}}",
+      layouts: {
+        masonry: "Masonry layout",
+        uniform: "Uniform layout",
+        columns: "Column layout",
+      },
+      viewFull: "View the full portfolio",
+    },
+    cta: {
+      badge: "There's room for your work here",
+      title: "Be an <strike>influencer</strike> artist.",
+      description:
+        "No feed to feed. No algorithm to please. Just your best work, in a place that does it justice.",
+      earlyAccessNote:
+        "A11STUDIO is in early access. Photographers who join from the waitlist get 3 months free on our top plan.",
+    },
+  },
   forDiscipline: {
     photographers: {
       metadata: {
@@ -474,9 +625,9 @@ const messages = {
       },
       {
         id: "why-ai",
-        question: "Why does A11STUDIO use AI?",
+        question: "What does the AI write for my photos?",
         answer:
-          "So you can focus on what you do best — creating art. Everything technical happens behind the scenes: our AI writes <strong>SEO-optimized titles, descriptions and tags</strong> for your work, categorizes your media automatically, and generates alt text so search engines and AI assistants can find you. You never have to learn SEO or marketing — just <a href='#position-profile'>upload your best pieces and complete your profile</a>, and let the right audience discover them.",
+          "When you switch on AI metadata at upload (or later, on any photo), it looks at the image and writes <strong>a title, a short description and literal alt text</strong> in English, Spanish and Portuguese, plus a search-friendly file name, up to 8 content tags and its disciplines and styles. You can rewrite the title, description and alt text whenever you like. Each image uses 1 AI credit and each video 3, only when generation succeeds; the free plan includes 20 credits a month. It never writes your bio and never posts anything for you. To give it the best material, <a href='/faqs#position-profile'>complete your profile</a>.",
       },
       {
         id: "what-is-seo",
@@ -500,13 +651,32 @@ const messages = {
         id: "upload-videos",
         question: "Can I upload videos?",
         answer:
-          "Not yet — A11STUDIO currently supports images and is designed to showcase them beautifully. Video support is on our roadmap for a future version, so filmmakers, animators, and motion artists will be able to present their work here too. Want to be notified when it lands? <a href='/support'>Get in touch</a>.",
+          "Yes. Alongside JPEG, PNG, WebP and GIF images (up to 25 MB each), you can upload MP4, MOV and MPEG videos up to 500 MB and 10 minutes long. A11STUDIO makes a short preview clip and lets you pick the cover frame.",
       },
       {
         id: "is-free",
         question: "Is A11STUDIO free?",
         answer:
-          "Yes. A11STUDIO offers a free tier that lets you create your profile, build portfolios, and start showcasing your work right away. Premium plans unlock extra features like AI-powered tools, more storage, and advanced customization — but you can start for free and upgrade only if you need to.",
+          "Yes, and you don't need a card to start. The free plan includes <strong>2 portfolios, 3 collections, 2 services, 1 GB of storage and 20 AI credits a month</strong>: enough to publish a complete, professional portfolio. Paid plans, from €9 a month, raise those limits and add image compression. You only upgrade if you need more room.",
+      },
+      {
+        id: "vs-social-media-website-builder",
+        question:
+          "How is A11STUDIO different from social media or a website builder?",
+        answer:
+          "Social media is a feed: the newest post wins and an algorithm decides who sees it. A website builder gives you templates, but the hosting, layout and SEO are yours to figure out. A11STUDIO sits between the two. You organize your best work into portfolios by specialty and collections per shoot, list the services you offer, and clients contact you from your page. The search-friendly side is done for you. You can keep posting wherever you like and make A11STUDIO the link in your bio.",
+      },
+      {
+        id: "google-visibility",
+        question: "Will clients find my photos on Google?",
+        answer:
+          "Your public pages are built to be found: each has its own title, description and structured data, and once your profile is complete your pages are listed in our sitemap for search engines. With AI metadata on, every photo also gets a descriptive title and alt text. Nobody can honestly guarantee a ranking, but a complete profile with your city, a clear specialty and well-described work gives you the best chance. Here is <a href='/faqs#position-profile'>how to position your profile</a>.",
+      },
+      {
+        id: "ownership",
+        question: "Who owns the photos I upload?",
+        answer:
+          "You do. You keep full ownership of everything you upload. We only get the limited licence needed to show your work on A11STUDIO, and it ends when you delete the work or your account. Deleting your account has a 15-day grace period, so you can change your mind. The details are in our <a href='/legal/terms'>terms</a>.",
       },
     ],
     page: {
@@ -2390,6 +2560,10 @@ const messages = {
         dropzoneAddMore: "Add more files",
         dropzoneRemaining:
           "{remaining} {remaining, plural, one {slot} other {slots}} left",
+        dropzoneFormats:
+          "JPEG, PNG, WebP, GIF up to {imageMb} MB · MP4, MOV, MPEG up to {videoMb} MB",
+        dropOverlayTitle: "Drop to add your files",
+        dropOverlayFull: "You've reached {max} files. Upload these first.",
         compressionLabel: "Compression",
         upgradeToAdjust: "Upgrade required",
         previewAlt: "Preview {index}",

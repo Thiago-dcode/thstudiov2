@@ -78,8 +78,11 @@ export const WebFooter = async ({
   return (
     <footer className="w-full border-t border-fg-2 bg-bg">
       <div className="mx-auto max-w-(--screen-ultrawide) px-5 py-10 tablet:px-10 tablet:py-12">
-        <div className="grid grid-cols-1 gap-10 phone-lg:grid-cols-2 tablet:grid-cols-4 tablet:gap-8">
-          <div className="flex flex-col gap-3 phone-lg:col-span-2 tablet:col-span-1">
+        {/* Four columns only from `tablet-lg`: at iPad portrait (768px) the four were too narrow,
+            wrapping link labels and pushing the support email past the viewport (horizontal
+            scroll). Below that the brand takes its own row above three link columns. */}
+        <div className="grid grid-cols-1 gap-10 phone-lg:grid-cols-2 tablet:grid-cols-3 tablet:gap-8 tablet-lg:grid-cols-4">
+          <div className="flex flex-col gap-3 phone-lg:col-span-2 tablet:col-span-3 tablet-lg:col-span-1">
             {/* Wrapped in a link: the logo is the conventional way back to the home page, and it
                 gives `/` an inbound link from every page instead of none. */}
             <Link href="/" aria-label={t("home")} className="w-fit">
@@ -160,7 +163,7 @@ export const WebFooter = async ({
               </Link>
               <a
                 href={`mailto:${supportEmail}`}
-                className="w-fit break-all text-sm tracking-wider text-text transition-colors hover:text-text phone-lg:break-normal"
+                className="w-fit max-w-full text-sm tracking-wider text-text transition-colors [overflow-wrap:anywhere] hover:text-text"
               >
                 {supportEmail}
               </a>

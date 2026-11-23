@@ -26,7 +26,7 @@ import {
 import { WaitListSteps } from "@/modules/wait-list/components/wait-list-steps";
 
 type RegistrationCtaButtonProps = {
-  size?: "sm" | "lg";
+  size?: "sm" | "lg" | "default";
   className?: string;
   intent?: "getStarted" | "createPortfolio";
   label?: string;

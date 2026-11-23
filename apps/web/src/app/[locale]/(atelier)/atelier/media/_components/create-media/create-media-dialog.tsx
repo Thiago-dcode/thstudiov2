@@ -55,6 +55,23 @@ export function CreateMediaDialog({
 
   const addedFilesRef = useRef(new Set<File>());
 
+  // While the dialog is open, a file dropped anywhere outside the media pane (header, settings
+  // panel, or the backdrop around the dialog) would be opened by the browser, navigating away
+  // and losing every staged file. The pane handles its own drops first; this only swallows the
+  // rest. Window-level, so the backdrop (outside the dialog's DOM) is covered too.
+  useEffect(() => {
+    if (!open) return;
+    const swallow = (e: DragEvent) => {
+      if (e.dataTransfer?.types.includes("Files")) e.preventDefault();
+    };
+    window.addEventListener("dragover", swallow);
+    window.addEventListener("drop", swallow);
+    return () => {
+      window.removeEventListener("dragover", swallow);
+      window.removeEventListener("drop", swallow);
+    };
+  }, [open]);
+
   useEffect(() => {
     if (!openFromQuery || openParam !== "1") return;
     setOpen(true);
