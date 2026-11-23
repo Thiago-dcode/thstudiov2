@@ -698,132 +698,168 @@ const messages = {
   },
   about: {
     metadata: {
-      title: "Sobre a A11STUDIO — Feito por um artista, para artistas",
+      title: "Sobre a A11STUDIO — Portfólios para fotógrafos, feitos por um",
       description:
-        "Conheça a A11STUDIO — a plataforma de portfólios que combina sites profissionais com a facilidade das redes sociais, feita por um artista para artistas.",
+        "Portfólios para fotógrafos e artistas: envie sua obra e publique um portfólio profissional em minutos. Sem código, hospedagem ou domínio. Feito por um fotógrafo.",
     },
     hero: {
       label: "Sobre",
-      title: "A plataforma de portfólios feita para artistas",
-      lead: "A A11STUDIO reúne o acabamento de um site de portfólio profissional com a simplicidade das redes sociais — para você nunca ter que escolher entre os dois.",
+      title: "Sua arte merece seu próprio espaço",
+      lead: "A A11STUDIO é uma plataforma de portfólios para fotógrafos e artistas. Você traz a obra; nós cuidamos da hospedagem, da apresentação e dos detalhes técnicos, para que ela fale por si.",
     },
     what: {
       title: "O que é a A11STUDIO?",
       paragraphs: [
-        "Sites tradicionais dão aos artistas controle total sobre como apresentam seu trabalho. As redes sociais tornam a publicação sem esforço e ajudam a construir comunidade. A A11STUDIO nasceu para unir esses dois mundos.",
-        "Em vez de forçar artistas a escolher entre um portfólio bonito ou uma plataforma fácil de usar, a A11STUDIO oferece os dois. Removemos as barreiras técnicas — você constrói um portfólio profissional em minutos enquanto a plataforma cuida do SEO, otimização e manutenção nos bastidores.",
+        "Um lugar para criar um portfólio bonito e profissional em minutos, sem construir um site. Crie uma conta grátis, configure seu perfil, envie e organize sua obra, e publique.",
+        "A A11STUDIO cuida do que normalmente atrapalha: hospedagem, apresentação e páginas preparadas para buscadores, com uma IA que ajuda a preparar os metadados de cada imagem. Sem código, sem configurar um site, sem domínio. Grátis para começar, sem cartão.",
       ],
     },
-    bridge: {
-      title: "O melhor dos dois mundos",
-      websiteLabel: "O que um site tradicional oferece",
-      websiteItems: [
-        "Uma presença online profissional",
-        "Um portfólio que fortalece sua marca pessoal",
-        "Projetos e galerias organizados",
-        "Melhor visibilidade em buscadores",
-        "Um lar permanente para sua arte, que você possui",
-      ],
-      socialLabel: "O que as redes sociais oferecem",
+    problem: {
+      title: "O problema que resolvemos",
+      socialLabel: "Nas redes sociais, artistas costumam sentir a pressão de",
       socialItems: [
-        "Publicação de conteúdo extremamente fácil",
-        "Criação rápida de perfil sem precisar programar",
-        "Configuração técnica mínima",
-        "Atualizações dinâmicas de conteúdo",
-        "Uma comunidade em torno do seu trabalho",
+        "Publicar sem parar para continuar visíveis",
+        "Adaptar a obra a tendências e formatos",
+        "Competir por atenção",
+        "Virar criadores de conteúdo e profissionais de marketing",
+        "Medir a obra em curtidas e visualizações",
+      ],
+      websiteLabel: "Um site dá controle, mas pede que você",
+      websiteItems: [
+        "Escolha e aprenda um criador de sites",
+        "Configure layouts e ajustes",
+        "Entenda domínios e hospedagem",
+        "Gerencie o SEO técnico",
+        "Mantenha tudo ao longo do tempo",
       ],
       closing:
-        "Sites são poderosos, mas geralmente exigem conhecimento técnico, SEO, hospedagem e manutenção contínua. Muitos artistas só querem criar arte — não passar horas aprendendo tecnologia. A A11STUDIO fecha essa lacuna.",
+        "Nem todo artista quer ser influencer, e ninguém deveria precisar virar desenvolvedor web para apresentar sua obra com profissionalismo. A A11STUDIO é uma casa simples e bonita para a sua obra, sem nenhum desses fardos.",
     },
     mission: {
       title: "Nossa missão",
       statement:
-        "Ajudar artistas a gastar menos tempo lidando com tecnologia e mais tempo criando arte com significado.",
-      body: "Artistas não deveriam se preocupar com SEO, indexação de busca, otimização de site, código ou configurações complexas. Sua única tarefa é criar e compartilhar seu melhor trabalho. A A11STUDIO cuida de todo o resto.",
+        "Ajudar artistas a passar menos tempo lidando com tecnologia e mais tempo criando arte com significado.",
+      body: "A tecnologia deveria apoiar a criatividade, não desviar a atenção dela. Tiramos a complexidade desnecessária para que você foque na sua obra e em como ela cresce.",
     },
-    vision: {
-      title: "Nossa visão",
-      paragraphs: [
-        "Acreditamos que artistas merecem uma plataforma pensada para suas necessidades — não para algoritmos. Com frequência demais, obras incríveis ficam enterradas sob feeds intermináveis, tendências e métricas de engajamento.",
-        "Aqui, a obra é sempre a protagonista. Cada decisão de design, cada funcionalidade e cada seção é construída com um objetivo: mostrar a arte da melhor forma possível.",
+    why: {
+      title: "Por que artistas escolhem a A11STUDIO",
+      items: [
+        {
+          title: "Simples",
+          description:
+            "Você não constrói um site. Envia sua obra, organiza e publica.",
+        },
+        {
+          title: "Rápido",
+          description:
+            "Uma presença profissional em minutos, não em fins de semana.",
+        },
+        {
+          title: "Grátis para começar",
+          description: "Crie seu portfólio sem cartão de crédito.",
+        },
+        {
+          title: "Feito para a obra",
+          description:
+            "Suas imagens ficam em uma moldura calma e editorial, pensada em torno da qualidade visual.",
+        },
+        {
+          title: "Menos trabalho repetitivo",
+          description:
+            "A IA ajuda a escrever títulos, descrições e textos alternativos para suas imagens. Você pode editar tudo.",
+        },
+        {
+          title: "Nada para manter",
+          description:
+            "A hospedagem e a parte técnica de publicar ficam por nossa conta.",
+        },
       ],
     },
     values: {
       title: "Nossos valores",
       items: [
         {
-          title: "Feito por um artista, para artistas",
-          description:
-            "A A11STUDIO não foi criada por uma empresa tentando entrar na indústria criativa. Foi construída por alguém que entende as frustrações de ser artista. Cada funcionalidade existe porque resolve um problema real.",
-        },
-        {
           title: "A arte vem primeiro",
           description:
-            "A plataforma não é projetada para maximizar tempo de tela. É projetada para maximizar a apresentação do seu trabalho. A interface se mantém limpa, elegante e livre de distrações para que os visitantes foquem no que importa: sua arte.",
+            "A obra é sempre a protagonista. A interface a emoldura e nunca compete com ela.",
+        },
+        {
+          title: "Independência criativa",
+          description:
+            "Você não deveria ter que abrir mão da sua identidade artística para conseguir atenção.",
         },
         {
           title: "A tecnologia deve desaparecer",
-          description:
-            "A tecnologia deve empoderar artistas — não sobrecarregá-los. SEO, desenvolvimento web, otimização de performance e manutenção do site acontecem todos nos bastidores.",
+          description: "Ferramentas poderosas deveriam parecer simples.",
         },
         {
-          title: "Tempo é valioso",
-          description:
-            "Artistas deveriam investir seu tempo criando, não configurando sites. A A11STUDIO automatiza o máximo possível para que cada minuto economizado vire mais um minuto fazendo arte.",
+          title: "Simplicidade com propósito",
+          description: "Cada recurso precisa merecer o seu lugar.",
         },
         {
-          title: "Conectando artistas e clientes",
+          title: "Respeito pelos artistas",
           description:
-            "Um portfólio deve fazer mais do que exibir trabalho — deve criar oportunidades. A A11STUDIO ajuda artistas a se apresentarem profissionalmente enquanto facilita que clientes descubram grandes talentos.",
+            "Sua obra, seu tempo e sua confiança merecem cuidado. O que você envia continua sendo seu.",
         },
-      ],
-    },
-    why: {
-      title: "Por que a A11STUDIO existe",
-      intro:
-        "As redes sociais modernas recompensam a postagem constante em vez de portfólios com significado. Artistas frequentemente se sentem pressionados a criar conteúdo para algoritmos em vez de arte que realmente amam. Sites tradicionais resolvem esse problema, mas trazem outro: são difíceis de construir e manter.",
-      items: [
-        "O profissionalismo de um site pessoal",
-        "A simplicidade das redes sociais",
-        "A descoberta do SEO",
-        "A facilidade de publicar conteúdo",
-        "Uma experiência bonita, desenhada especificamente para artistas",
+        {
+          title: "Honestidade",
+          description:
+            "Dizemos o que a plataforma faz hoje e não fazemos promessas que ela não pode cumprir.",
+        },
+        {
+          title: "Pensar no longo prazo",
+          description:
+            "Valor duradouro para os artistas importa mais do que engajamento de curto prazo.",
+        },
       ],
     },
     who: {
       title: "Para quem é",
       intro: "A A11STUDIO é para artistas que:",
       items: [
-        "Querem um portfólio online bonito",
-        "Valorizam seu tempo",
-        "Não querem aprender desenvolvimento web",
-        "Querem ser descobertos por clientes",
-        "Se importam com apresentação e qualidade",
-        "Preferem criar arte em vez de gerenciar tecnologia",
+        "Levam a obra a sério e querem apresentá-la com profissionalismo",
+        "Valorizam autenticidade e independência criativa",
+        "Preferem não correr atrás de atenção nos feeds",
+        "Querem ser encontrados por clientes e colaboradores",
+        "Preferem uma experiência simples a um software complicado",
       ],
       closing:
-        "Feita primeiro para fotógrafos — casamento, retrato, marca, viagem ou qualquer outra especialidade. Outros criativos também são bem-vindos, e a A11STUDIO ajuda seu trabalho a se destacar.",
+        "Começamos pelos fotógrafos: de casamento, retrato, marca, viagem ou qualquer outra especialidade. Outros artistas visuais também são bem-vindos.",
+    },
+    vision: {
+      title: "Para onde vamos",
+      paragraphs: [
+        "Começamos com portfólios, mas a ambição é maior: uma casa criativa de confiança que cresça com os artistas, do primeiro portfólio a uma carreira consolidada.",
+        "Com o tempo, queremos acrescentar:",
+      ],
+      items: [
+        "Blogs pessoais e narrativas criativas",
+        "Descoberta de artistas e comunidade",
+        "Concursos, exposições e reconhecimento",
+        "Um marketplace para vender sua obra",
+      ],
+      note: "Nada disso está disponível ainda. Cada passo precisa melhorar de verdade a vida dos artistas antes de ser construído.",
     },
     philosophy: {
       title: "Como decidimos",
-      question: "Isso ajuda artistas a mostrar melhor o próprio trabalho?",
+      question: "Isso ajuda os artistas a mostrar melhor sua obra?",
       answer:
-        "Se a resposta for sim, faz parte. Se não, não faz. A plataforma existe para servir artistas — não o contrário.",
+        "Se ajuda, tem lugar aqui. Se não, não tem. A A11STUDIO existe para servir os artistas. Os artistas não existem para servir a A11STUDIO.",
     },
     creator: {
       title: "Sobre o criador",
       paragraphs: [
-        "Oi, eu sou o Thiago. Sou engenheiro de software, mas antes de tudo, sou artista. Fotografia e cinema sempre foram minhas maiores paixões.",
-        "Depois de anos criando conteúdo para redes sociais, senti que estava trabalhando para algoritmos em vez de para mim mesmo. O burnout me fez me afastar da arte por completo — e, eventualmente, me levou à programação, onde descobri uma nova forma de construir coisas que ajudam as pessoas.",
-        "A ideia de uma plataforma para fotógrafos e artistas nunca me deixou. No verão de 2025, comecei a A11STUDIO — combinando arte, design, fotografia, cinema e programação em um único produto.",
-        "A A11STUDIO não é só mais um projeto. É a plataforma que eu sempre quis que existisse quando era um artista tentando compartilhar meu trabalho com o mundo.",
+        "Oi, eu sou o Thiago. Sou engenheiro de software, mas antes de tudo sou fotógrafo e cineasta.",
+        "Passei anos fazendo crescer um canal de fotografia no YouTube. Com o tempo senti que trabalhava para os algoritmos e não para mim, e o burnout me afastou da arte por completo, e me aproximou da programação, onde encontrei uma nova forma de construir coisas que ajudam as pessoas.",
+        "A ideia de uma plataforma para fotógrafos e artistas não me deixou. No verão de 2025 comecei a A11STUDIO, juntando fotografia, cinema, design e código em um só produto.",
+        "É a plataforma que eu gostaria que existisse quando tentava compartilhar minha própria obra.",
       ],
     },
     cta: {
-      title: "Pronto para mostrar seu trabalho?",
+      title: "Sua arte. Seu espaço. Sua história.",
       description:
-        "Crie um portfólio profissional em minutos. Grátis para começar — sem necessidade de cartão de crédito.",
-      button: "Começar",
+        "Crie hoje seu portfólio profissional. Grátis para começar, sem cartão de crédito.",
+      button: "Comece grátis",
     },
   },
   language: "Idioma",
