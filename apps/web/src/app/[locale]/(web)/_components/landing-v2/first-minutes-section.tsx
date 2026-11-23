@@ -73,7 +73,57 @@ export async function FirstMinutesSection({
           </p>
         </header>
 
-        <ol className="flex flex-col gap-16 tablet:gap-20 laptop:gap-28">
+        {/* Phones: an accordion (time + title opens the step), only the first open. Native
+            <details>, so it works without JavaScript. The zigzag list below takes over from
+            tablet up; only one of the two is ever displayed, and the hidden one's lazy images are
+            never fetched. */}
+        <ol className="flex flex-col border-t border-border tablet:hidden">
+          {steps.map((step, index) => (
+            <li key={step.time} className="border-b border-border">
+              <details open={index === 0} className="group">
+                <summary className="flex cursor-pointer list-none items-center gap-4 py-5 [&::-webkit-details-marker]:hidden">
+                  <span
+                    aria-hidden="true"
+                    className="w-12 shrink-0 font-mono text-sm! tabular-nums tracking-widest text-text-muted"
+                  >
+                    {step.time}
+                  </span>
+                  <h3 className="flex-1 font-serif! text-xl! font-medium! leading-tight!">
+                    <span className="sr-only">{`${index + 1}. `}</span>
+                    {step.title}
+                  </h3>
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 12 12"
+                    className="h-3 w-3 shrink-0 text-text-muted transition-transform duration-200 group-open:rotate-45 motion-reduce:transition-none"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.25}
+                  >
+                    <path d="M6 0v12M0 6h12" />
+                  </svg>
+                </summary>
+                <div className="flex flex-col gap-5 pb-6">
+                  {/* Indented to line up with the title (w-12 time + gap-4). */}
+                  <p className="pl-16 text-base! leading-relaxed text-text-muted">
+                    <StepDescription text={step.description} />
+                  </p>
+                  <figure className="relative aspect-16/10 w-full overflow-hidden border border-border bg-fg">
+                    <NextImage
+                      src={screenshotSrc(step.image)}
+                      alt={step.imageAlt}
+                      fill
+                      unoptimized
+                      className="object-cover object-top"
+                    />
+                  </figure>
+                </div>
+              </details>
+            </li>
+          ))}
+        </ol>
+
+        <ol className="hidden flex-col gap-16 tablet:flex tablet:gap-20 laptop:gap-28">
           {steps.map((step, index) => {
             // Steps zigzag: text left / image right, then mirrored.
             const flip = index % 2 === 1;
