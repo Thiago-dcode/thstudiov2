@@ -37,13 +37,17 @@ export default async function AboutPage({
     title: string;
     description: string;
   }[];
-  const whyItems = t.raw("why.items") as string[];
+  const whyItems = t.raw("why.items") as {
+    title: string;
+    description: string;
+  }[];
   const whoItems = t.raw("who.items") as string[];
   const whatParagraphs = t.raw("what.paragraphs") as string[];
   const visionParagraphs = t.raw("vision.paragraphs") as string[];
   const creatorParagraphs = t.raw("creator.paragraphs") as string[];
-  const websiteItems = t.raw("bridge.websiteItems") as string[];
-  const socialItems = t.raw("bridge.socialItems") as string[];
+  const visionItems = t.raw("vision.items") as string[];
+  const socialItems = t.raw("problem.socialItems") as string[];
+  const websiteItems = t.raw("problem.websiteItems") as string[];
 
   return (
     <article className="mx-auto w-full max-w-3xl px-6 py-20 tablet:px-10 tablet:py-28">
@@ -72,21 +76,21 @@ export default async function AboutPage({
         ))}
       </Section>
 
-      <Section id="bridge" title={t("bridge.title")}>
+      <Section id="problem" title={t("problem.title")}>
         <div className="space-y-8">
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-text">
-              {t("bridge.websiteLabel")}
-            </h3>
-            <BulletList items={websiteItems} />
-          </div>
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium text-text">
-              {t("bridge.socialLabel")}
+              {t("problem.socialLabel")}
             </h3>
             <BulletList items={socialItems} />
           </div>
-          <P>{t("bridge.closing")}</P>
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-text">
+              {t("problem.websiteLabel")}
+            </h3>
+            <BulletList items={websiteItems} />
+          </div>
+          <P>{t("problem.closing")}</P>
         </div>
       </Section>
 
@@ -97,26 +101,12 @@ export default async function AboutPage({
         <P>{t("mission.body")}</P>
       </Section>
 
-      <Section id="vision" title={t("vision.title")}>
-        {visionParagraphs.map((paragraph) => (
-          <P key={paragraph}>{paragraph}</P>
-        ))}
+      <Section id="why" title={t("why.title")}>
+        <TitledList items={whyItems} />
       </Section>
 
       <Section id="values" title={t("values.title")}>
-        <div className="space-y-8">
-          {valueItems.map((item) => (
-            <div key={item.title} className="space-y-2">
-              <h3 className="text-sm font-medium text-text">{item.title}</h3>
-              <P>{item.description}</P>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <Section id="why" title={t("why.title")}>
-        <P>{t("why.intro")}</P>
-        <BulletList items={whyItems} />
+        <TitledList items={valueItems} />
       </Section>
 
       <Section id="who" title={t("who.title")}>
@@ -125,6 +115,17 @@ export default async function AboutPage({
         </p>
         <BulletList items={whoItems} />
         <P>{t("who.closing")}</P>
+      </Section>
+
+      <Section id="vision" title={t("vision.title")}>
+        {visionParagraphs.map((paragraph) => (
+          <P key={paragraph}>{paragraph}</P>
+        ))}
+        <BulletList items={visionItems} />
+        {/* The brand doc: future features must be labelled as not available yet. */}
+        <p className="max-w-2xl text-xs leading-relaxed text-text-muted">
+          {t("vision.note")}
+        </p>
       </Section>
 
       <Section id="philosophy" title={t("philosophy.title")}>
@@ -192,6 +193,23 @@ function P({ children }: { children: ReactNode }) {
     <p className="max-w-2xl text-sm leading-relaxed text-text-muted">
       {children}
     </p>
+  );
+}
+
+function TitledList({
+  items,
+}: {
+  items: { title: string; description: string }[];
+}) {
+  return (
+    <div className="space-y-8">
+      {items.map((item) => (
+        <div key={item.title} className="space-y-2">
+          <h3 className="text-sm font-medium text-text">{item.title}</h3>
+          <P>{item.description}</P>
+        </div>
+      ))}
+    </div>
   );
 }
 
