@@ -1,3 +1,9 @@
+import {
+  EDITORIAL_PROSE_CLASS,
+  EDITORIAL_PROSE_LINK_CLASS,
+  EditorialHeader,
+  editorialHeadlineClass,
+} from "@repo/ui/components/custom/editorial";
 import type { ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
 
@@ -10,8 +16,11 @@ import { Link } from "@/i18n/navigation";
  * assumed to put the link in the same place.
  */
 
-const LINK_CLASS =
-  "text-text underline underline-offset-4 hover:text-text-muted transition-colors";
+const LINK_CLASS = EDITORIAL_PROSE_LINK_CLASS;
+
+/** The reading column: starts on the opening's 4th grid column on laptop+ (12 cols, gap-x-10). */
+export const LEGAL_COLUMN_CLASS =
+  "w-full max-w-[38rem] laptop:ml-[calc(25%+0.625rem)]";
 
 export function LegalHeader({
   lastUpdated,
@@ -23,17 +32,13 @@ export function LegalHeader({
   intro: ReactNode;
 }) {
   return (
-    <header className="space-y-4">
-      <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
-        {lastUpdated}
-      </p>
-      <h1 className="text-3xl tablet:text-4xl font-bold tracking-tight text-text">
-        {heading}
-      </h1>
-      <p className="text-sm leading-relaxed text-text-muted max-w-2xl">
-        {intro}
-      </p>
-    </header>
+    <EditorialHeader
+      as="h1"
+      className="mb-6 tablet:mb-10"
+      label={lastUpdated}
+      title={heading}
+      standfirst={intro}
+    />
   );
 }
 
@@ -45,23 +50,21 @@ export function Section({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-4">
-      <h2 className="text-lg font-semibold tracking-tight text-text">
-        {title}
-      </h2>
+    <section className={`${LEGAL_COLUMN_CLASS} space-y-5`}>
+      <h2 className={editorialHeadlineClass("sub")}>{title}</h2>
       {children}
     </section>
   );
 }
 
 export function P({ children }: { children: ReactNode }) {
-  return <p className="text-sm leading-relaxed text-text-muted">{children}</p>;
+  return <p className={EDITORIAL_PROSE_CLASS}>{children}</p>;
 }
 
 /** Bullet list. `items` are already-rendered nodes so each one can carry its own rich markup. */
 export function Bullets({ items }: { items: ReactNode[] }) {
   return (
-    <ul className="list-disc list-inside space-y-2 text-sm leading-relaxed text-text-muted">
+    <ul className="max-w-[38rem] list-disc space-y-2.5 pl-5 text-base leading-[1.75] text-text-muted marker:text-border-em">
       {items.map((item, i) => (
         // Legal copy is a fixed, ordered list per document — index is a stable identity here.
         <li key={i}>{item}</li>

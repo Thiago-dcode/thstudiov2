@@ -8,6 +8,7 @@ skills:
   - tech-stack
   - architecture
   - frontend
+  - a11studio-design
   - logging
 hooks:
   PreToolUse:

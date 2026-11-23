@@ -28,8 +28,8 @@ export default async function PasswordUpdateSuccess() {
       <PageComponent.Content>
         {/* Success Icon */}
         <div className="flex justify-center">
-          <div className="w-16 h-16 bg-green-100 flex items-center justify-center">
-            <CheckCircle2 className="size-8 text-green-600" />
+          <div className="flex size-16 items-center justify-center">
+            <CheckCircle2 className="size-7 text-success" strokeWidth={1.25} />
           </div>
         </div>
 
@@ -51,7 +51,7 @@ export default async function PasswordUpdateSuccess() {
           {t("needHelp")}{" "}
           <Link
             href="/support"
-            className="text-blue-500 hover:text-blue-600 underline"
+            className="text-text underline decoration-border-em underline-offset-4 transition-colors hover:decoration-text"
           >
             {t("contactSupport")}
           </Link>

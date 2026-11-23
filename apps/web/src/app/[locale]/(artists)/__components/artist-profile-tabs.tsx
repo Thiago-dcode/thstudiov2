@@ -28,7 +28,7 @@ export const ArtistProfileTabs = ({ tabs }: { tabs: ProfileTab[] }) => {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="relative bg-transparent px-0 py-4 text-xs uppercase tracking-[0.2em] text-text-muted shadow-none transition-colors duration-300 hover:text-text data-[state=active]:text-text data-[state=active]:shadow-none data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:bottom-0 data-[state=active]:after:h-px data-[state=active]:after:bg-text"
+                className="relative bg-transparent px-0 py-4 text-xs uppercase tracking-[0.24em] text-text-muted shadow-none transition-colors duration-300 hover:text-text data-[state=active]:text-text data-[state=active]:shadow-none data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:bottom-0 data-[state=active]:after:h-px data-[state=active]:after:bg-text"
               >
                 {tab.label}
               </TabsTrigger>

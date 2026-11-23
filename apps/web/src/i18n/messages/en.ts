@@ -13,12 +13,10 @@ const messages = {
     metadata: {
       title: "A11STUDIO — Portfolio Platform for Photographers",
       description:
-        "Build a professional photography portfolio and get hired: you upload your photos, we handle SEO, hosting and the technical side. Free to start.",
+        "A professional photography portfolio in minutes. Upload your photos; AI writes the SEO, we host it, clients find you. Free to start, no card required.",
     },
     hero: {
       srTitle: "A11STUDIO — the portfolio platform for photographers.",
-      definition:
-        "A11STUDIO is where photographers show their work — and where clients come to find and hire them.",
       titlePrefix: "Let your",
       titleAccentWords: ["art", "vision", "craft", "work", "story"],
       titleConnector: "be",
@@ -30,10 +28,7 @@ const messages = {
         "discovered",
       ],
       subtitle:
-        "For Artists who don't want to be influencers. Bring your photos, we take care of the rest.",
-      primaryCtaLoggedIn: "Access Atelier",
-      primaryCtaLoggedOut: "Start Free Now",
-      secondaryCta: "Find artists",
+        "For photographers who don't want to be influencers. Just bring your art, we'll take care of the rest.",
       waitList: {
         hook: "Join the waitlist to get early access to the app.",
         label: "Join the artist waitlist",
@@ -75,204 +70,6 @@ const messages = {
           learnMore: "Read the full waitlist FAQ",
         },
       },
-      disclaimer: "Free to start · No credit card required",
-      scrollToNextSection: "Scroll to next section",
-      disciplinesAria: "Disciplines welcomed",
-      disciplines: {
-        photography: "Photography",
-        illustration: "Illustration",
-        painting: "Painting",
-        sculpture: "Sculpture",
-        tattoo: "Tattoo",
-        design: "Design",
-        fashion: "Fashion",
-        animation: "Animation",
-        digitalArt: "Digital Art",
-        architecture: "Architecture",
-        film: "Film",
-      },
-    },
-    valuePillars: {
-      header: {
-        badge: "Why A11STUDIO",
-        title: "Made by an artist for artists",
-        description:
-          "A professional home for your work — with the {intelligence} to grow your career and the simplicity to never slow you down.",
-      },
-      cta: "Bring your art",
-      scrollToNextSection: "Scroll to next section",
-      items: [
-        {
-          title: "Just Art",
-          description:
-            "A place for art, and nothing else. No noise, no distractions.",
-        },
-        {
-          title: "Intelligence",
-          description:
-            "AI quietly handles the boring, technical stuff. You focus on creating.",
-        },
-        {
-          title: "Focus",
-          description:
-            "Your only job is to share your best work. We take care of the rest.",
-        },
-        {
-          title: "Community",
-          description:
-            "A community built on taste, not trends. People who value craft over noise.",
-        },
-        {
-          title: "Quality",
-          description:
-            "We value quality over quantity — take your time to upload your best work.",
-        },
-        {
-          title: "Clients",
-          description:
-            "We connect client needs with the right artists. Fast, direct, and trustworthy.",
-        },
-        {
-          title: "No Algorithms",
-          description:
-            "No more {algorithm burnout}. No feeds, no games, no chasing engagement.",
-        },
-        {
-          title: "Ownership",
-          description:
-            "A home for your work that belongs to you. Permanent, not rented from a platform.",
-        },
-        {
-          title: "Simplicity",
-          description:
-            "As easy to update as a social post. No coding, no configuration.",
-        },
-        {
-          title: "Craftsmanship",
-          description:
-            "Built for quality first, always. Great art deserves great presentation.",
-        },
-        {
-          title: "Discovery",
-          description:
-            "Be found by the clients who matter. Visibility earned by talent, not algorithms.",
-        },
-        {
-          title: "Time",
-          description:
-            "All your energy goes into your {art}, not into social media.",
-        },
-        {
-          title: "Credibility",
-          description:
-            "A professional presence, without the technical hassle. Trusted by clients from the first visit.",
-        },
-        {
-          title: "Elegance",
-          description:
-            "A minimal space where your art takes center stage. Nothing competes for attention.",
-        },
-        {
-          title: "Trust",
-          description:
-            "A fast, reliable way to find real talent. No guesswork, no wasted hours.",
-        },
-      ],
-    },
-    socialProof: {
-      highlights: [
-        "Pro website quality, social-media ease",
-        "AI writes your bios, tags & positioning",
-        "Clients discover and connect directly",
-      ],
-      cta: "Start Free Now",
-    },
-    featureCategories: {
-      header: {
-        badge: "Explore",
-        title: "Featured Categories",
-        description:
-          "Discover artists by discipline — each path leads to curated results.",
-      },
-      card: {
-        browse: "Browse",
-        ariaBrowseArtistsIn: "Browse artists in",
-      },
-    },
-    featuredArtists: {
-      header: {
-        badge: "Discover",
-        title: "Artists you can connect with today",
-        description:
-          "Every portfolio is a direct line between artist and client. Browse, discover, and start a conversation.",
-      },
-      browseAll: "Browse All Artists",
-    },
-    disciplines: {
-      heading: "For creatives",
-      items: {
-        photographers: {
-          title: "Free photography portfolio for photographers",
-          description:
-            "Portfolios by specialty, collections for every shoot and services clients can book.",
-          cta: "See how it works",
-        },
-      },
-    },
-    featuredPortfolio: {
-      header: {
-        badge: "Portfolio spotlight",
-        title: "Get inspired with this portfolio",
-        description:
-          "A live portfolio on A11STUDIO — curated, polished, and ready to share.",
-      },
-      by: "A portfolio by",
-      viewProfile: "View @{username}'s profile",
-      exploreMore: "Get inspired",
-      scrollToNextSection: "Scroll to next section",
-    },
-    cta: {
-      badge: "Get discovered",
-      title: "Be an <strike>influencer</strike> artist.",
-      description:
-        "No more algorithm burnout. Your energy belongs to your art, not to social media — A11STUDIO handles SEO and positioning so people find your work.",
-      button: "Create Your Portfolio",
-      waitListButton: "Bring your art",
-    },
-    howItWorks: {
-      badge: "How it works",
-      title: "From upload to your first client",
-      description:
-        "A portfolio that builds your career, not just displays your work.",
-      steps: {
-        organize: {
-          title: "Organize & Customize",
-          description:
-            "Upload your work and arrange it into a stunning portfolio. Customize the layout like editing a social post — no code, no friction.",
-        },
-        ai: {
-          title: "AI Positions You",
-          description:
-            "AI generates your bio, descriptions, and tags. It optimizes your portfolio for search engines so the right people find you.",
-        },
-        connect: {
-          title: "Clients Connect",
-          description:
-            "Collectors, agencies, and collaborators discover your portfolio and reach out directly. Real relationships, no middlemen.",
-        },
-      },
-    },
-  },
-  // The v2 homepage (`SECTIONS_V2`, behind `LANDING_V2=1`). v1 keeps reading `landing`.
-  landingV2: {
-    metadata: {
-      title: "A11STUDIO — Portfolio Platform for Photographers",
-      description:
-        "A professional photography portfolio in minutes. Upload your photos; AI writes the SEO, we host it, clients find you. Free to start, no card required.",
-    },
-    hero: {
-      subtitle:
-        "For photographers who don't want to be influencers. Just bring your art, we'll take care of the rest.",
     },
     microcopy: {
       earlyAccess: "Early access",
@@ -319,6 +116,8 @@ const messages = {
       ],
     },
     valuePillars: {
+      /** Editorial metadata label above the headline (`VALUES / 002`). */
+      label: "Values",
       cta: "Bring your art",
       items: [
         {
@@ -393,6 +192,15 @@ const messages = {
         },
       ],
     },
+    featuredArtists: {
+      header: {
+        badge: "Discover",
+        title: "Artists you can connect with today",
+        description:
+          "Every portfolio is a direct line between artist and client. Browse, discover, and start a conversation.",
+      },
+      browseAll: "Browse All Artists",
+    },
     featuredPortfolio: {
       badge: "Made on A11STUDIO",
       title: "A photography portfolio, as clients see it.",
@@ -412,6 +220,8 @@ const messages = {
         "No feed to feed. No algorithm to please. Just your best work, in a place that does it justice.",
       earlyAccessNote:
         "A11STUDIO is in early access. Photographers who join from the waitlist get 3 months free on our top plan.",
+      button: "Create Your Portfolio",
+      waitListButton: "Bring your art",
     },
   },
   forDiscipline: {
@@ -589,6 +399,8 @@ const messages = {
     },
   },
   faqs: {
+    /** Editorial metadata label above the title on the homepage (`QUESTIONS / 006`). */
+    label: "Questions",
     title: "Frequently asked questions",
     stillHaveQuestions: "Still have questions? We're here to <link>help</link>",
     viewAll: "Browse all FAQs",

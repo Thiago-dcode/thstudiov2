@@ -1,4 +1,8 @@
 import { normalizeUsername } from "@repo/common-lib/utils/username";
+import {
+  EditorialLabel,
+  editorialHeadlineClass,
+} from "@repo/ui/components/custom/editorial";
 import { Mail, Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -147,10 +151,11 @@ export default async function AboutPage({ params, searchParams }: Props) {
             )}
 
             <div className="flex flex-col justify-center gap-10 flex-1 min-w-0">
-              <div className="space-y-2">
+              <div className="space-y-6">
+                <EditorialLabel>{t("heading")}</EditorialLabel>
                 {/* Always an h1: an about page without its own title used to render none. */}
                 <div className="flex items-baseline gap-4">
-                  <h1 className="text-4xl font-serif  tracking-tight md:text-5xl lg:text-6xl">
+                  <h1 className={editorialHeadlineClass("page")}>
                     {aboutPage.title || t("metaTitleDefault", { name })}
                   </h1>
                   {canEdit && (
@@ -166,7 +171,7 @@ export default async function AboutPage({ params, searchParams }: Props) {
               </div>
 
               {aboutPage.description && (
-                <p className="text-base leading-[1.8] text-text-muted whitespace-pre-line md:text-lg max-w-xl">
+                <p className="max-w-[38rem] text-base leading-[1.8] text-text-muted whitespace-pre-line md:text-lg">
                   {aboutPage.description}
                 </p>
               )}
@@ -175,7 +180,7 @@ export default async function AboutPage({ params, searchParams }: Props) {
                 <ArtistContactDialog>
                   <button
                     type="button"
-                    className="inline-flex items-center gap-3 text-sm tracking-wider uppercase hover:text-text text-text-muted transition-colors duration-300 group"
+                    className="group inline-flex min-h-11 items-center gap-3 text-xs uppercase tracking-[0.24em] text-text-muted transition-colors duration-300 hover:text-text"
                   >
                     <Mail className="size-4 transition-transform duration-300 group-hover:-translate-y-px" />
                     <span>{t("getInTouch")}</span>

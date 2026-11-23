@@ -24,8 +24,6 @@ export interface ServerEnv {
   LEGAL_REGISTRY?: string;
   /** 1 = show the cookie banner under `next dev`. Never loads GA; ignored outside development. */
   CONSENT_PREVIEW: number;
-  /** 1 = render the v2 homepage (`SECTIONS_V2`) instead of v1, to validate it before switching. */
-  LANDING_V2: number;
 }
 
 const isBuildPhase = () => process.env.NEXT_PHASE === "phase-production-build";
@@ -91,9 +89,6 @@ export const serverEnv: ServerEnv = {
   },
   get CONSENT_PREVIEW() {
     return integer("CONSENT_PREVIEW", 0);
-  },
-  get LANDING_V2() {
-    return integer("LANDING_V2", 0);
   },
 };
 

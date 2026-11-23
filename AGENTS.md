@@ -11,7 +11,7 @@ This repo ships project skills in `.agents/skills/<name>/SKILL.md`. They hold th
 
 | Area | Skills |
 | --- | --- |
-| `apps/web`, `packages/ui`, `packages/frontend-lib` (pages, components, styling, server actions) | `frontend` (also `accessibility`, `marketing-seo-ux` for public pages) |
+| `apps/web`, `packages/ui`, `packages/frontend-lib` (pages, components, styling, server actions) | `frontend` + `a11studio-design` (how it should look and feel; also `accessibility`, `marketing-seo-ux` for public pages) |
 | `apps/api`, `packages/database`, `packages/backend-lib`, `packages/common-lib` | `backend`, plus the matching recipe: `full-api-module` (spans several recipes), `api-migration`, `api-schema-types`, `api-repository`, `api-join-queries` (+ `collision-prevention`), `api-nest-module`, `api-http-endpoint`, `api-service`, `api-queue-processor`, `api-mail` |
 | Adding or changing log lines, log levels, `critical` alerts, flow tracing (api, worker, web server code, backend-lib). **Also load it for any new service, processor, endpoint, webhook, cron or server action that has side effects** (auth, payments, uploads, deletes, emails, queues): those must log their milestones and failures | `logging` |
 | Verifying API changes | `api-verification`, `api-testing` |

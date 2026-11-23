@@ -197,7 +197,7 @@ export default async function Page({ params, searchParams }: Props) {
             </div>
           </GalleryProvider>
         ) : (
-          <div className="flex min-h-[40vh] items-center justify-center border border-dashed border-border/60 text-sm  text-text-muted">
+          <div className="flex min-h-[40vh] items-center justify-center border-t border-border font-serif text-lg italic text-text-muted">
             {t("galleryEmpty")}
           </div>
         )}
