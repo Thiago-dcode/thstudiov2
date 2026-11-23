@@ -43,11 +43,23 @@ export function localizeFaqAnswer(answer: string, locale: string): string {
 /**
  * The FAQ accordion with a link to the full /faqs page. `limit` shows only the first questions:
  * the home page used to repeat /faqs word for word, two indexable URLs with the same content.
+ * `ids` picks a curated subset, in that order, from the same shared list (unknown ids are skipped),
+ * so /faqs stays the single source and its FAQPage JSON-LD covers every answer shown anywhere.
  */
-export function FaqsContent({ limit }: { limit?: number } = {}) {
+export function FaqsContent({
+  limit,
+  ids,
+}: {
+  limit?: number;
+  ids?: readonly string[];
+} = {}) {
   const t = useTranslations("faqs");
   const locale = useLocale();
-  const items = (t.raw("items") as FaqItem[]).slice(0, limit);
+  const all = t.raw("items") as FaqItem[];
+  const picked = ids
+    ? ids.flatMap((id) => all.filter((faq) => faq.id === id))
+    : all;
+  const items = picked.slice(0, limit);
 
   return (
     <div className="flex flex-col gap-8">

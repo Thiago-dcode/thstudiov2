@@ -3,13 +3,13 @@ import { notFound } from "next/navigation";
 import { hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import type { ComponentType } from "react";
+import { serverEnv } from "@/env/server";
 import { routing } from "@/i18n/routing";
 import { isDirectoryOpen } from "@/lib/directory-visibility";
 import { buildHomeJsonLd, JsonLd } from "@/lib/seo/json-ld";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import { FaqsContent } from "../../../lib/components/faqs";
 import { CtaSection } from "./_components/landing/cta-section";
-import { DisciplineLandingsSection } from "./_components/landing/discipline-landings-section";
 import { FeaturedArtistsSection } from "./_components/landing/featured-artists-section";
 import { FeaturedPortfolioSection } from "./_components/landing/featured-portfolio-section";
 import { HeroSectionV2 } from "./_components/landing/hero-v2/hero-section-v2";
@@ -18,6 +18,14 @@ import {
   type LandingSectionProps,
   WebSection,
 } from "./_components/landing/web-section";
+import { CtaSectionV2 } from "./_components/landing-v2/cta-section-v2";
+import { FeaturedPortfolioSectionV2 } from "./_components/landing-v2/featured-portfolio-section-v2";
+import { FirstMinutesSection } from "./_components/landing-v2/first-minutes-section";
+import {
+  FaqsSectionV2,
+  HeroSectionLandingV2,
+  ValuePillarsSectionV2,
+} from "./_components/landing-v2/landing-v2-sections";
 
 function FaqsSection({ id }: LandingSectionProps) {
   return (
@@ -46,6 +54,22 @@ const SECTIONS: {
   { id: "landing-faqs", Component: FaqsSection },
 ];
 
+/**
+ * The v2 homepage, being validated before it replaces `SECTIONS`. Rendered only when the server
+ * env `LANDING_V2=1`; production stays on v1 until that flips. Same rules: order lives here.
+ */
+const SECTIONS_V2: typeof SECTIONS = [
+  { id: "home-hero-section", Component: HeroSectionLandingV2 },
+  { id: "first-15-minutes", Component: FirstMinutesSection },
+  { id: "value-pillars", Component: ValuePillarsSectionV2 },
+  { id: "featured-portfolio", Component: FeaturedPortfolioSectionV2 },
+  { id: "featured-artists", Component: FeaturedArtistsSection },
+  { id: "landing-cta-section", Component: CtaSectionV2 },
+  { id: "landing-faqs", Component: FaqsSectionV2 },
+];
+
+const isLandingV2 = () => serverEnv.LANDING_V2 === 1;
+
 export async function generateMetadata({
   params,
 }: {
@@ -54,7 +78,9 @@ export async function generateMetadata({
   const { locale } = await params;
   // See `Home`: deciding it here, before the first byte, makes it a real 404.
   if (!hasLocale(routing.locales, locale)) notFound();
-  const t = await getTranslations("landing.metadata");
+  const t = await getTranslations(
+    isLandingV2() ? "landingV2.metadata" : "landing.metadata",
+  );
   return buildStaticPageMetadata({
     path: "/",
     title: t("title"),
@@ -79,6 +105,7 @@ export default async function Home({
     getTranslations("seo"),
     isDirectoryOpen(),
   ]);
+  const sections = isLandingV2() ? SECTIONS_V2 : SECTIONS;
   return (
     <>
       {/* One connected graph: the brand, the site and this page (they were two unrelated scripts). */}
@@ -93,8 +120,8 @@ export default async function Home({
           { directoryOpen },
         )}
       />
-      {SECTIONS.map(({ id, Component }, index) => (
-        <Component key={id} id={id} nextSectionId={SECTIONS[index + 1]?.id} />
+      {sections.map(({ id, Component }, index) => (
+        <Component key={id} id={id} nextSectionId={sections[index + 1]?.id} />
       ))}
     </>
   );
