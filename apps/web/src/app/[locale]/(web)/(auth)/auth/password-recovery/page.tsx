@@ -51,7 +51,7 @@ export default async function PasswordRecovery() {
           {t("needHelp")}{" "}
           <Link
             href="/support"
-            className="text-blue-500 hover:text-blue-600 underline"
+            className="text-text underline decoration-border-em underline-offset-4 transition-colors hover:decoration-text"
           >
             {t("contactSupport")}
           </Link>

@@ -4,7 +4,6 @@ import {
 } from "@repo/common-lib/utils/portfolio";
 import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { PortfolioGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
-import { Badge } from "@repo/ui/components/shadcn/badge";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -139,6 +138,12 @@ export default async function Page({ params, searchParams }: Props) {
       />
 
       <Web.Header
+        // Categories read as the editorial metadata line (`LANDSCAPE / TRAVEL`), not badges.
+        label={
+          portfolio.categories?.length
+            ? portfolio.categories.map((c) => c.name).join(" / ")
+            : undefined
+        }
         title={portfolio.title}
         description={portfolio.description || undefined}
       >
@@ -149,20 +154,6 @@ export default async function Page({ params, searchParams }: Props) {
           />
         )}
       </Web.Header>
-
-      {portfolio.categories && portfolio.categories.length > 0 && (
-        <div className="mb-10 flex flex-wrap items-center gap-2">
-          {portfolio.categories.map((category) => (
-            <Badge
-              key={category.id}
-              variant="outline"
-              className="border-border/40 bg-fg-2/20 px-3 py-1 text-[11px] font-normal tracking-wide text-text-muted"
-            >
-              {category.name}
-            </Badge>
-          ))}
-        </div>
-      )}
 
       <section className="relative m-auto">
         {portfolio.media.length > 0 ? (
@@ -199,7 +190,7 @@ export default async function Page({ params, searchParams }: Props) {
             </div>
           </GalleryProvider>
         ) : (
-          <div className="flex min-h-[40vh] items-center justify-center border border-dashed border-border/60 text-sm  text-text-muted">
+          <div className="flex min-h-[40vh] items-center justify-center border-t border-border font-serif text-lg italic text-text-muted">
             {t("galleryEmpty")}
           </div>
         )}

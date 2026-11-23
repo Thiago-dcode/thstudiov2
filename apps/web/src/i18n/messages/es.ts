@@ -15,12 +15,10 @@ const messages = {
     metadata: {
       title: "A11STUDIO — Plataforma de portafolios para fotógrafos",
       description:
-        "Crea un portafolio de fotografía profesional y consigue clientes: tú subes tus fotos, nosotros nos encargamos del SEO, el hosting y la parte técnica. Gratis.",
+        "Un portafolio de fotografía profesional en minutos. Sube tus fotos: la IA escribe el SEO, nosotros lo alojamos. Gratis para empezar, sin tarjeta.",
     },
     hero: {
       srTitle: "A11STUDIO — la plataforma de portafolios para fotógrafos.",
-      definition:
-        "A11STUDIO es donde los fotógrafos muestran su trabajo, y donde los clientes vienen a encontrarlos y contratarlos.",
       titlePrefix: "Deja que tu",
       titleAccentWords: ["arte", "mirada", "talento", "trabajo", "visión"],
       titleConnector: "se",
@@ -32,10 +30,7 @@ const messages = {
         "descubra",
       ],
       subtitle:
-        "Para fotógrafos que no quieren ser influencers. Trae tus fotos, del resto nos encargamos nosotros.",
-      primaryCtaLoggedIn: "Acceder a Atelier",
-      primaryCtaLoggedOut: "Empieza gratis ahora",
-      secondaryCta: "Encuentra artistas",
+        "Para fotógrafos que no quieren ser influencers. Solo trae tu arte, nosotros nos encargamos del resto.",
       waitList: {
         hook: "Únete a la lista de espera para obtener acceso anticipado a la app.",
         label: "Únete a la lista de espera para artistas",
@@ -76,204 +71,6 @@ const messages = {
           learnMore: "Lee las preguntas frecuentes de la lista de espera",
         },
       },
-      disclaimer: "Gratis para empezar · No se requiere tarjeta",
-      scrollToNextSection: "Ir a la siguiente sección",
-      disciplinesAria: "Disciplinas bienvenidas",
-      disciplines: {
-        photography: "Fotografía",
-        illustration: "Ilustración",
-        painting: "Pintura",
-        sculpture: "Escultura",
-        tattoo: "Tatuaje",
-        design: "Diseño",
-        fashion: "Moda",
-        animation: "Animación",
-        digitalArt: "Arte digital",
-        architecture: "Arquitectura",
-        film: "Cine",
-      },
-    },
-    valuePillars: {
-      header: {
-        badge: "Por qué A11STUDIO",
-        title: "Creado por un artista para artistas",
-        description:
-          "Un espacio profesional para tu obra, con la inteligencia necesaria para hacer crecer tu carrera y la simplicidad para no frenarte.",
-      },
-      cta: "Trae tu arte",
-      scrollToNextSection: "Ir a la siguiente sección",
-      items: [
-        {
-          title: "Solo arte",
-          description:
-            "Un lugar solo para el {arte}. Sin ruido, sin distracciones.",
-        },
-        {
-          title: "Inteligencia",
-          description:
-            "La {IA} se encarga de lo técnico y aburrido. Tú te enfocas en crear.",
-        },
-        {
-          title: "Foco",
-          description:
-            "Tu único trabajo es compartir lo {mejor} de tu obra. Del resto nos encargamos nosotros.",
-        },
-        {
-          title: "Comunidad",
-          description:
-            "Una comunidad basada en el buen {gusto}, no en las tendencias. Gente que valora el oficio sobre el ruido.",
-        },
-        {
-          title: "Calidad",
-          description:
-            "Valoramos la {calidad} sobre la cantidad: tómate tu tiempo para subir tu mejor arte.",
-        },
-        {
-          title: "Clientes",
-          description:
-            "Conectamos las necesidades de los clientes con los {artistas} adecuados. Rápido, directo y de confianza.",
-        },
-        {
-          title: "Sin algoritmos",
-          description:
-            "Se acabó el {agotamiento} por el algoritmo. Sin feeds, sin juegos, sin perseguir el engagement.",
-        },
-        {
-          title: "Propiedad",
-          description:
-            "Un hogar para tu obra que te {pertenece}. Permanente, no alquilado a una plataforma.",
-        },
-        {
-          title: "Simplicidad",
-          description:
-            "Tan fácil de {actualizar} como una publicación en redes. Sin código, sin configuración.",
-        },
-        {
-          title: "Oficio",
-          description:
-            "Hecho para priorizar la {calidad}, siempre. El gran arte merece una gran presentación.",
-        },
-        {
-          title: "Descubrimiento",
-          description:
-            "Que te encuentren los clientes que importan. Visibilidad ganada por {talento}, no por algoritmos.",
-        },
-        {
-          title: "Tiempo",
-          description:
-            "Toda tu energía va a tu {arte}, no a las redes sociales.",
-        },
-        {
-          title: "Credibilidad",
-          description:
-            "Una presencia profesional, sin el lío técnico. Genera confianza desde la primera {visita}.",
-        },
-        {
-          title: "Elegancia",
-          description:
-            "Un espacio minimalista donde tu arte es el {protagonista}. Nada compite por la atención.",
-        },
-        {
-          title: "Confianza",
-          description:
-            "Una forma rápida y fiable de encontrar {talento} real. Sin conjeturas, sin horas perdidas.",
-        },
-      ],
-    },
-    socialProof: {
-      highlights: [
-        "Calidad de web profesional, facilidad de red social",
-        "La IA escribe tus biografías, etiquetas y posicionamiento",
-        "Los clientes te descubren y te contactan directamente",
-      ],
-      cta: "Empieza gratis ahora",
-    },
-    featureCategories: {
-      header: {
-        badge: "Explorar",
-        title: "Categorías destacadas",
-        description:
-          "Descubre artistas por disciplina: cada ruta te lleva a resultados seleccionados con criterio.",
-      },
-      card: {
-        browse: "Ver",
-        ariaBrowseArtistsIn: "Explorar artistas en",
-      },
-    },
-    featuredArtists: {
-      header: {
-        badge: "Descubrir",
-        title: "Artistas con quienes puedes conectar hoy mismo",
-        description:
-          "Cada portafolio es una línea directa entre artista y cliente. Explora, descubre e inicia una conversación.",
-      },
-      browseAll: "Ver todos los artistas",
-    },
-    disciplines: {
-      heading: "Para creativos",
-      items: {
-        photographers: {
-          title: "Portafolio de fotografía gratis para fotógrafos",
-          description:
-            "Portafolios por especialidad, colecciones para cada sesión y servicios que tus clientes pueden contratar.",
-          cta: "Descubre cómo funciona",
-        },
-      },
-    },
-    featuredPortfolio: {
-      header: {
-        badge: "Portafolio destacado",
-        title: "Inspírate con este portafolio",
-        description:
-          "Un portafolio real en A11STUDIO — curado, pulido y listo para compartir.",
-      },
-      by: "Un portafolio de",
-      viewProfile: "Ver el perfil de @{username}",
-      exploreMore: "Inspírate",
-      scrollToNextSection: "Ir a la siguiente sección",
-    },
-    cta: {
-      badge: "Hazte descubrir",
-      title: "Sé <strike>influencer</strike> artista.",
-      description:
-        "Se acabó el agotamiento por el algoritmo. Tu energía es para tu arte, no para las redes sociales — A11STUDIO se encarga del SEO y el posicionamiento para que encuentren tu trabajo.",
-      button: "Crear mi portafolio",
-      waitListButton: "Trae tu arte",
-    },
-    howItWorks: {
-      badge: "Cómo funciona",
-      title: "Desde la subida hasta tu primer cliente",
-      description:
-        "Un portafolio que construye tu carrera, no solo muestra tu trabajo.",
-      steps: {
-        organize: {
-          title: "Organiza y personaliza",
-          description:
-            "Sube tu trabajo y organízalo en un portafolio impactante. Personaliza el diseño como si editaras una publicación en redes — sin código, sin fricción.",
-        },
-        ai: {
-          title: "La IA te posiciona",
-          description:
-            "La IA genera tu biografía, descripciones y etiquetas. Optimiza tu portafolio para buscadores, de modo que las personas adecuadas te encuentren.",
-        },
-        connect: {
-          title: "Los clientes conectan",
-          description:
-            "Coleccionistas, agencias y colaboradores descubren tu portafolio y te contactan directamente. Relaciones reales, sin intermediarios.",
-        },
-      },
-    },
-  },
-  // La home v2 (`SECTIONS_V2`, tras `LANDING_V2=1`). La v1 sigue leyendo `landing`.
-  landingV2: {
-    metadata: {
-      title: "A11STUDIO — Plataforma de portafolios para fotógrafos",
-      description:
-        "Un portafolio de fotografía profesional en minutos. Sube tus fotos: la IA escribe el SEO, nosotros lo alojamos. Gratis para empezar, sin tarjeta.",
-    },
-    hero: {
-      subtitle:
-        "Para fotógrafos que no quieren ser influencers. Solo trae tu arte, nosotros nos encargamos del resto.",
     },
     microcopy: {
       earlyAccess: "Acceso anticipado",
@@ -322,6 +119,8 @@ const messages = {
       ],
     },
     valuePillars: {
+      /** Etiqueta editorial sobre el titular (`VALORES / 002`). */
+      label: "Valores",
       cta: "Trae tu arte",
       items: [
         {
@@ -396,6 +195,15 @@ const messages = {
         },
       ],
     },
+    featuredArtists: {
+      header: {
+        badge: "Descubrir",
+        title: "Artistas con quienes puedes conectar hoy mismo",
+        description:
+          "Cada portafolio es una línea directa entre artista y cliente. Explora, descubre e inicia una conversación.",
+      },
+      browseAll: "Ver todos los artistas",
+    },
     featuredPortfolio: {
       badge: "Hecho en A11STUDIO",
       title: "Un portafolio de fotografía, tal como lo ven los clientes.",
@@ -415,6 +223,8 @@ const messages = {
         "Sin feed que alimentar. Sin algoritmo que complacer. Solo tu mejor trabajo, en un lugar a su altura.",
       earlyAccessNote:
         "A11STUDIO está en acceso anticipado. Los fotógrafos que entran desde la lista de espera reciben 3 meses gratis en nuestro plan superior.",
+      button: "Crear mi portafolio",
+      waitListButton: "Trae tu arte",
     },
   },
   forDiscipline: {
@@ -591,6 +401,8 @@ const messages = {
     },
   },
   faqs: {
+    /** Etiqueta editorial sobre el título en la home (`PREGUNTAS / 006`). */
+    label: "Preguntas",
     title: "Preguntas frecuentes",
     stillHaveQuestions:
       "¿Aún tienes preguntas? Estamos aquí para <link>ayudar</link>",

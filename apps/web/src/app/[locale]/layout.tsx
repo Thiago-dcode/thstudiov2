@@ -18,6 +18,7 @@ import { AppStatusProvider } from "@/lib/providers/app-status.provider";
 import { ConsentProvider } from "@/lib/providers/consent.provider";
 import { SessionProvider } from "@/lib/providers/session.provider";
 import { OG_LOCALE, ogImage, resolveLocale, SITE_NAME } from "@/lib/seo/core";
+import { iconUrl } from "@/lib/seo/icons";
 import { isIndexableEnv } from "@/lib/seo/indexability";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 
@@ -62,11 +63,19 @@ export async function generateMetadata({
     // Favicon + apple-touch icons (files in public/). The PWA icons are declared in manifest.ts.
     icons: {
       icon: [
-        { url: "/favicon.ico", sizes: "any" },
-        { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
-        { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+        { url: iconUrl("/favicon.ico"), sizes: "any" },
+        {
+          url: iconUrl("/favicon-32x32.png"),
+          type: "image/png",
+          sizes: "32x32",
+        },
+        {
+          url: iconUrl("/favicon-16x16.png"),
+          type: "image/png",
+          sizes: "16x16",
+        },
       ],
-      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+      apple: [{ url: iconUrl("/apple-touch-icon.png"), sizes: "180x180" }],
     },
     // Site-wide noindex on every deployment that is not the canonical production origin (dev,
     // local, preview). `nocache`/`noarchive` also keep a duplicate out of caches and snippets.

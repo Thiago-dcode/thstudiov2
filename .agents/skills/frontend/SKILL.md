@@ -11,11 +11,15 @@ description: >-
 
 UX comes first: clear flows, obvious affordances, low friction. Immediate feedback (hover, active, skeletons, toasts) is mandatory; skeletons and optimistic UI beat raw speed. Error copy is human and says how to fix the problem.
 
-Related skills: `accessibility` (WCAG, keyboard, ARIA), `marketing-seo-ux` (public pages, metadata, structured data), `logging` (server-side log lines). For layout, spacing and tone details read `references/design-language.md`.
+Related skills: `a11studio-design` (art direction for public pages and the **editorial kit** in `packages/ui/src/components/custom/editorial.tsx`; read it and its `references/editorial-kit.md` before building or restyling any public page or component), `accessibility` (WCAG, keyboard, ARIA), `marketing-seo-ux` (public pages, metadata, structured data), `logging` (server-side log lines). For layout, spacing and tone details read `references/design-language.md`.
 
 ## Style in one paragraph
 
-Editorial minimalist, light-first with dark mode: pages **breathe**, chrome is quiet, uploaded art is the focus. **Zero border-radius** (no `rounded-*` except `rounded-full` on functionally circular controls). **Accent** (`#B20000`) is rationed to primary CTAs and deliberate emphasis, never fills, borders or links. One primary action and one focal point per view.
+Editorial minimalist, light and dark: pages **breathe**, chrome is quiet, uploaded art is the focus. **Poppins is the only typeface** (`src/font.ts`; never add a serif). **Zero border-radius** (no `rounded-*` except `rounded-full` on functionally circular controls). **Accent** (scarlet `#ED2100`, `--color-accent`) is rationed to primary CTAs and deliberate emphasis, never fills, borders or links. One primary action and one focal point per view.
+
+- **Public pages** (everything outside `(atelier)`) use the art-publication look: `SECTION / 001` labels, hairlines, large light headlines, italic standfirsts, no cards, badges or boxed panels. Build them from the editorial kit (`EditorialHeader`, `EditorialChapter`, `editorialHeadlineClass`, `EDITORIAL_*_CLASS`); don't re-type its classes.
+- **Atelier** keeps its app UI (cards, `surface-card`, chips). When a component is shared with atelier, add the editorial look as an opt-in prop/variant and leave the default alone.
+- **Typography gotcha:** global `p` and `h1`–`h6` rules in `globals.css` are unlayered and beat utilities. Any typographic class on a `p`/`h*` needs `!` (`text-lg!`, `font-normal!`); the kit's classes already have it.
 
 ## Tokens
 
@@ -32,7 +36,7 @@ All colours come from `packages/ui/src/styles/globals.css`. **Never hardcode hex
 | Borders | `--color-border` / `--color-border-em` | `border-border` / `border-border-em` |
 | Status | `--color-{success,error,warning,info}` and `-fg` | `text-success`, `bg-success-fg`, … |
 
-Card containers use `surface-card` / `surface-card-strong`. Shadows: `--shadow-soft` (cards), `--shadow-strong` (modals, dropdowns). Never use colour as the only differentiator.
+App-UI cards (atelier, dialogs) use `surface-card` / `surface-card-strong`; public pages use hairlines (`border-t border-border`) and space instead. Shadows: `--shadow-soft` (cards), `--shadow-strong` (modals, dropdowns). Never use colour as the only differentiator.
 
 ## Layout and components
 
@@ -65,7 +69,8 @@ Domain-based file names (`user.utils.ts`, not `utils.ts`). Never import from `ap
 
 ## Audit checklist
 
-- [ ] Only design tokens, no hex/px literals; cards use `surface-card*`
+- [ ] Only design tokens, no hex/px literals; app-UI cards use `surface-card*`, public pages none
+- [ ] Public page built from the editorial kit (no copied label/headline/standfirst strings); `!` on any hand-styled `p`/`h*`; atelier untouched
 - [ ] No `rounded-*` (except circular controls); accent only on CTAs and deliberate emphasis
 - [ ] Layout breathes: generous section padding, constrained prose, no cramped grids; one focal point
 - [ ] One clear primary CTA above the fold; text ≥ 16 px at ≥ 4.5:1 contrast

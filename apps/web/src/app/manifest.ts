@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { iconUrl } from "@/lib/seo/icons";
 
 /**
  * PWA / install manifest, served at `/manifest.webmanifest`. Next injects `<link rel="manifest">`
@@ -26,13 +27,13 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["art", "design", "photography", "portfolio"],
     icons: [
       {
-        src: "/android-chrome-192x192.png",
+        src: iconUrl("/android-chrome-192x192.png"),
         sizes: "192x192",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/android-chrome-512x512.png",
+        src: iconUrl("/android-chrome-512x512.png"),
         sizes: "512x512",
         type: "image/png",
         purpose: "any",

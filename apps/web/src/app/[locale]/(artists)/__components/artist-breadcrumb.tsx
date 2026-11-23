@@ -48,14 +48,14 @@ export const ArtistBreadcrumb = async ({
 
   return (
     <Breadcrumb className={cn("mb-8 md:mb-12 flex gap-4 w-full", className)}>
-      <BreadcrumbList className="flex-wrap gap-2 text-[10px] uppercase tracking-[0.2em] text-text-muted">
+      <BreadcrumbList className="flex-wrap gap-2 text-xs uppercase tracking-[0.24em] text-text-muted">
         {backUrl && (
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
               <Link
                 href={backUrl}
                 aria-label={t("breadcrumb.goBack")}
-                className="inline-flex cursor-pointer items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-text-muted/70 transition-colors hover:text-text"
+                className="inline-flex cursor-pointer items-center gap-1.5 text-xs uppercase tracking-[0.24em] text-text-muted/70 transition-colors hover:text-text"
               >
                 <ArrowLeft className="size-3.5" />
                 <span>{t("breadcrumb.goBack")}</span>
@@ -67,14 +67,14 @@ export const ArtistBreadcrumb = async ({
           <React.Fragment key={item.url}>
             <BreadcrumbItem className="gap-2 line-clamp-1">
               {item.isActive ? (
-                <BreadcrumbPage className="text-[10px] font-normal uppercase tracking-[0.2em] text-text-muted cursor-default">
+                <BreadcrumbPage className="text-xs font-normal uppercase tracking-[0.24em] text-text-muted cursor-default">
                   {item.title}
                 </BreadcrumbPage>
               ) : (
                 <BreadcrumbLink asChild>
                   <Link
                     href={item.url}
-                    className="cursor-pointer text-[10px] uppercase tracking-[0.2em] text-text-muted transition-colors hover:text-text"
+                    className="cursor-pointer text-xs uppercase tracking-[0.24em] text-text-muted transition-colors hover:text-text"
                   >
                     {item.title}
                   </Link>

@@ -4,8 +4,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@repo/ui/components/shadcn/accordion";
+import { cn } from "@repo/ui/lib/utils";
 import { ArrowRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
 
 export type FaqItem = { id: string; question: string; answer: string };
@@ -49,10 +51,17 @@ export function localizeFaqAnswer(answer: string, locale: string): string {
 export function FaqsContent({
   limit,
   ids,
+  header,
+  variant = "default",
 }: {
   limit?: number;
   ids?: readonly string[];
+  /** Replaces the default `<h2>` (the homepage passes its editorial section opening). */
+  header?: ReactNode;
+  /** `editorial`: serif questions with more air, for the homepage's art-publication look. */
+  variant?: "default" | "editorial";
 } = {}) {
+  const editorial = variant === "editorial";
   const t = useTranslations("faqs");
   const locale = useLocale();
   const all = t.raw("items") as FaqItem[];
@@ -62,12 +71,20 @@ export function FaqsContent({
   const items = picked.slice(0, limit);
 
   return (
-    <div className="flex flex-col gap-8">
-      <h2 className="font-serif text-2xl! font-light  leading-none tracking-tight tablet:text-3xl desktop:text-5xl">
-        {t("title")}
-      </h2>
+    <div className={cn("flex flex-col", editorial ? "gap-12" : "gap-8")}>
+      {header ?? (
+        <h2 className="font-serif text-2xl! font-light  leading-none tracking-tight tablet:text-3xl desktop:text-5xl">
+          {t("title")}
+        </h2>
+      )}
 
-      <div className="flex flex-col">
+      {/* Editorial: starts on the header's 4th column (12 cols, gap-x-10 → 25% + 3/12 of a gap). */}
+      <div
+        className={cn(
+          "flex flex-col",
+          editorial && "laptop:ml-[calc(25%+0.625rem)]",
+        )}
+      >
         <Accordion
           defaultValue={items[0]?.id}
           type="single"
@@ -76,7 +93,13 @@ export function FaqsContent({
         >
           {items.map((faq) => (
             <AccordionItem key={faq.id} id={faq.id} value={faq.id}>
-              <AccordionTrigger className="text-base! font-medium tablet:text-xl py-4">
+              <AccordionTrigger
+                className={
+                  editorial
+                    ? "py-6 font-serif text-lg! font-normal leading-snug tablet:text-2xl!"
+                    : "text-base! font-medium tablet:text-xl py-4"
+                }
+              >
                 {faq.question}
               </AccordionTrigger>
               <AccordionContent className={faqAnswerClassName}>

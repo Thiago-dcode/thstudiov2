@@ -1,6 +1,16 @@
 import type { FullPlan } from "@repo/common-lib/types/plan";
 import type { Portfolio } from "@repo/common-lib/types/portfolio";
 import {
+  EDITORIAL_COLUMN_CLASS,
+  EDITORIAL_LABEL_CLASS,
+  EDITORIAL_LINK_CLASS,
+  EDITORIAL_PROSE_LINK_CLASS,
+  EDITORIAL_STANDFIRST_CLASS,
+  EditorialRule,
+  editorialHeadlineClass,
+  editorialNumber,
+} from "@repo/ui/components/custom/editorial";
+import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
@@ -8,6 +18,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@repo/ui/components/shadcn/breadcrumb";
+import { cn } from "@repo/ui/lib/utils";
 import { ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -117,6 +128,10 @@ export default async function DisciplineLandingPage({ params }: Props) {
   const steps = t.raw("guide.steps") as TextItem[];
   const faq = t.raw("faq.items") as FaqItem[];
 
+  // Issue-style numbers for the sections that render, in page order (`FEATURES / 003`).
+  let sectionCount = 0;
+  const nextNumber = () => editorialNumber(++sectionCount);
+
   return (
     <article className="w-full">
       <JsonLd
@@ -133,14 +148,14 @@ export default async function DisciplineLandingPage({ params }: Props) {
       />
 
       {/* Mirrors the BreadcrumbList in the JSON-LD above: Google wants the trail visible too. */}
-      <WebSection.Container className="px-6 pt-8 tablet:px-10">
+      <WebSection.Container className="max-w-6xl px-5 pt-8 tablet:px-10">
         <Breadcrumb>
-          <BreadcrumbList className="gap-2 text-[10px] uppercase tracking-[0.2em] text-text-muted">
+          <BreadcrumbList className="gap-2 text-xs uppercase tracking-[0.24em] text-text-muted">
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
                 <Link
                   href="/"
-                  className="text-[10px] uppercase tracking-[0.2em] text-text-muted transition-colors hover:text-text"
+                  className="text-xs uppercase tracking-[0.24em] text-text-muted transition-colors hover:text-text"
                 >
                   {SITE_NAME}
                 </Link>
@@ -150,7 +165,7 @@ export default async function DisciplineLandingPage({ params }: Props) {
               <ChevronRight className="size-3" />
             </BreadcrumbSeparator>
             <BreadcrumbItem>
-              <BreadcrumbPage className="text-[10px] font-normal uppercase tracking-[0.2em] text-text-muted">
+              <BreadcrumbPage className="text-xs font-normal uppercase tracking-[0.24em] text-text-muted">
                 {t("hero.label")}
               </BreadcrumbPage>
             </BreadcrumbItem>
@@ -159,25 +174,21 @@ export default async function DisciplineLandingPage({ params }: Props) {
       </WebSection.Container>
 
       <WebSection id="hero">
-        <WebSection.Container className="flex max-w-3xl flex-col items-center gap-8 px-6 py-20 text-center tablet:px-10 tablet:py-28">
-          <div className="flex flex-col items-center gap-5">
+        <WebSection.Container className="flex max-w-4xl flex-col items-center gap-8 px-5 py-24 text-center tablet:px-10 tablet:py-32">
+          <div className="flex flex-col items-center gap-6">
             <span aria-hidden="true" className="h-px w-12 bg-border-em" />
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">
-              {t("hero.label")}
-            </span>
+            <WebSection.Label>{t("hero.label")}</WebSection.Label>
           </div>
-          <h1 className="max-w-2xl text-4xl! leading-[1.05]! tracking-tight tablet:text-6xl!">
+          <h1 className={`max-w-3xl ${editorialHeadlineClass("page")}`}>
             {t("hero.title")}
           </h1>
-          <p className="max-w-xl text-base leading-relaxed text-text-muted tablet:text-lg!">
-            {t("hero.lead")}
-          </p>
+          <p className={EDITORIAL_STANDFIRST_CLASS}>{t("hero.lead")}</p>
           <div className="flex flex-col items-center gap-4 pt-2 phone-lg:flex-row phone-lg:gap-8">
             <RegistrationCtaButton intent="createPortfolio" size="lg" />
             {examples.length > 0 && (
               <a
                 href="#examples"
-                className="inline-flex min-h-11 items-center text-sm tracking-wider text-text-muted underline-offset-4 transition-colors hover:text-text hover:underline"
+                className={`inline-flex min-h-11 items-center ${EDITORIAL_LINK_CLASS}`}
               >
                 {t("hero.seeExamples")}
               </a>
@@ -188,15 +199,20 @@ export default async function DisciplineLandingPage({ params }: Props) {
 
       {examples.length > 0 && (
         <Section id="examples">
-          <WebSection.Header
-            badge={t("examples.badge")}
+          <WebSection.EditorialHeader
+            className="mb-14 laptop:mb-20"
+            label={t("examples.badge")}
+            qualifier={nextNumber()}
             title={t("examples.title")}
-            description={t("examples.description")}
+            standfirst={t("examples.description")}
           />
           <ExamplesGrid portfolios={examples} />
           {directoryOpen && (
-            <div className="mt-12 flex justify-center">
-              <WebSection.ActionLink href="/portfolios">
+            <div className="mt-16 flex">
+              <WebSection.ActionLink
+                href="/portfolios"
+                className={EDITORIAL_LINK_CLASS}
+              >
                 {t("examples.viewAll")}
               </WebSection.ActionLink>
             </div>
@@ -205,18 +221,24 @@ export default async function DisciplineLandingPage({ params }: Props) {
       )}
 
       {specialties.length > 0 && (
-        <Section id="specialties" narrow>
-          <WebSection.Header
-            badge={t("specialties.badge")}
+        <Section id="specialties">
+          <WebSection.EditorialHeader
+            className="mb-14 laptop:mb-20"
+            label={t("specialties.badge")}
+            qualifier={nextNumber()}
             title={t("specialties.title")}
-            description={t("specialties.description")}
+            standfirst={t("specialties.description")}
           />
-          <ul className="flex flex-wrap justify-center gap-3">
-            {specialties.map((s) => (
-              <li
-                key={s.slug}
-                className="border border-fg-2 px-4 py-2 text-sm tracking-wider text-text"
-              >
+          <ul
+            className={`flex max-w-[38rem] flex-wrap gap-x-3 gap-y-2 font-serif text-xl text-text tablet:text-2xl ${EDITORIAL_COLUMN_CLASS}`}
+          >
+            {specialties.map((s, i) => (
+              <li key={s.slug} className="flex items-baseline gap-3">
+                {i > 0 ? (
+                  <span aria-hidden="true" className="text-text-muted/60">
+                    /
+                  </span>
+                ) : null}
                 {s.label}
               </li>
             ))}
@@ -225,18 +247,23 @@ export default async function DisciplineLandingPage({ params }: Props) {
       )}
 
       <Section id="features">
-        <WebSection.Header
-          badge={t("features.badge")}
+        <WebSection.EditorialHeader
+          className="mb-14 laptop:mb-20"
+          label={t("features.badge")}
+          qualifier={nextNumber()}
           title={t("features.title")}
-          description={t("features.description")}
+          standfirst={t("features.description")}
         />
-        <ul className="mx-auto grid max-w-5xl grid-cols-1 gap-x-12 gap-y-12 tablet:grid-cols-2 laptop:grid-cols-3">
+        <ul
+          className={`grid grid-cols-1 gap-x-10 gap-y-12 tablet:grid-cols-2 ${EDITORIAL_COLUMN_CLASS}`}
+        >
           {features.map((f) => (
-            <li key={f.title} className="flex flex-col gap-3">
-              <h3 className="font-serif text-lg font-semibold tracking-tight text-text">
-                {f.title}
-              </h3>
-              <p className="text-sm leading-relaxed text-text-muted">
+            <li
+              key={f.title}
+              className="flex flex-col gap-3 border-t border-border pt-5"
+            >
+              <h3 className={editorialHeadlineClass("sub")}>{f.title}</h3>
+              <p className="max-w-md text-base leading-relaxed text-text-muted">
                 {f.description}
               </p>
             </li>
@@ -244,26 +271,28 @@ export default async function DisciplineLandingPage({ params }: Props) {
         </ul>
       </Section>
 
-      <Section id="guide" narrow>
-        <WebSection.Header
-          badge={t("guide.badge")}
+      <Section id="guide">
+        <WebSection.EditorialHeader
+          className="mb-14 laptop:mb-20"
+          label={t("guide.badge")}
+          qualifier={nextNumber()}
           title={t("guide.title")}
-          description={t("guide.description")}
+          standfirst={t("guide.description")}
         />
-        <ol className="flex flex-col gap-10">
+        <ol
+          className={`flex max-w-[38rem] flex-col gap-12 ${EDITORIAL_COLUMN_CLASS}`}
+        >
           {steps.map((step, i) => (
             <li key={step.title} className="flex gap-6">
               <span
                 aria-hidden="true"
-                className="font-serif text-2xl leading-none text-text-muted tabular-nums"
+                className={`w-10 shrink-0 pt-2 ${EDITORIAL_LABEL_CLASS}`}
               >
                 {String(i + 1).padStart(2, "0")}
               </span>
               <div className="flex flex-col gap-2">
-                <h3 className="text-base font-semibold text-text">
-                  {step.title}
-                </h3>
-                <p className="text-sm leading-relaxed text-text-muted">
+                <h3 className={editorialHeadlineClass("sub")}>{step.title}</h3>
+                <p className="text-base leading-relaxed text-text-muted">
                   {step.description}
                 </p>
               </div>
@@ -273,11 +302,13 @@ export default async function DisciplineLandingPage({ params }: Props) {
       </Section>
 
       {freePlan && (
-        <Section id="free-plan" narrow>
-          <WebSection.Header
-            badge={t("freePlan.badge")}
+        <Section id="free-plan">
+          <WebSection.EditorialHeader
+            className="mb-14 laptop:mb-20"
+            label={t("freePlan.badge")}
+            qualifier={nextNumber()}
             title={t("freePlan.title")}
-            description={t("freePlan.description")}
+            standfirst={t("freePlan.description")}
           />
           <FreePlanLimits
             plan={freePlan}
@@ -290,37 +321,42 @@ export default async function DisciplineLandingPage({ params }: Props) {
               unlimited: t("freePlan.unlimited"),
             }}
           />
-          <p className="mt-8 text-center text-sm text-text-muted">
+          <p
+            className={`mt-10 text-sm text-text-muted ${EDITORIAL_COLUMN_CLASS}`}
+          >
             {t("freePlan.upgradeNote")}
           </p>
         </Section>
       )}
 
-      <Section id="faq" narrow>
-        <WebSection.Header
-          badge={t("faq.badge")}
+      <Section id="faq">
+        <WebSection.EditorialHeader
+          className="mb-14 laptop:mb-20"
+          label={t("faq.badge")}
+          qualifier={nextNumber()}
           title={t("faq.title")}
-          description={t("faq.description")}
+          standfirst={t("faq.description")}
         />
-        <dl className="flex flex-col divide-y divide-fg-2 border-y border-fg-2">
+        <dl
+          className={`flex max-w-[38rem] flex-col divide-y divide-border border-y border-border ${EDITORIAL_COLUMN_CLASS}`}
+        >
           {faq.map((item) => (
-            <div key={item.question} className="flex flex-col gap-2 py-6">
-              <dt className="text-base font-semibold text-text">
+            <div key={item.question} className="flex flex-col gap-3 py-8">
+              <dt className="font-serif text-xl leading-snug text-text tablet:text-2xl">
                 {item.question}
               </dt>
-              <dd className="text-sm leading-relaxed text-text-muted">
+              <dd className="text-base leading-relaxed text-text-muted">
                 {item.answer}
               </dd>
             </div>
           ))}
         </dl>
-        <p className="mt-8 text-center text-sm text-text-muted">
+        <p
+          className={`mt-10 text-base text-text-muted ${EDITORIAL_COLUMN_CLASS}`}
+        >
           {t.rich("faq.more", {
             link: (chunks) => (
-              <Link
-                href="/faqs"
-                className="text-text underline underline-offset-4"
-              >
+              <Link href="/faqs" className={EDITORIAL_PROSE_LINK_CLASS}>
                 {chunks}
               </Link>
             ),
@@ -329,12 +365,12 @@ export default async function DisciplineLandingPage({ params }: Props) {
       </Section>
 
       <WebSection id="cta">
-        <WebSection.Container className="flex max-w-3xl flex-col items-center gap-8 px-6 py-20 text-center tablet:px-10 tablet:py-28">
-          <span aria-hidden="true" className="h-px w-12 bg-border-em" />
-          <h2 className="max-w-2xl text-3xl! leading-tight! tracking-tight tablet:text-5xl!">
+        <WebSection.Container className="flex max-w-4xl flex-col items-center gap-8 px-5 py-24 text-center tablet:px-10 tablet:py-32">
+          <EditorialRule />
+          <h2 className={`max-w-3xl ${editorialHeadlineClass("section")}`}>
             {t("cta.title")}
           </h2>
-          <p className="max-w-lg text-base leading-relaxed text-text-muted tablet:text-lg!">
+          <p className={cn(EDITORIAL_STANDFIRST_CLASS, "max-w-lg")}>
             {t("cta.description")}
           </p>
           <RegistrationCtaButton intent="createPortfolio" size="lg" />
@@ -344,24 +380,14 @@ export default async function DisciplineLandingPage({ params }: Props) {
   );
 }
 
-function Section({
-  id,
-  narrow = false,
-  children,
-}: {
-  id: string;
-  narrow?: boolean;
-  children: ReactNode;
-}) {
+/**
+ * Every section shares the 6xl grid so the label and reading columns line up page-wide; the
+ * editorial opening carries the hairline. Narrow content constrains itself (`max-w-[38rem]`).
+ */
+function Section({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <WebSection id={id} className="border-t border-fg-2">
-      <WebSection.Container
-        className={
-          narrow
-            ? "max-w-3xl px-6 py-20 tablet:px-10 tablet:py-28"
-            : "px-6 py-20 tablet:px-10 tablet:py-28"
-        }
-      >
+    <WebSection id={id}>
+      <WebSection.Container className="max-w-6xl px-5 py-20 tablet:px-10 tablet:py-28">
         {children}
       </WebSection.Container>
     </WebSection>
@@ -372,7 +398,7 @@ function ExamplesGrid({ portfolios }: { portfolios: Portfolio[] }) {
   return (
     // Centred flex rather than a grid: with one or two examples a 3-column grid left-aligns them
     // and the section reads as empty.
-    <ul className="mx-auto flex max-w-6xl flex-wrap justify-center gap-8">
+    <ul className="flex flex-wrap gap-x-8 gap-y-14">
       {portfolios.map((portfolio) => (
         <li
           key={portfolio.id}
@@ -442,17 +468,17 @@ function FreePlanLimits({
   ];
 
   return (
-    <dl className="mx-auto grid max-w-2xl grid-cols-2 gap-px border border-fg-2 bg-fg-2 phone-lg:grid-cols-3 tablet:grid-cols-5">
+    <dl
+      className={`grid max-w-3xl grid-cols-2 gap-x-8 gap-y-10 phone-lg:grid-cols-3 tablet:grid-cols-5 ${EDITORIAL_COLUMN_CLASS}`}
+    >
       {rows.map((row) => (
         // Term before value in the markup (valid <dl>), value shown on top.
         <div
           key={row.label}
-          className="flex flex-col-reverse items-center gap-1 bg-bg px-4 py-6 text-center"
+          className="flex flex-col-reverse gap-3 border-t border-border pt-4"
         >
-          <dt className="text-xs tracking-wider text-text-muted">
-            {row.label}
-          </dt>
-          <dd className="font-serif text-2xl font-semibold tabular-nums text-text">
+          <dt className={EDITORIAL_LABEL_CLASS}>{row.label}</dt>
+          <dd className="font-serif text-4xl font-normal tabular-nums leading-none text-text">
             {row.value}
           </dd>
         </div>

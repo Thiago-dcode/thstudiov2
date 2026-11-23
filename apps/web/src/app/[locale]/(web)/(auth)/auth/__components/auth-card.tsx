@@ -1,4 +1,8 @@
 import { BrandLogo } from "@repo/ui/components/custom/brand-logo";
+import {
+  EDITORIAL_LABEL_CLASS,
+  EDITORIAL_PROSE_LINK_CLASS,
+} from "@repo/ui/components/custom/editorial";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
@@ -14,11 +18,12 @@ export const AuthCard = ({
 }) => {
   return (
     <authComponent.Container className="max-w-md">
-      <authComponent.Content className="surface-card gap-6 px-6 py-10 inset-shadow-none">
+      {/* No card: a hairline above and room around, like the rest of the public pages. */}
+      <authComponent.Content className="gap-8 border-t border-border px-2 py-12 inset-shadow-none">
         <authComponent.Header>
           <Link
             href="/"
-            className="mb-2 text-text transition-opacity hover:opacity-80"
+            className="mb-4 text-text transition-opacity hover:opacity-80"
           >
             <BrandLogo className="h-10 tablet:h-10" />
           </Link>
@@ -36,9 +41,7 @@ export const AuthDivider = () => {
   return (
     <div className="flex items-center gap-4" aria-hidden="true">
       <span className="h-px flex-1 bg-border" />
-      <span className="text-xs uppercase tracking-widest text-text-muted">
-        {t("or")}
-      </span>
+      <span className={EDITORIAL_LABEL_CLASS}>{t("or")}</span>
       <span className="h-px flex-1 bg-border" />
     </div>
   );
@@ -66,10 +69,7 @@ export const AuthSwitchLink = ({
   return (
     <p className="text-sm! text-text-muted">
       {prompt}{" "}
-      <Link
-        href={href}
-        className="text-text underline underline-offset-4 transition-colors hover:text-text-muted"
-      >
+      <Link href={href} className={EDITORIAL_PROSE_LINK_CLASS}>
         {label}
       </Link>
     </p>

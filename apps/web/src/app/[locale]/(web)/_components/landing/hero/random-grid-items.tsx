@@ -62,7 +62,7 @@ export const RandomGridItems = ({
             sizes={
               mediaItem.isPortrait ? HERO_PORTRAIT_SIZES : HERO_IMAGE_SIZES
             }
-            // Sits under the blur layers in hero-section-v2.tsx, so the extra detail of the
+            // Sits under the blur layers in hero-section.tsx, so the extra detail of the
             // site-wide q90 is never seen. 50 is allow-listed in next.config.ts for this.
             quality={50}
             className="object-contain p-8"

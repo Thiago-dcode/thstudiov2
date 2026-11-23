@@ -1,3 +1,4 @@
+import { editorialHeadlineClass } from "@repo/ui/components/custom/editorial";
 import { cn } from "@repo/ui/lib/utils";
 import type { ReactNode } from "react";
 
@@ -48,8 +49,9 @@ const Header = ({ children }: { children?: ReactNode }) => {
     </div>
   );
 };
+/** Public-only (auth, get-started): the editorial serif title. Atelier never renders it. */
 const Title = ({ title }: { title: string }) => {
-  return <h1 className="text-2xl! font-bold text-text">{title}</h1>;
+  return <h1 className={editorialHeadlineClass("sub")}>{title}</h1>;
 };
 const SubTitle = ({
   subTitle,
@@ -66,7 +68,9 @@ const SubTitle = ({
 };
 const Footer = ({ children }: { children: ReactNode }) => {
   return (
-    <div className="mt-6 text-center text-xs! text-text-muted">{children}</div>
+    <div className="mt-8 text-center text-xs! text-text-muted [&_a]:text-text [&_a]:underline [&_a]:decoration-border-em [&_a]:underline-offset-4 [&_a:hover]:decoration-text">
+      {children}
+    </div>
   );
 };
 export default {

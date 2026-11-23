@@ -1,5 +1,10 @@
 import { normalizeUsername } from "@repo/common-lib/utils/username";
-import { Badge } from "@repo/ui/components/shadcn/badge";
+import {
+  EDITORIAL_LABEL_CLASS,
+  EditorialLabel,
+  EditorialRule,
+  editorialHeadlineClass,
+} from "@repo/ui/components/custom/editorial";
 import { Globe, Mail, MapPin, Phone } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -173,31 +178,39 @@ const ArtistHomePage = async ({ params, searchParams }: Props) => {
       </section>
 
       {/* Profile identity */}
-      <section className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 px-6 pt-24 pb-12 text-center tablet:pt-28">
-        <div className="space-y-3">
-          <h1 className="font-serif  tracking-tight tablet:text-4xl laptop:text-5xl">
+      <section className="mx-auto flex w-full max-w-3xl flex-col items-center gap-7 px-5 pt-24 pb-14 text-center tablet:pt-28">
+        {/* Editorial order: metadata label (profession), the name large, then quiet details. */}
+        <div className="flex flex-col items-center gap-5">
+          {profession && <EditorialLabel>{profession}</EditorialLabel>}
+          <h1 className={`text-balance ${editorialHeadlineClass("page")}`}>
             {heading}
           </h1>
-          {profession && (
-            <p className="text-sm tracking-wide text-text-muted tablet:text-base">
-              {profession}
+          {fullName && (
+            <p className="text-sm! tracking-wide text-text-muted">
+              @{profile.username}
             </p>
           )}
-          {fullName && <p className=" text-text">@{profile.username}</p>}
         </div>
 
         {profile.address?.formated_address && (
-          <p className="flex items-center gap-1.5 text-sm text-text-muted/80">
+          <p className="flex items-center gap-1.5 text-sm text-text-muted">
             <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
             <span>{profile.address.formated_address}</span>
           </p>
         )}
 
         {profile.categories.length > 0 && (
-          <ul className="flex flex-wrap justify-center gap-2">
-            {profile.categories.map((cat) => (
-              <li key={cat.id}>
-                <Badge variant="secondary">{cat.name}</Badge>
+          <ul
+            className={`flex flex-wrap justify-center gap-x-2 gap-y-1 ${EDITORIAL_LABEL_CLASS}`}
+          >
+            {profile.categories.map((cat, i) => (
+              <li key={cat.id} className="flex items-center gap-2">
+                {i > 0 ? (
+                  <span aria-hidden="true" className="text-text-muted/60">
+                    /
+                  </span>
+                ) : null}
+                {cat.name}
               </li>
             ))}
           </ul>
@@ -206,13 +219,13 @@ const ArtistHomePage = async ({ params, searchParams }: Props) => {
         {/* Email sits with the other contact icons. About lives in artist navigation. */}
         <nav
           aria-label={t("connect")}
-          className="flex flex-wrap items-center justify-center gap-2 pt-2"
+          className="flex flex-wrap items-center justify-center gap-1 pt-1"
         >
           <ArtistContactDialog>
             <button
               type="button"
               aria-label={t("emailLabel", { name: heading })}
-              className="inline-flex size-11 cursor-pointer items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+              className="inline-flex size-11 cursor-pointer items-center justify-center text-text-muted transition-colors duration-300 hover:text-text"
             >
               <Mail className="size-4" aria-hidden="true" />
             </button>
@@ -221,7 +234,7 @@ const ArtistHomePage = async ({ params, searchParams }: Props) => {
             <a
               href={`tel:${profile.phone_number}`}
               aria-label={t("phoneLabel", { name: heading })}
-              className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+              className="inline-flex size-11 items-center justify-center text-text-muted transition-colors duration-300 hover:text-text"
             >
               <Phone className="size-4" aria-hidden="true" />
             </a>
@@ -236,7 +249,7 @@ const ArtistHomePage = async ({ params, searchParams }: Props) => {
               target="_blank"
               rel="noreferrer noopener nofollow ugc"
               aria-label={t("instagramLabel", { name: heading })}
-              className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+              className="inline-flex size-11 items-center justify-center text-text-muted transition-colors duration-300 hover:text-text"
             >
               <InstagramIcon className="size-4" />
             </a>
@@ -247,7 +260,7 @@ const ArtistHomePage = async ({ params, searchParams }: Props) => {
               target="_blank"
               rel="noreferrer noopener nofollow ugc"
               aria-label={t("facebookLabel", { name: heading })}
-              className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+              className="inline-flex size-11 items-center justify-center text-text-muted transition-colors duration-300 hover:text-text"
             >
               <FacebookIcon className="size-4" />
             </a>
@@ -258,7 +271,7 @@ const ArtistHomePage = async ({ params, searchParams }: Props) => {
               target="_blank"
               rel="noreferrer noopener nofollow ugc"
               aria-label={t("youtubeLabel", { name: heading })}
-              className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+              className="inline-flex size-11 items-center justify-center text-text-muted transition-colors duration-300 hover:text-text"
             >
               <YoutubeIcon className="size-4" />
             </a>
@@ -269,7 +282,7 @@ const ArtistHomePage = async ({ params, searchParams }: Props) => {
               target="_blank"
               rel="noreferrer noopener nofollow ugc"
               aria-label={t("websiteLabel", { name: heading })}
-              className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+              className="inline-flex size-11 items-center justify-center text-text-muted transition-colors duration-300 hover:text-text"
             >
               <Globe className="size-4" aria-hidden="true" />
             </a>
@@ -283,8 +296,9 @@ const ArtistHomePage = async ({ params, searchParams }: Props) => {
           className="mx-auto w-full max-w-(--breakpoint-desktop-lg) px-4 pb-20 phone-lg:px-6 tablet:px-10 laptop:px-12"
           aria-label={t("bioRegion")}
         >
-          <div className="relative py-8">
-            <blockquote className="mx-auto w-full text-center font-serif text-base leading-[1.9] text-text-muted  tablet:text-lg">
+          <div className="relative flex flex-col items-center gap-10 py-8">
+            <EditorialRule />
+            <blockquote className="mx-auto w-full max-w-2xl text-center font-serif! text-xl! italic leading-relaxed text-text-muted tablet:text-2xl">
               &ldquo;{profile.short_biography}&rdquo;
             </blockquote>
           </div>

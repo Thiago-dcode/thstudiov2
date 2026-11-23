@@ -7,6 +7,7 @@ import { NextSectionArrow } from "./next-section-arrow";
 import { reportSectionError } from "./section-error";
 import { ValueCarousel } from "./values-carousel";
 import {
+  editorialNumber,
   FULL_SCREEN_MIN_H,
   type LandingSectionProps,
   WebSection,
@@ -15,12 +16,9 @@ import {
 export async function ValuePillarsSection({
   id,
   nextSectionId,
-  namespace = "landing.valuePillars",
-}: LandingSectionProps & {
-  /** The v2 homepage passes its own copy (same shape: `items` and `cta`). */
-  namespace?: "landing.valuePillars" | "landingV2.valuePillars";
-}) {
-  const t = await getTranslations(namespace);
+  index,
+}: LandingSectionProps) {
+  const t = await getTranslations("landing.valuePillars");
   const items = t.raw("items") as { title: string; description: string }[];
 
   const valuePillarsMedia = await mediaService.findAllWithUser(
@@ -43,11 +41,17 @@ export async function ValuePillarsSection({
             <div className="flex justify-start flex-col tablet:flex-row gap-4">
               <MediaCarousel media={media} />
               <div className="order-first tablet:order-2 flex flex-col gap-4 max-w-lg ">
+                <WebSection.Label
+                  className="mb-2 px-5 tablet:px-0"
+                  qualifier={index ? editorialNumber(index) : undefined}
+                >
+                  {t("label")}
+                </WebSection.Label>
                 {/* One heading, one copy of its text. The word-per-line break on tablet+ is
                     purely layout (flex-col); on phones the same words wrap as a sentence. The
                     previous version still carried the headline twice (a phone span + a tablet
                     span), so crawlers read "LET'S MAKE ART GREAT AGAIN" two times over. */}
-                <h2 className="flex flex-wrap gap-x-[0.25em] text-4xl! tablet:text-6xl! desktop:text-7xl! desktop-lg:text-8xl! items-start justify-start tablet:flex-col tablet:gap-2">
+                <h2 className="flex flex-wrap gap-x-[0.25em] items-start justify-start tablet:flex-col tablet:gap-2 font-serif! font-normal! leading-[0.95]! tracking-[-0.02em]! px-5 tablet:px-0 text-3xl! tablet:text-5xl! desktop:text-6xl! desktop-lg:text-7xl!">
                   <span>LET'S</span> <span>MAKE</span> <span>ART</span>{" "}
                   <span>GREAT</span> <span>AGAIN</span>
                 </h2>
