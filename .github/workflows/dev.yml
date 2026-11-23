@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Run lint and tests
-        uses: Thiago-dcode/gh-actions/.github/actions/check-ci@738138213ed2142b61418c3e06c10a4e51ddaa0b # v2
+        uses: Thiago-dcode/gh-actions/.github/actions/check-ci@9610307e5f3ff7fa16bb6be2dd34fe39fd95943c # v2
         with:
           package-manager: pnpm
 
