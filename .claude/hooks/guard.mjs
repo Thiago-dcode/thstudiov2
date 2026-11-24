@@ -42,7 +42,13 @@ const target = toolInput.file_path ?? toolInput.notebook_path;
 if (!target) process.exit(0);
 
 const root = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
-const rel = path.relative(root, path.resolve(input.cwd || root, target)).split(path.sep).join('/');
+// A session inside a git worktree (`.claude/worktrees/<name>/`) still reports the main checkout as
+// CLAUDE_PROJECT_DIR, so strip that prefix: lanes are judged on the repo-relative path either way.
+const rel = path
+  .relative(root, path.resolve(input.cwd || root, target))
+  .split(path.sep)
+  .join('/')
+  .replace(/^\.claude\/worktrees\/[^/]+\//, '');
 
 if (rel.startsWith('..')) block(`${target} is outside the repository.`);
 

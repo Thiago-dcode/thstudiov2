@@ -1919,6 +1919,7 @@ const messages = {
     },
     media: {
       titleFallback: "Obra de {name}",
+      placeLabel: "Local",
       altFallback: "Obra de {name} no A11STUDIO",
       untitled: "Sem título",
       editAria: "Editar mídia",

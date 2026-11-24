@@ -47,7 +47,7 @@ export const BrandLogo = ({ collapsed = false, className }: BrandLogoProps) => {
           the drawn width instead of 2× the 401px intrinsic size. */}
       <Image
         src="/logo/logo_black.png"
-        alt="A11 STUDIO"
+        alt="A11STUDIO"
         width={LOGO_WIDTH}
         height={LOGO_HEIGHT}
         sizes={LOGO_SIZES}

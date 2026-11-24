@@ -1,4 +1,5 @@
 import type { MediaWithUser } from "@repo/common-lib/types/media";
+import { resolveMediaPageText } from "@repo/common-lib/utils/media-page-text";
 import { getLocale, getTranslations } from "next-intl/server";
 import {
   ArtistBreadcrumb,
@@ -30,10 +31,14 @@ export const MediaPageComponent = async ({
   const artistName = media.user
     ? artistDisplayName(media.user)
     : `@${user.username}`;
-  // Only what the artist wrote is shown. The SEO title/description are head metadata — as visible
-  // copy they read as a keyword string, not as the artist's own words.
-  const title = media.title || t("titleFallback", { name: artistName });
-  const description = media.description || "";
+  // The artist's own words win; when they wrote none, the AI copy (in the page language) is the
+  // heading and standfirst. Showing only the artist's text left most media pages with nine words
+  // and the same "Artwork by {name}" H1, which Google refused to index. A media with no text at all
+  // keeps the fallback heading and is `noindex, follow` (the API decides, with the same rule).
+  const text = resolveMediaPageText(media);
+  const title = text.title ?? t("titleFallback", { name: artistName });
+  const description = text.description ?? "";
+  const place = media.location?.formatted?.trim() || undefined;
 
   const allBreadcrumbs: BreadcrumbEntry[] = [
     ...breadcrumbs,
@@ -65,7 +70,12 @@ export const MediaPageComponent = async ({
         items={allBreadcrumbs}
         backUrl={backUrl}
       />
-      <Web.Header title={title} description={description}>
+      <Web.Header
+        title={title}
+        description={description}
+        label={place ? t("placeLabel") : undefined}
+        qualifier={place}
+      >
         {canEdit && (
           <Web.EditLink
             href={`/atelier/media?m=${media.public_id}`}

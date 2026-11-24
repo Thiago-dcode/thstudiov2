@@ -26,7 +26,8 @@ export const CACHE_KEY_ACTIVE_CATEGORIES = 'active_categories' as const;
 export const CACHE_KEY_PORTFOLIO_SEO = (userId: number, slug: string) => `seo_v2_portfolio_${userId}_${slug}` as const;
 export const CACHE_KEY_COLLECTION_SEO = (userId: number, slug: string) => `seo_v2_collection_${userId}_${slug}` as const;
 export const CACHE_KEY_SERVICE_SEO = (userId: number, slug: string) => `seo_v2_service_${userId}_${slug}` as const;
-export const CACHE_KEY_MEDIA_SEO = (publicId: string) => `seo_v2_media_${publicId}` as const;
+// Media is `v3`: `noindex` can be `'follow'` (public but no text to show), 2026-11-24.
+export const CACHE_KEY_MEDIA_SEO = (publicId: string) => `seo_v3_media_${publicId}` as const;
 /** SEO metadata is served to crawlers and changes rarely — cache a full day. */
 export const SEO_METADATA_CACHE_TTL = 1000 * 60 * 60 * 24;
 /**

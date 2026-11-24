@@ -1907,6 +1907,8 @@ const messages = {
     },
     media: {
       titleFallback: "Artwork by {name}",
+      // Label above the H1 when the media has a place: "PLACE / MADRID, SPAIN".
+      placeLabel: "Place",
       untitled: "Untitled",
       editAria: "Edit media",
       // Last-resort alt text. The AI pipeline's sanitizeSeoText can null `seo_alt`, and media may

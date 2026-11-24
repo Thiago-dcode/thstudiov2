@@ -374,8 +374,9 @@ export class MediaRepository extends BaseMediaRepository {
     const result = await Query.raw(
       `SELECT m.thumbnail, m.title, m.description, u.username,
               (${BaseMediaRepository.PUBLIC_MEDIA_PREDICATE}) AS is_public,
-              COALESCE(mt.seo_title, m.seo_title) AS seo_title,
-              COALESCE(mt.seo_description, m.seo_description) AS seo_description
+              (${BaseMediaRepository.INDEXABLE_MEDIA_PREDICATE}) AS is_indexable,
+              COALESCE(${BaseMediaRepository.nonBlankSql('mt.seo_title')}, m.seo_title) AS seo_title,
+              COALESCE(${BaseMediaRepository.nonBlankSql('mt.seo_description')}, m.seo_description) AS seo_description
        FROM ${TABLES_ENUM.MEDIA} m
        INNER JOIN ${TABLES_ENUM.USERS} u ON u.id = m.user_id
        LEFT JOIN ${TABLES_ENUM.MEDIA_TRANSLATIONS} mt
@@ -395,6 +396,7 @@ export class MediaRepository extends BaseMediaRepository {
       thumbnail: row.thumbnail ?? null,
       username: row.username,
       is_public: Boolean(row.is_public),
+      is_indexable: Boolean(row.is_indexable),
     };
   }
 
@@ -458,6 +460,8 @@ type MediaSeoRow = {
   seo_description: string | null;
   thumbnail: string | null;
   username: string;
-  /** Same rule as the sitemap (`PUBLIC_MEDIA_PREDICATE`). */
+  /** Reachable by visitors (`PUBLIC_MEDIA_PREDICATE`). */
   is_public: boolean;
+  /** Same rule as the sitemap (`INDEXABLE_MEDIA_PREDICATE`): public AND has text to show. */
+  is_indexable: boolean;
 };
