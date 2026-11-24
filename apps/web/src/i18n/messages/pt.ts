@@ -87,7 +87,7 @@ const messages = {
           time: "00:00",
           title: "Envie seu melhor trabalho",
           description:
-            "Até 20 arquivos de uma vez: JPEG, PNG, WebP, GIF ou vídeo. Traga suas 15 a 30 melhores, não tudo.",
+            "Até 20 arquivos de uma vez: JPEG, PNG, WebP, GIF ou vídeo. Traga suas melhores, não tudo.",
           image: "1.webp",
           imageAlt:
             "A janela de envio da A11STUDIO com fotos prontas para enviar",
@@ -206,8 +206,8 @@ const messages = {
       browseAll: "Ver todos os artistas",
     },
     featuredPortfolio: {
-      badge: "Feito na A11STUDIO",
-      title: "Um portfólio de fotografia, do jeito que os clientes veem.",
+      badge: "Portfólios",
+      title: "Bonitos por padrão.",
       by: "Por",
       works: "{count, plural, one {# obra} other {# obras}}",
       layouts: {
@@ -546,7 +546,7 @@ const messages = {
         "Mantenha tudo ao longo do tempo",
       ],
       closing:
-        "Nem todo artista quer ser influencer, e ninguém deveria precisar virar desenvolvedor web para apresentar sua obra com profissionalismo. A A11STUDIO é uma casa simples e bonita para a sua obra, sem nenhum desses fardos.",
+        "<strong>Nem todo artista quer ser influencer,</strong> e ninguém deveria precisar virar desenvolvedor web para apresentar sua obra com profissionalismo. A A11STUDIO é uma casa simples e bonita para a sua obra, sem nenhum desses fardos.",
     },
     mission: {
       title: "Nossa missão",

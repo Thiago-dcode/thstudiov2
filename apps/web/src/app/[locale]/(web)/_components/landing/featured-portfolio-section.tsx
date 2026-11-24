@@ -64,7 +64,7 @@ export async function FeaturedPortfolioSection({
   return (
     <WebSection
       id={id}
-      className="overflow-hidden max-w-(--breakpoint-ultrawide) max-h-[200svh] mx-auto"
+      className="overflow-hidden max-w-(--breakpoint-desktop) w-full max-h-[200svh] mx-auto"
     >
       <WebSection.Container className="pt-24">
         <div className="flex w-full flex-col gap-10 laptop:gap-14">

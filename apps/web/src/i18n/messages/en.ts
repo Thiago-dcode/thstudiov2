@@ -84,7 +84,7 @@ const messages = {
           time: "00:00",
           title: "Upload your best work",
           description:
-            "Up to 20 files at a time: JPEG, PNG, WebP, GIF or video. Bring your strongest 15 to 30, not everything.",
+            "Up to 20 files at a time: JPEG, PNG, WebP, GIF or video. Bring your strongest, not everything.",
           image: "1.webp",
           imageAlt: "The A11STUDIO upload dialog with photos ready to upload",
         },
@@ -202,8 +202,8 @@ const messages = {
       browseAll: "Browse All Artists",
     },
     featuredPortfolio: {
-      badge: "Made on A11STUDIO",
-      title: "A photography portfolio, as clients see it.",
+      badge: "Portfolios",
+      title: "Beautiful by default.",
       by: "By",
       works: "{count, plural, one {# work} other {# works}}",
       layouts: {
@@ -542,7 +542,7 @@ const messages = {
         "Maintain it over time",
       ],
       closing:
-        "Not every artist wants to become an influencer, and no one should need to become a web developer to present their work professionally. A11STUDIO is a simple, beautiful home for your work, without either burden.",
+        "<strong>Not every artist wants to become an influencer,</strong> and no one should need to become a web developer to present their work professionally. A11STUDIO is a simple, beautiful home for your work, without either burden.",
     },
     mission: {
       title: "Our mission",

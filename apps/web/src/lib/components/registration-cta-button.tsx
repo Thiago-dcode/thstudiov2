@@ -123,7 +123,6 @@ export function RegistrationCtaButton({
                 {tWaitList("waitList.dialog.description")}
               </DialogDescription>
             </DialogHeader>
-            <WaitListSteps />
             <div className="flex flex-col gap-2">
               <WaitListForm
                 onSuccess={handleWaitListSuccess}
@@ -131,6 +130,7 @@ export function RegistrationCtaButton({
               />
               <FormPrivacyNotice context="waitList" className="text-left" />
             </div>
+            <WaitListSteps />
           </DialogContent>
         </Dialog>
         <WaitListSuccessDialog
