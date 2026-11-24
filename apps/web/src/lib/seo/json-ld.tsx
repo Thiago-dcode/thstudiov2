@@ -179,19 +179,25 @@ export function JsonLd({ data }: { data: Record<string, unknown> }) {
 // Brand
 // ---------------------------------------------------------------------------------------------
 
+/** The search spelling of the brand, declared as `alternateName` (see `organizationNode`). */
+const BRAND_ALTERNATE_NAME = "A11 Studio";
+
 /**
  * The brand entity. Carries the founder because A11STUDIO's positioning — "built by an artist, for
  * artists" (docs/A11STUDIO.md) — is its strongest trust signal, and answer engines can only connect
  * "who is behind A11STUDIO" when it is stated as data rather than prose.
  *
- * `A11STUDIO` is the one official name: no `alternateName` is declared, here or on the WebSite node.
- * Other spellings ("A11 Studio") belong to unrelated companies, and declaring them would invite
- * Google to merge the entities.
+ * `A11STUDIO` is the one official name, and the only one shown anywhere. `BRAND_ALTERNATE_NAME` is
+ * declared here and on the WebSite node because people search "a11 studio" / "a1 studio", and
+ * Google's site-name guidance uses `alternateName` for exactly that. Known risk, accepted by the
+ * owner (2026-11-24): unrelated companies use "A11 Studio", so watch brand queries in Search
+ * Console. If results start mixing them up, remove it — `sameAs`, `logo` and `url` stay the anchors.
  */
 const organizationNode = (description: string, founderRole: string): Node => ({
   "@type": "Organization",
   "@id": ORGANIZATION_ID(),
   name: SITE_NAME,
+  alternateName: BRAND_ALTERNATE_NAME,
   url: localizedUrl("en", "/"),
   logo: {
     "@type": "ImageObject",
@@ -224,6 +230,7 @@ const websiteNode = (locale: string, withSearch: boolean): Node => ({
   "@type": "WebSite",
   "@id": WEBSITE_ID(),
   name: SITE_NAME,
+  alternateName: BRAND_ALTERNATE_NAME,
   url: localizedUrl("en", "/"),
   inLanguage: ["en", "es", "pt"],
   publisher: { "@id": ORGANIZATION_ID() },

@@ -141,11 +141,14 @@ export class MediaService {
     media.thumbnail = thumbnail;
     media.url = url;
     // The page's alt text, JSON-LD and visible AI description follow the page language, like its
-    // <meta> (getSeoMetadata); the main row's English SEO is the fallback.
+    // <meta> (getSeoMetadata); the main row's English SEO is the fallback — also when the
+    // translation is blank, not only missing, so a page never loses its H1 to an empty string.
     if (seo) {
-      media.seo_title = seo.seo_title ?? media.seo_title;
-      media.seo_description = seo.seo_description ?? media.seo_description;
-      media.seo_alt = seo.seo_alt ?? media.seo_alt;
+      media.seo_title = seo.seo_title?.trim() ? seo.seo_title : media.seo_title;
+      media.seo_description = seo.seo_description?.trim()
+        ? seo.seo_description
+        : media.seo_description;
+      media.seo_alt = seo.seo_alt?.trim() ? seo.seo_alt : media.seo_alt;
     }
     // Localized content tags (LLM-assigned) for JSON-LD keywords + on-page chips.
     (media as MediaWithUser).tags = tags;
@@ -1079,9 +1082,11 @@ export class MediaService {
           seo_description: meta.seo_description,
           thumbnail_path: meta.thumbnail,
           canonical_path: `/artists/${meta.username}/media/${publicId}`,
-          // Mirrors the sitemap: atelier-only drafts, unprocessed uploads and an incomplete artist's
-          // work stay out of the index even when someone has the URL.
-          noindex: !meta.is_public,
+          // Mirrors the sitemap (`INDEXABLE_MEDIA_PREDICATE`): atelier-only drafts, unprocessed
+          // uploads and an incomplete artist's work stay out of the index even when someone has the
+          // URL. A public media with no text of its own is `noindex, follow`: too thin to rank, but
+          // its links (artist, portfolio) are still worth crawling.
+          noindex: meta.is_indexable ? false : meta.is_public ? ('follow' as const) : true,
         };
       },
       { ttl: SEO_METADATA_CACHE_TTL, append_language: true },

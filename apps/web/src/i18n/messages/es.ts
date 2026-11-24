@@ -1921,6 +1921,7 @@ const messages = {
     },
     media: {
       titleFallback: "Obra de {name}",
+      placeLabel: "Lugar",
       altFallback: "Obra de {name} en A11STUDIO",
       untitled: "Sin título",
       editAria: "Editar contenido",

@@ -39,7 +39,7 @@ export class IndexNowRepository {
          SELECT '/artists/' || u.username || '/media/' || m.public_id, m.updated_at
            FROM ${TABLES_ENUM.MEDIA} m
            JOIN ${TABLES_ENUM.USERS} u ON u.id = m.user_id
-          WHERE m.updated_at > $1 AND ${MediaRepository.PUBLIC_MEDIA_PREDICATE}
+          WHERE m.updated_at > $1 AND ${MediaRepository.INDEXABLE_MEDIA_PREDICATE}
        ) changed
        ORDER BY changed_at DESC
        LIMIT $2`,

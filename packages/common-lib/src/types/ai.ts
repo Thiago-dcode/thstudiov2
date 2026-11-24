@@ -90,7 +90,11 @@ export type EntitySeoMetadata = {
     og_image: string | null;
     /** Locale-agnostic path (no locale prefix); the web builds canonical + hreflang from it. */
     canonical_path: string;
-    noindex: boolean;
+    /**
+     * `true` = `noindex, nofollow` (not public). `'follow'` = `noindex, follow`: reachable, but too
+     * thin to index, while its links are still worth crawling (media with no text of its own).
+     */
+    noindex: boolean | 'follow';
 };
 
 /** Payload for cron-driven entity SEO generation (portfolio / collection / service / user). */

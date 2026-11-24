@@ -316,7 +316,10 @@ export class MediaRepository extends BaseRepository {
    * A media item is only public if it is itself visible AND it is published inside at least one
    * public portfolio or collection — the media table also holds atelier drafts, which are
    * reachable by URL but must never be advertised. It must also be fully processed and owned by a
-   * share-ready artist. Public so the API's SEO metadata `noindex` applies the exact same rule.
+   * share-ready artist.
+   *
+   * This is the structural "may a visitor reach it" rule. Whether it is worth INDEXING is
+   * `INDEXABLE_MEDIA_PREDICATE` below, which the sitemap, IndexNow and the page's `noindex` use.
    */
   static readonly PUBLIC_MEDIA_PREDICATE = `m.blocked_at IS NULL
       AND m.is_active = true
@@ -338,11 +341,45 @@ export class MediaRepository extends BaseRepository {
         )
       )`;
 
+  /**
+   * `column` trimmed, or NULL when it is empty or only whitespace — the SQL twin of JS `.trim()`.
+   * Plain `BTRIM(x)` strips spaces only, so a description of "\n" (Enter in an empty textarea)
+   * would count as text here while the page, trimming in JS, showed nothing.
+   */
+  static nonBlankSql(column: string): string {
+    return `NULLIF(BTRIM(${column}, E' \\t\\n\\r\\f\\u000b\\u00a0\\ufeff'), '')`;
+  }
+
+  /**
+   * Whether a media page has words of its own to show: the artist's title or description, or the
+   * AI SEO title AND description (the page renders them as its H1 and standfirst). Without any, the
+   * page is a bare image under a generic "Artwork by {name}" heading — repeated across every such
+   * page, which Google reads as thin, duplicate content and which drags down the whole site.
+   *
+   * Language-agnostic on purpose: the AI job writes the English main row and every locale's
+   * `media_translations` in one run, and every locale falls back to the main row.
+   *
+   * Mirrors `resolveMediaPageText` (`@repo/common-lib/utils/media-page-text`), which decides what
+   * the page displays. Change both together.
+   */
+  static readonly MEDIA_HAS_TEXT_SQL = `${MediaRepository.nonBlankSql('m.title')} IS NOT NULL
+      OR ${MediaRepository.nonBlankSql('m.description')} IS NOT NULL
+      OR (${MediaRepository.nonBlankSql('m.seo_title')} IS NOT NULL
+          AND ${MediaRepository.nonBlankSql('m.seo_description')} IS NOT NULL)`;
+
+  /**
+   * The one "list it and let it be indexed" rule for media: public AND has text. Shared by the
+   * sitemap rows and count, IndexNow, and the SEO metadata `noindex` — so a media URL is in the
+   * sitemap if and only if its page is indexable.
+   */
+  static readonly INDEXABLE_MEDIA_PREDICATE = `${MediaRepository.PUBLIC_MEDIA_PREDICATE}
+      AND (${MediaRepository.MEDIA_HAS_TEXT_SQL})`;
+
   /** Rows for `getSitemapMedia` / `countSitemapMedia`. */
   private static readonly SITEMAP_MEDIA_FROM = `
     FROM ${TABLES_ENUM.MEDIA} m
     INNER JOIN ${TABLES_ENUM.USERS} u ON u.id = m.user_id
-    WHERE ${MediaRepository.PUBLIC_MEDIA_PREDICATE}`;
+    WHERE ${MediaRepository.INDEXABLE_MEDIA_PREDICATE}`;
 
   /**
    * Public media for the sitemap, keyed by the PRIMARY media URL

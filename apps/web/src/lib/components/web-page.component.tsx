@@ -38,17 +38,22 @@ const Header = ({
   title,
   description,
   label,
+  qualifier,
   children,
 }: {
   title: string;
   description?: string;
   /** Small uppercase metadata line above the title (`ARTISTS / LISBON`). */
   label?: ReactNode;
+  /** The part after the slash in `label` (`PLACE / MADRID, SPAIN`). */
+  qualifier?: ReactNode;
   children?: ReactNode;
 }) => {
   return (
     <header className="mx-auto mb-10 flex w-full max-w-4xl flex-col items-start gap-5 md:mb-16 md:items-center md:text-center">
-      {label ? <EditorialLabel>{label}</EditorialLabel> : null}
+      {label ? (
+        <EditorialLabel qualifier={qualifier}>{label}</EditorialLabel>
+      ) : null}
       <h1 className={cn(editorialHeadlineClass("section"), "text-balance")}>
         {title}
       </h1>
