@@ -22,6 +22,7 @@ import { type ReactNode, useEffect, useMemo } from "react";
 import { StickyFormFooter } from "@/app/[locale]/(atelier)/__components/sticky-form-footer";
 import { SubmitCollectionButton } from "@/app/[locale]/(atelier)/__components/submit-collection-button";
 import FormComponent from "@/lib/components/form-component";
+import { SlugPreview } from "@/lib/components/slug-preview";
 import { useMainNav } from "@/lib/providers/main-nav.provider";
 import { useCollection } from "@/modules/collections/providers/create-update-collection.provider";
 import { SelectMediaDrawer } from "@/modules/media/components/select-media-drawer";
@@ -217,9 +218,16 @@ export const CreateOrUpdateCollection = ({
             />
             {/* The title decides the permanent public address, so say so before they commit. */}
             {!defaultCollection && (
-              <p className="text-xs text-text-muted">
-                {t("form.titleAddressHint")}
-              </p>
+              <>
+                <SlugPreview
+                  title={collectionInput.title || ""}
+                  username={user.username}
+                  resource="collection"
+                />
+                <p className="text-xs text-text-muted">
+                  {t("form.titleAddressHint")}
+                </p>
+              </>
             )}
             {defaultCollection?.slug && (
               <p className="text-xs text-text-muted">

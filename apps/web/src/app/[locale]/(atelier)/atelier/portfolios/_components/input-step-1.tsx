@@ -17,6 +17,7 @@ import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { cn } from "@repo/ui/lib/utils";
 import { useTranslations } from "next-intl";
 import FormComponent from "@/lib/components/form-component";
+import { SlugPreview } from "@/lib/components/slug-preview";
 import CategoryCombobox from "@/modules/categories/components/category-combobox";
 
 import { GetCategoriesProvider } from "@/modules/categories/providers/getCategories.provider";
@@ -171,7 +172,16 @@ const FirstStepInputs = () => {
             />
             {/* The title decides the permanent public address, so say so before they commit. */}
             {!currentPortfolio && (
-              <p className="text-xs text-text-muted">{t("titleAddressHint")}</p>
+              <>
+                <SlugPreview
+                  title={portfolioInput.title || ""}
+                  username={user.username}
+                  resource="portfolio"
+                />
+                <p className="text-xs text-text-muted">
+                  {t("titleAddressHint")}
+                </p>
+              </>
             )}
             {currentPortfolio?.slug && (
               <p className="text-xs text-text-muted">

@@ -671,6 +671,10 @@ const messages = {
     },
   },
   language: "Language",
+  slugPreview: {
+    label: "Your link will be:",
+    placeholder: "your-title",
+  },
   formPrivacyNotice: {
     report:
       "We use these details only to handle your report and, if you leave an email, to tell you the outcome. More in our <privacy>Privacy Policy</privacy>.",

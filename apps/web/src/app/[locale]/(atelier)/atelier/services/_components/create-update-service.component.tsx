@@ -32,6 +32,7 @@ import { StickyFormFooter } from "@/app/[locale]/(atelier)/__components/sticky-f
 import { SubmitServiceButton } from "@/app/[locale]/(atelier)/__components/submit-service-button";
 import { DynamicListInput } from "@/lib/components/dynamic-list-input";
 import FormComponent from "@/lib/components/form-component";
+import { SlugPreview } from "@/lib/components/slug-preview";
 import { useMainNav } from "@/lib/providers/main-nav.provider";
 import { useCreateUpdateService } from "@/modules/services/providers/create-update-service.provider";
 
@@ -135,9 +136,16 @@ export const CreateOrUpdateService = ({
               />
               {/* The title decides the permanent public address, so say so before they commit. */}
               {!isUpdate && (
-                <p className="text-xs text-text-muted">
-                  {t("titleAddressHint")}
-                </p>
+                <>
+                  <SlugPreview
+                    title={serviceInput.current.title ?? ""}
+                    username={user.username}
+                    resource="service"
+                  />
+                  <p className="text-xs text-text-muted">
+                    {t("titleAddressHint")}
+                  </p>
+                </>
               )}
               {currentService?.slug && (
                 <p className="text-xs text-text-muted">

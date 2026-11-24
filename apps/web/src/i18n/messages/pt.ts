@@ -676,6 +676,10 @@ const messages = {
     },
   },
   language: "Idioma",
+  slugPreview: {
+    label: "Seu link será:",
+    placeholder: "seu-titulo",
+  },
   formPrivacyNotice: {
     report:
       "Usamos estes dados apenas para tratar a sua denúncia e, se deixar um email, comunicar-lhe o resultado. Mais informações na nossa <privacy>Política de privacidade</privacy>.",
