@@ -8,12 +8,11 @@ import {
   editorialHeadlineClass,
   editorialNumber,
 } from "@repo/ui/components/custom/editorial";
-import { Button } from "@repo/ui/components/shadcn/button";
 import { cn } from "@repo/ui/lib/utils";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
-import { Link } from "@/i18n/navigation";
+import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import { buildAboutPageJsonLd, JsonLd } from "@/lib/seo/json-ld";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 
@@ -92,7 +91,13 @@ export default async function AboutPage({
             <h3 className={SUBHEAD_CLASS}>{t("problem.websiteLabel")}</h3>
             <BulletList items={websiteItems} />
           </div>
-          <P>{t("problem.closing")}</P>
+          <P>
+            {t.rich("problem.closing", {
+              strong: (chunks) => (
+                <span className="font-semibold text-text">{chunks}</span>
+              ),
+            })}
+          </P>
         </div>
       </Section>
 
@@ -151,9 +156,11 @@ export default async function AboutPage({
         <p className={cn(EDITORIAL_STANDFIRST_CLASS, "max-w-lg")}>
           {t("cta.description")}
         </p>
-        <Button asChild variant="accent" size="lg">
-          <Link href="/auth/register">{t("cta.button")}</Link>
-        </Button>
+        <RegistrationCtaButton
+          intent="createPortfolio"
+          size="lg"
+          label={t("cta.button")}
+        />
       </section>
     </article>
   );

@@ -85,7 +85,7 @@ const messages = {
           time: "00:00",
           title: "Sube tu mejor trabajo",
           description:
-            "Hasta 20 archivos a la vez: JPEG, PNG, WebP, GIF o video. Trae tus 15 a 30 mejores, no todo.",
+            "Hasta 20 archivos a la vez: JPEG, PNG, WebP, GIF o video. Trae tus mejores, no todo.",
           image: "1.webp",
           imageAlt:
             "El diálogo de subida de A11STUDIO con fotos listas para subir",
@@ -205,8 +205,8 @@ const messages = {
       browseAll: "Ver todos los artistas",
     },
     featuredPortfolio: {
-      badge: "Hecho en A11STUDIO",
-      title: "Un portafolio de fotografía, tal como lo ven los clientes.",
+      badge: "Portafolios",
+      title: "Hermosos por defecto.",
       by: "De",
       works: "{count, plural, one {# obra} other {# obras}}",
       layouts: {
@@ -546,7 +546,7 @@ const messages = {
         "Mantenerla con el tiempo",
       ],
       closing:
-        "No todos los artistas quieren ser influencers, y nadie debería tener que ser desarrollador web para presentar su obra de forma profesional. A11STUDIO es un hogar simple y bonito para tu obra, sin ninguna de las dos cargas.",
+        "<strong>No todos los artistas quieren ser influencers,</strong> y nadie debería tener que ser desarrollador web para presentar su obra de forma profesional. A11STUDIO es un hogar simple y bonito para tu obra, sin ninguna de las dos cargas.",
     },
     mission: {
       title: "Nuestra misión",
