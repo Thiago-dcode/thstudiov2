@@ -5,6 +5,7 @@ import type { ComponentType, SVGProps } from "react";
 import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
 import { CookieSettingsButton } from "@/lib/components/cookie-settings-button";
+import { FooterSignInLink } from "@/lib/components/footer-sign-in-link";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import {
   InstagramIcon,
@@ -91,16 +92,19 @@ export const WebFooter = async ({
             <p className="max-w-xs text-xs leading-relaxed tracking-wider text-text">
               {t("tagline")}
             </p>
-            {artistPage ? (
-              <RegistrationCtaButton
-                size="sm"
-                variant="outline"
-                invitePlacement="footer"
-                className="min-h-11 w-fit border-border-em px-4 text-sm tracking-wider text-text hover:bg-fg"
-              />
-            ) : (
-              <RegistrationCtaButton size="sm" className="w-fit" />
-            )}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              {artistPage ? (
+                <RegistrationCtaButton
+                  size="sm"
+                  variant="outline"
+                  invitePlacement="footer"
+                  className="min-h-11 w-fit border-border-em px-4 text-sm tracking-wider text-text hover:bg-fg"
+                />
+              ) : (
+                <RegistrationCtaButton size="sm" className="w-fit" />
+              )}
+              <FooterSignInLink />
+            </div>
           </div>
 
           <div className="flex flex-col gap-3">
