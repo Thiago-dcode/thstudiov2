@@ -80,7 +80,7 @@ export function RegistrationCtaButton({
 
   if (session) {
     return (
-      <Button asChild size={size} className={cn(className)}>
+      <Button asChild variant={variant} size={size} className={cn(className)}>
         <Link href="/atelier" onClick={onNavigate}>
           {tWebHeader("goToAtelier")}
           <ArrowRight className={iconClassName} />
