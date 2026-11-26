@@ -3,39 +3,41 @@ name: deployment
 description: >-
   Commit local changes and optionally push, then watch GitHub Actions until
   green. Use ONLY when the user explicitly asks to commit, push to origin, push
-  to main or develop, or check the pipeline / Actions. Do not use during
-  feature work, code review, or implementation. Never push to main or develop
-  unless the user asked for that branch.
+  to main, or check the pipeline / Actions. Do not use during
+  feature work, code review, or implementation. Never push to main
+  unless the user asked for that branch. There is no dev environment.
 ---
 
 # Deployment (commit → gate → push → CI)
+
+> **Only local and prod exist (since 2026-11-26).** The `develop` branch and the dev deploy are retired: never push to `develop` or deploy to dev. If the user asks for "develop" or "dev", remind them it no longer exists and ask whether they mean a PR or `main`.
 
 Explicit-request skill. Completing a coding task is **not** permission to commit or push.
 
 ## When this skill applies
 
-Run it only if the user clearly asked, for example: "commit", "commit this", "push", "push to origin", "push to develop", "push to main", "check CI", "watch the pipeline".
+Run it only if the user clearly asked, for example: "commit", "commit this", "push", "push to origin", "push to main", "check CI", "watch the pipeline".
 
 | User said | Do |
 | --- | --- |
 | commit (no push) | Commit only. Stop. |
 | push / push to origin | Commit if needed, then **pre-push gate**, then push the **current** branch. |
-| push to develop / push to main | Same, but only to that named branch. |
+| push to main | Same, but only to `main` (via the PR-only ruleset). |
 | check CI / watch the pipeline | Watch the latest run. Do not commit or push unless they also asked. |
 
-If the request is ambiguous ("ship it", "deploy this") and they did not name **commit**, **push**, **main**, or **develop**, ask which action they want. Do not guess.
+If the request is ambiguous ("ship it", "deploy this") and they did not name **commit**, **push** or **main**, ask which action they want. Do not guess.
 
 ## Hard rules
 
 - Never commit unless the user asked to commit or to push (push implies commit first if there are uncommitted changes they intended to include).
-- Never push to `main` or `develop` unless the user named that branch or said "push" while already on it.
-- Never switch to `main`/`develop` and push just because work is done.
-- Never `--force` / `--force-with-lease` to `main` or `develop`. Warn if they ask.
+- Never push to `main` unless the user named that branch or said "push" while already on it.
+- Never switch to `main` and push just because work is done.
+- Never `--force` / `--force-with-lease` to `main`. Warn if they ask.
 - Never `--no-verify`, `--no-gpg-sign`, or `git config`.
 - Never interactive git (`-i`).
 - Never commit `.env`, credentials, or secret files. Warn if they ask.
 - Do not amend unless: the user asked, **or** HEAD was created by you in this conversation, the commit succeeded, a hook only auto-modified files, and it has **not** been pushed. If a hook **rejected** the commit, fix and make a **new** commit — do not amend.
-- If already pushed, never amend unless the user explicitly asked (that requires force-push; refuse for `main`/`develop`).
+- If already pushed, never amend unless the user explicitly asked (that requires force-push; refuse for `main`).
 
 ## 1. Inspect (always, in parallel)
 
@@ -88,26 +90,25 @@ Do not push a known-red tree. Do not push while the gate is still running.
 
 ## 4. Push
 
-Current branch unless they named `main` or `develop`.
+Current branch unless they named `main`.
 
 ```powershell
 git push -u origin HEAD
 ```
 
-If they named `main` or `develop` and HEAD is a different branch, **stop and ask** — do not merge or push the other branch for them.
+If they named `main` and HEAD is a different branch, **stop and ask** — do not merge or push the other branch for them.
 
 ## 5. Watch GitHub Actions (after every origin push)
 
 Workflows (one per environment):
 
-- `.github/workflows/dev.yml` (`CI / Dev`): `push` to **`develop`** → `test`, then Docker build/push, then SSH deploy. **`pull_request`** (any base) → `test` only.
+- `.github/workflows/dev.yml` (`CI / Dev`): only its **`pull_request`** (any base) → `test` job still matters. Its `develop` push → deploy path targets the retired dev environment; ignore it.
 - `.github/workflows/prod.yml` (`CI / Prod`): `push` to **`main`** → `test`, then Docker build/push, then SSH deploy, then the Cloudflare cache purge.
 - Push to any other branch **does not** run either workflow unless a PR exists.
 
 Identify the run (prefer the SHA just pushed). Use the workflow for the branch you pushed:
 
 ```powershell
-gh run list --workflow "CI / Dev" --branch develop --limit 5   # develop pushes
 gh run list --workflow "CI / Prod" --branch main --limit 5     # main pushes
 gh run list --workflow "CI / Dev" --branch (git branch --show-current) --limit 5   # PR branches
 ```

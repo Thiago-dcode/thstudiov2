@@ -10,6 +10,8 @@ export type PlanPriceSchema = {
   plan_id: number;
   price: number;
   billing_type: EnumType<'BILLING_TYPE'>;
+  /** False once retired. Rows are never deleted: subscriptions and Stripe webhooks reference them. */
+  is_active: boolean;
   created_at: Date;
   updated_at: Date;
 };
@@ -33,11 +35,11 @@ export type PlanPriceWithPlanSchema = PlanPriceSchema & {
   p_id: number;
   p_stripe_id: string | null;
   p_paypal_id?: string | null;
+  p_is_active: boolean;
   // Non-colliding fields (no prefix)
   name: string;
   short_description: string;
   base_price: number;
-  is_active: boolean;
   is_free: boolean;
   top_tier: boolean;
 };

@@ -1,21 +1,25 @@
-import { calculatePrice, getMonthlyPrice, getLowestMontlyPrice, getHighestMontlyPrice } from "../calculatePrice";
+import {
+  getMonthlyPrice,
+  getLowestMontlyPrice,
+  getPurchasablePrices,
+  getYearlySaving,
+  toMinorUnits,
+} from "../calculatePrice";
 import type { PlanPrice } from "../../types/plan-price";
 
-const price = (billing_type: PlanPrice["billing_type"], price: number): PlanPrice =>
-  ({ billing_type, price } as PlanPrice);
+const price = (
+  billing_type: PlanPrice["billing_type"],
+  price: number,
+  is_active = true,
+): PlanPrice => ({ billing_type, price, is_active } as PlanPrice);
 
-describe("calculatePrice", () => {
-  it("returns price as-is for MONTHLY", () => {
-    expect(calculatePrice(price("MONTHLY", 10))).toBe(10);
+describe("toMinorUnits", () => {
+  it("converts the seeded yearly amounts exactly", () => {
+    expect(toMinorUnits(57.6)).toBe(5760);
+    expect(toMinorUnits(86.4)).toBe(8640);
   });
-  it("returns price * 3 for QUARTERLY", () => {
-    expect(calculatePrice(price("QUARTERLY", 10))).toBe(30);
-  });
-  it("returns price * 12 for YEARLY", () => {
-    expect(calculatePrice(price("YEARLY", 10))).toBe(120);
-  });
-  it("returns price * 36 for LIFETIME", () => {
-    expect(calculatePrice(price("LIFETIME", 10))).toBe(360);
+  it("rounds away float noise", () => {
+    expect(toMinorUnits(0.1 + 0.2)).toBe(30);
   });
 });
 
@@ -53,20 +57,58 @@ describe("getLowestMontlyPrice", () => {
   });
 });
 
-describe("getHighestMontlyPrice", () => {
-  it("returns 0 for empty array", () => {
-    expect(getHighestMontlyPrice([])).toBe(0);
-  });
-  it("returns max monthly equivalent across billing types", () => {
+describe("getPurchasablePrices", () => {
+  it("keeps only active MONTHLY and YEARLY rows, MONTHLY first", () => {
     const prices = [
-      price("MONTHLY", 10),
-      price("QUARTERLY", 36), // 12/mo
-      price("YEARLY", 120),  // 10/mo
-      price("LIFETIME", 360), // 10/mo
+      price("YEARLY", 57.6),
+      price("QUARTERLY", 22),
+      price("LIFETIME", 0),
+      price("MONTHLY", 9, false),
+      price("MONTHLY", 6),
     ];
-    expect(getHighestMontlyPrice(prices)).toBe(12);
+    expect(getPurchasablePrices(prices)).toEqual([
+      price("MONTHLY", 6),
+      price("YEARLY", 57.6),
+    ]);
   });
-  it("handles single price", () => {
-    expect(getHighestMontlyPrice([price("MONTHLY", 5)])).toBe(5);
+  it("returns nothing for the free plan", () => {
+    expect(getPurchasablePrices([price("LIFETIME", 0)])).toEqual([]);
+  });
+});
+
+describe("getYearlySaving", () => {
+  it("computes the Artist Plus saving (10 months charged, 2 free)", () => {
+    expect(getYearlySaving([price("MONTHLY", 6), price("YEARLY", 60)])).toEqual({
+      yearlyTotal: 60,
+      monthlyEquivalent: 5,
+      percent: 17,
+    });
+  });
+  it("computes the Studio saving (10 months charged, 2 free)", () => {
+    expect(getYearlySaving([price("MONTHLY", 9), price("YEARLY", 90)])).toEqual({
+      yearlyTotal: 90,
+      monthlyEquivalent: 7.5,
+      percent: 17,
+    });
+  });
+  it("still computes a 20% saving with non-round amounts", () => {
+    expect(getYearlySaving([price("MONTHLY", 6), price("YEARLY", 57.6)])).toEqual({
+      yearlyTotal: 57.6,
+      monthlyEquivalent: 4.8,
+      percent: 20,
+    });
+  });
+  it("ignores retired rows", () => {
+    expect(
+      getYearlySaving([price("MONTHLY", 9, false), price("MONTHLY", 6), price("YEARLY", 60)]),
+    ).toMatchObject({ percent: 17, monthlyEquivalent: 5 });
+  });
+  it("returns null when a row is missing", () => {
+    expect(getYearlySaving([price("MONTHLY", 6)])).toBeNull();
+    expect(getYearlySaving([price("YEARLY", 57.6)])).toBeNull();
+    expect(getYearlySaving([price("MONTHLY", 6), price("YEARLY", 57.6, false)])).toBeNull();
+  });
+  it("returns null when yearly saves nothing", () => {
+    expect(getYearlySaving([price("MONTHLY", 6), price("YEARLY", 72)])).toBeNull();
   });
 });

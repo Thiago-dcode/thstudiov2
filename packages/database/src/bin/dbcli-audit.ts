@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { LogTraceCarrier } from '@repo/backend-lib/utils';
 import { logBuffer, logService } from '@repo/backend-lib/config/logging';
+import type { LogChannel } from '@repo/common-lib/types/log';
 
 /**
  * The running command: its trace id (the line's `id`) and name (the line's `request`), set once
@@ -26,6 +27,21 @@ const dbcliLog = logService.dbcli({
     globalContext: runContext,
     defaultOptions: { channel: 'system' },
 });
+
+export type DbcliLogger = ReturnType<typeof logService.dbcli>;
+
+/**
+ * A logger for a command's own flow (a seed, a script), on its module's channel. It shares the
+ * current run's trace id, so its lines follow `dbcli command started` in the same trace. Build it
+ * once per run, inside the command.
+ */
+export function dbcliLogger(channel: LogChannel, operation: string): DbcliLogger {
+    return logService.dbcli({
+        id: () => run?.id ?? null,
+        globalContext: runContext,
+        defaultOptions: { channel, operation },
+    });
+}
 
 /** Only these arguments are logged (snake_case). Never passwords or connection strings. */
 const LOGGED_ARGS = new Set([

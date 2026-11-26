@@ -13,7 +13,7 @@
     "test:e2e": "turbo run test:e2e",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "dbcli": "turbo run dbcli",
+    "dbcli": "pnpm --filter=@repo/database dbcli",
     "clean": "rimraf --glob \"apps/*/dist\" \"apps/*/.next\" \"packages/*/dist\"",
     "redis:flush": "docker exec a11studio_redis redis-cli FLUSHALL",
     "sync:asset": "bash scripts/sync-seed-assets.sh",

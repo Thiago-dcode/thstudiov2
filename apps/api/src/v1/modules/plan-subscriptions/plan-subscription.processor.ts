@@ -212,18 +212,6 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
             activeColumn: 'is_active',
           },
           {
-            table: 'projects',
-            maxLimit: currentPlan.max_projects,
-            currentCount: userExtraData.projects_count,
-            activeColumn: 'is_active',
-          },
-          {
-            table: 'clients',
-            maxLimit: currentPlan.max_clients,
-            currentCount: userExtraData.clients_count,
-            activeColumn: 'is_active',
-          },
-          {
             table: 'services',
             maxLimit: currentPlan.max_services,
             currentCount: userExtraData.services_count,

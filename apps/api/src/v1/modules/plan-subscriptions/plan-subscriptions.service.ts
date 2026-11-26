@@ -40,6 +40,7 @@ import { UserBenefitService } from '../user-benefit/user-benefit.service';
 import { config } from '@repo/common-lib/config';
 import { UserRepository } from '../users/users.repository';
 import { getConfigValue } from '@repo/common-lib/config/utils';
+import { PURCHASABLE_BILLING_TYPES } from '@repo/common-lib/constants/plan';
 
 /** Same origin as APP_URL (scheme, host and port). */
 const isAppUrl = (value: string): boolean => {
@@ -100,6 +101,20 @@ export class PlanSubscriptionsService {
       // A retired plan stays in the table for existing subscribers; nobody new may buy it.
       if (!planPrice.plan.is_active) {
         this.logger.warn('Attempted to subscribe to an inactive plan', { plan_price_id });
+        throw new HttpException('Plan price does not exist', 422);
+      }
+      // Retired prices (old amounts, dropped billing periods) stay for existing subscribers and
+      // webhooks; only active MONTHLY/YEARLY prices can be bought.
+      const notPurchasableReason = !planPrice.is_active
+        ? 'inactive-price'
+        : !(PURCHASABLE_BILLING_TYPES as readonly string[]).includes(planPrice.billing_type)
+          ? 'billing-type-not-purchasable'
+          : null;
+      if (notPurchasableReason) {
+        this.logger.warn('Attempted to subscribe to a non-purchasable price', {
+          plan_price_id,
+          reason: notPurchasableReason,
+        });
         throw new HttpException('Plan price does not exist', 422);
       }
       let currentUserSubscription =
@@ -304,11 +319,17 @@ export class PlanSubscriptionsService {
           metadata: traceMetadata,
           mode: 'subscription',
 
+          // `name: 'auto'` is required by Stripe when an existing customer can enter a tax ID.
           customer_update: {
             address: 'auto',
+            name: 'auto',
           },
           automatic_tax: {
             enabled: config().stripe.automaticTax,
+          },
+          // EU businesses can enter a VAT number (reverse charge).
+          tax_id_collection: {
+            enabled: true,
           },
 
           line_items: [
