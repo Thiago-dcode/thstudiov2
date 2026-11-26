@@ -156,10 +156,10 @@ echo ""
 # keeps an older hand-copied config.
 info "Step 1b/6 — Syncing nginx config ($NGINX_SRC → nginx) …"
 if [[ -d "$NGINX_SRC" ]]; then
-  # nginx refuses to start when an ssl_certificate file is missing, and the container is
-  # force-recreated below — so syncing a config that points at a certificate not issued
-  # yet would take the site down. Check every referenced cert first and abort before
-  # touching ./nginx.
+  # nginx refuses to start when an ssl_certificate file is missing. `nginx -t` in step 5 would
+  # reject such a config, but only after the app containers were already recreated, so check
+  # every referenced cert here, before the pull and the migrations, and abort while nothing
+  # has changed yet.
   for cert in $(grep -hoE '/etc/letsencrypt/live/[^;[:space:]]+' "$NGINX_SRC"/conf.d/*.conf | sort -u); do
     if ! $COMPOSE run --rm --no-deps --entrypoint test nginx -s "$cert"; then
       error "Certificate $cert referenced by $NGINX_SRC is not in the certbot_certs volume."
@@ -167,6 +167,10 @@ if [[ -d "$NGINX_SRC" ]]; then
       exit 1
     fi
   done
+  # Keep the previous config so step 5 can put it back if the new one fails `nginx -t`.
+  # Otherwise a bad config stays on disk and fails the next time the nginx container restarts.
+  rm -rf nginx.prev
+  if [[ -d nginx ]]; then cp -r nginx nginx.prev; fi
   mkdir -p nginx
   cp -r "$NGINX_SRC"/. nginx/
   success "nginx config synced."
@@ -231,25 +235,27 @@ else
 fi
 echo ""
 
-# ── Step 5: Rolling restart of application services ──────────────────────────
-info "Step 5/6 — Starting / restarting application services …"
+# ── Step 5: Recreate application services ────────────────────────────────────
+info "Step 5/6 — Starting / recreating application services …"
 
-# Bring everything up; compose will recreate only changed containers.
+# Recreates every service whose image or config changed. Note: a service with 2 replicas is
+# recreated as a whole, so there is a gap until the new replicas are healthy (see the PR notes).
 $COMPOSE up -d --remove-orphans
 
-# nginx config and TLS certs are bind-mounted from the host (NOT baked into the
-# image). `docker compose up -d` only recreates containers whose image/config
-# changed, so edits under nginx/conf.d, nginx/snippets, or certs/ do NOT take
-# effect until the container is recreated.
-#
-# IMPORTANT bind-mount pitfall: never `rm -rf`/recreate a bind-mounted host dir
-# (nginx/, certs/) while its container is running — the mount then points at the
-# old (deleted) inode. Edit files in place, then force-recreate.
-info "Force-recreating nginx so bind-mounted config/certs are current …"
-$COMPOSE up -d --force-recreate nginx
-
-# Give nginx and app containers a moment to settle, then show status.
-sleep 5
+# nginx config and TLS certs are bind-mounted from the host (NOT baked into the image). Step 1b
+# copies them in place (never rm -rf / recreate the bind-mounted dir), so a graceful reload
+# picks them up without restarting the container. Always validate and reload, even when the
+# files are byte-identical: a previous deploy may have left a failed config on disk.
+if ! $COMPOSE exec -T nginx nginx -t </dev/null; then
+  error "nginx config failed validation — restoring the previous config."
+  if [[ -d nginx.prev ]]; then
+    cp -r nginx.prev/. nginx/
+    $COMPOSE exec -T nginx nginx -s reload </dev/null || true
+  fi
+  exit 1
+fi
+$COMPOSE exec -T nginx nginx -s reload </dev/null
+success "nginx config validated and reloaded."
 echo ""
 
 # ── Step 6: Invalidate cached asset URLs ─────────────────────────────────────
@@ -281,9 +287,21 @@ $COMPOSE ps --format "table {{.Service}}\t{{.Status}}\t{{.Ports}}"
 echo ""
 
 # ── Health smoke-test ─────────────────────────────────────────────────────────
-info "Smoke testing …"
-WEB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1/ || true)
-API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1/api/v1/categories || true)
+info "Smoke testing the public vhosts (retrying up to 120s while new replicas warm up) …"
+# Probe the real hostnames over TLS on the droplet. A plain request to 127.0.0.1 has no matching
+# server_name, so nginx answers 444 (000 here) and the test could never pass.
+# A single check right after recreation races the replicas' healthcheck start_period (45s), so
+# poll until both answer 200 or time out.
+probe() { curl -s -o /dev/null --max-time 10 -w "%{http_code}" "$@" || true; }
+WEB_STATUS=""; API_STATUS=""
+for _ in $(seq 1 24); do
+  WEB_STATUS=$(probe --resolve a11studio.com:443:127.0.0.1 https://a11studio.com/)
+  API_STATUS=$(probe --resolve api.a11studio.com:443:127.0.0.1 https://api.a11studio.com/api/v1/categories)
+  if [[ "$WEB_STATUS" == "200" && "$API_STATUS" == "200" ]]; then
+    break
+  fi
+  sleep 5
+done
 
 if [[ "$WEB_STATUS" == "200" ]]; then
   success "Web  → HTTP $WEB_STATUS"
