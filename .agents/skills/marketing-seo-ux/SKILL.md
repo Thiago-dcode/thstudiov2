@@ -26,7 +26,7 @@ All in `apps/web/src/lib/seo/`:
 
 ## Invariants (break these and rankings or privacy suffer)
 
-1. **Dev and preview must never be indexable.** `NODE_ENV` can't tell environments apart; gate robots, sitemap and meta robots on `isIndexableEnv()` (canonical host `a11studio.com`, fail-closed).
+1. **Non-prod hosts (local, previews) must never be indexable.** (The dev environment is retired; only local and prod exist.) `NODE_ENV` can't tell environments apart; gate robots, sitemap and meta robots on `isIndexableEnv()` (canonical host `a11studio.com`, fail-closed).
 2. **One public-visibility predicate per entity**, shared by the sitemap and the page's noindex decision, so a URL is listed if and only if it is indexable. Add or change a predicate in both at once.
 3. **Missing or hidden content returns a real 404** (`notFound()`), never a 200 shell. **Never put `loading.tsx` above public routes**: streaming a fallback makes soft 404s. (`atelier/` is private, so it may have one.)
 4. **Directory gate**: `/artists` and `/portfolios` stay hidden (404 and no entry points: nav, sitemap, links) until `isDirectoryOpen()` (`lib/directory-visibility.ts`) says so.

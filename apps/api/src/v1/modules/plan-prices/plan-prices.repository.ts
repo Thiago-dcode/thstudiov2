@@ -18,15 +18,16 @@ export class PlanPricesRepository extends BaseRepository {
     'plan_prices.plan_id',
     'plan_prices.price',
     'plan_prices.billing_type',
+    'plan_prices.is_active',
     // plans colliding fields (prefixed)
     'plans.id as p_id',
     'plans.stripe_id as p_stripe_id',
     'plans.paypal_id as p_paypal_id',
+    'plans.is_active as p_is_active',
     // plans non-colliding fields
     'plans.name',
     'plans.short_description',
     'plans.base_price',
-    'plans.is_active',
     'plans.is_free',
     'plans.top_tier',
   ];
@@ -43,12 +44,13 @@ export class PlanPricesRepository extends BaseRepository {
       billing_type: result.billing_type,
       plan_id: result.plan_id,
       price: result.price,
+      is_active: result.is_active,
       plan: {
         id: result.p_id,
         name: result.name,
         base_price: result.base_price,
         is_free: result.is_free,
-        is_active: result.is_active,
+        is_active: result.p_is_active,
         top_tier: result.top_tier,
         short_description: result.short_description,
       },

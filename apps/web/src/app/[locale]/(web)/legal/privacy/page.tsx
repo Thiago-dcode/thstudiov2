@@ -67,7 +67,6 @@ export default async function PrivacyPolicyPage() {
             t.rich("collect.account", strongTag),
             t.rich("collect.location", strongTag),
             t.rich("collect.content", strongTag),
-            t.rich("collect.business", strongTag),
             t.rich("collect.messages", strongTag),
             t.rich("collect.security", strongTag),
           ]}

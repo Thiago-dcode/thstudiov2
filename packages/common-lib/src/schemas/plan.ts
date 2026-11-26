@@ -8,6 +8,8 @@ export type PlanSchema = {
   id: number;
   stripe_id: string | null;
   paypal_id?: string | null;
+  /** Stable internal key (`PLAN_IDENTIFIERS`); `name` is display copy. Null only on rows the seed has not reached. */
+  unique_identifier: string | null;
   name: string;
   short_description: string;
   description: string;
@@ -64,6 +66,7 @@ export type PlanWithPricesSchema = PlanSchema & {
   pp_paypal_id?: string | null;
   pp_created_at: Date;
   pp_updated_at: Date;
+  pp_is_active: boolean;
   plan_id: number;
   price: number;
   billing_type: EnumType<'BILLING_TYPE'>;

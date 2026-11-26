@@ -15,6 +15,12 @@ description: High-level tech stack, project structure, and core principles. Use 
 - `packages/backend-lib` → Server-side-only shared logic (api, worker, and web server code — never the browser)
 - `packages/frontend-lib` → Frontend-only shared logic
 
+## Environments (since 2026-11-26)
+
+There are exactly **two** environments: **local** (your machine, `.env`) and **production** (`a11studio.com`, `.env.prod`, `infrastructure/scripts/dbcli-prod.sh`, `CI / Prod` on `main`).
+
+**There is no dev/staging environment any more.** Ignore any leftover dev artefacts (`.env.dev`, `dbcli-dev.sh`, `compose.dev.yaml`, `.github/workflows/dev.yml` deploy job, the `develop` branch, `dev.a11studio.com`, the old dev droplet). Never plan, verify, migrate, seed, deploy or debug against "dev". Verify locally, then ship to prod. Rollout steps in plans and PRs list only local and prod.
+
 ## Package Manager
 
 - **pnpm**: used for monorepo management and package resolution.

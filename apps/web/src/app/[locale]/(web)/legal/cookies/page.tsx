@@ -14,7 +14,6 @@ import {
 } from "../_components/legal-doc";
 
 const STRIPE_PRIVACY_URL = "https://stripe.com/privacy";
-const PAYPAL_PRIVACY_URL = "https://www.paypal.com/webapps/mpp/ua/privacy-full";
 
 export async function generateMetadata({
   params,
@@ -89,9 +88,6 @@ export default async function CookiePolicyPage() {
           items={[
             <ExternalLink key="stripe" href={STRIPE_PRIVACY_URL}>
               {t("thirdParty.stripe")}
-            </ExternalLink>,
-            <ExternalLink key="paypal" href={PAYPAL_PRIVACY_URL}>
-              {t("thirdParty.paypal")}
             </ExternalLink>,
           ]}
         />

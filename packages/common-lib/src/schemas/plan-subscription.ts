@@ -38,6 +38,7 @@ export type FullPlanSubscriptionSchema = PlanSubscriptionSchema & {
   pp_id: number;
   pp_stripe_id: string | null;
   pp_paypal_id: string | null;
+  pp_is_active: boolean;
   // plan_prices non-colliding fields
   plan_id: number;
   price: number;

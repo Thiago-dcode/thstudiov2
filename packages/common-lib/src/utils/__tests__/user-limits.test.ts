@@ -6,6 +6,7 @@ const basePlan = (overrides: Partial<BasePlan> = {}): BasePlan => ({
   id: 1,
   stripe_id: null,
   paypal_id: null,
+  unique_identifier: 'pro',
   name: 'Pro',
   short_description: '',
   description: '',

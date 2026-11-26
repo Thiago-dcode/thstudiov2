@@ -75,7 +75,6 @@ export class UserExtraDataService {
    * @param toCheck - Constraints to validate
    * @param toCheck.size - Media size to add in MB
    * @param toCheck.storageRequests - Number of storage requests to add
-   * @param toCheck.projects_count - Number of projects to add
    */
   async enforceUserLimits(
     userId: number,
@@ -83,7 +82,6 @@ export class UserExtraDataService {
       size?: number;
       storageRequests?: number;
       enforceCompressionLevel?: boolean;
-      projects_count?: number;
       portfolios_count?: number;
       collections_count?: number;
       services_count?: number;
@@ -98,7 +96,7 @@ export class UserExtraDataService {
       this.planService.findUserActivePlan(userId),
     ]);
 
-    const { size, portfolios_count, collections_count, services_count, projects_count, enforceCompressionLevel, storageRequests, enforceAiCredits, aiCreditsCost = 1, enforceUserStrikes } =
+    const { size, portfolios_count, collections_count, services_count, enforceCompressionLevel, storageRequests, enforceAiCredits, aiCreditsCost = 1, enforceUserStrikes } =
       toEnforce;
     if (
       enforceUserStrikes &&
@@ -187,18 +185,6 @@ export class UserExtraDataService {
     ) {
       throw ApiException.maxServices(
         `Services limit exceeded. Current: ${userExtraData.services_count}, Adding: ${services_count}, Max allowed: ${currentPlan.max_services}`,
-      );
-    }
-    if (
-      projects_count &&
-      !UserLimits.entityCount({
-        currentCount: userExtraData.projects_count,
-        incomingCount: projects_count,
-        maxAllowed: currentPlan.max_projects,
-      })
-    ) {
-      throw ApiException.maxProjects(
-        `Projects limit exceeded. Current: ${userExtraData.projects_count}, Adding: ${projects_count}, Max allowed: ${currentPlan.max_projects}`,
       );
     }
   }

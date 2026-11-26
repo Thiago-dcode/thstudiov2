@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import { type ReactNode, useMemo } from "react";
 
 function formatMegaBytes(megabytes: number): string {
-  return `${(Math.ceil(megabytes / 1024)).toFixed(1)} GB`;
+  return `${Number((megabytes / 1024).toFixed(1))} GB`;
 }
 
 export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
@@ -41,17 +41,6 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
         ),
       },
       {
-        key: "projects",
-        content: (
-          <span className="text-pretty">
-            <span className="font-bold tabular-nums text-text">
-              {String(formatFeatureValue(plan.max_projects))}
-            </span>
-            <span className="text-text-muted"> {t("projects")}</span>
-          </span>
-        ),
-      },
-      {
         key: "portfolios",
         content: (
           <span className="text-pretty">
@@ -63,6 +52,17 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
         ),
       },
       {
+        key: "collections",
+        content: (
+          <span className="text-pretty">
+            <span className="font-bold tabular-nums text-text">
+              {String(formatFeatureValue(plan.max_collections))}
+            </span>
+            <span className="text-text-muted"> {t("collections")}</span>
+          </span>
+        ),
+      },
+      {
         key: "services",
         content: (
           <span className="text-pretty">
@@ -70,17 +70,6 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
               {String(formatFeatureValue(plan.max_services))}
             </span>
             <span className="text-text-muted"> {t("services")}</span>
-          </span>
-        ),
-      },
-      {
-        key: "clients",
-        content: (
-          <span className="text-pretty">
-            <span className="font-bold tabular-nums text-text">
-              {String(formatFeatureValue(plan.max_clients))}
-            </span>
-            <span className="text-text-muted"> {t("clients")}</span>
           </span>
         ),
       },

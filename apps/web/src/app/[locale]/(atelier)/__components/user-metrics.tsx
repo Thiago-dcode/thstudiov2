@@ -73,22 +73,18 @@ export const UserMetrics = async ({ userId }: { userId: number }) => {
   const { extra_data, active_plan } = metricsResult.data;
   if (!extra_data || !active_plan) return <div>{t("noDataAvailable")}</div>;
   const {
-    clients_count,
     media_count,
     storage_used_mb,
     collections_count,
     portfolios_count,
-    projects_count,
     services_count,
     ai_credits,
     ai_credits_consumed,
   } = extra_data;
   const {
-    max_clients,
     storage_limit_mb,
     max_portfolios,
     max_collections,
-    max_projects,
     max_services,
     translation,
     name,
@@ -114,11 +110,6 @@ export const UserMetrics = async ({ userId }: { userId: number }) => {
         `${(used / 1024).toFixed(1)} / ${(limit / 1024).toFixed(0)} GB`,
     },
     {
-      title: t("clients"),
-      used: clients_count,
-      limit: max_clients,
-    },
-    {
       title: t("portfolios"),
       used: portfolios_count,
       limit: max_portfolios,
@@ -127,11 +118,6 @@ export const UserMetrics = async ({ userId }: { userId: number }) => {
       title: t("collections"),
       used: collections_count,
       limit: max_collections,
-    },
-    {
-      title: t("projects"),
-      used: projects_count,
-      limit: max_projects,
     },
     {
       title: t("services"),

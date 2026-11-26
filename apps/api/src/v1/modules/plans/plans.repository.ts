@@ -34,6 +34,8 @@ export class PlansRepository extends BasePlansRepository {
     const query = this.query().select(this.COLUMNS);
     query.join('id', 'plan_prices', 'plan_id', 'INNER');
     query.join('id', 'plan_translations', 'plan_id', 'INNER');
+    // Retired prices stay in the table for existing subscribers; nobody is offered them.
+    query.where('plan_prices.is_active', '=', true);
     query.where(
       'plan_translations.language_code',
       '=',
@@ -68,6 +70,7 @@ export class PlansRepository extends BasePlansRepository {
 
         acc[curr.id] = {
           id: curr.id,
+          unique_identifier: curr.unique_identifier,
           name: curr.name,
           short_description: curr.short_description,
           description: curr.description,
@@ -87,6 +90,7 @@ export class PlansRepository extends BasePlansRepository {
                   plan_id: c.plan_id,
                   price: c.price,
                   stripe_id: c.pp_stripe_id,
+                  is_active: c.pp_is_active,
                 };
                 return p;
               },
@@ -130,7 +134,7 @@ export class PlansRepository extends BasePlansRepository {
 
   protected async applyFilters(filters: IndexPlanRequest, query: QueryBuilder) {
     if (filters.is_active !== undefined) {
-      query.where('is_active', '=', filters.is_active);
+      query.where('plans.is_active', '=', filters.is_active);
     }
     return query;
   }

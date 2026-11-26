@@ -61,6 +61,7 @@ export const main = async () => {
     .join('plan_id', TABLES_ENUM.PLANS, 'id')
     .where('plans.is_free', '=', true)
     .where('billing_type', '=', 'LIFETIME')
+    .where('plan_prices.is_active', '=', true)
     .first<{ id: number }>();
 
   if (!lifetimePrice) {

@@ -5,6 +5,7 @@ import type { BenefitWithRedeemed } from "@repo/common-lib/types/benefit";
 import type { PaymentMethod } from "@repo/common-lib/types/payment-method";
 import type { FullPlan } from "@repo/common-lib/types/plan";
 import type { PlanPrice as PlanPriceType } from "@repo/common-lib/types/plan-price";
+import { getPurchasablePrices } from "@repo/common-lib/utils/calculatePrice";
 import { useRouter } from "next/navigation";
 import { createContext, type ReactNode, useContext, useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
@@ -76,12 +77,13 @@ export const PlanSubscriptionProvider = ({
 
   const setPlanSelected = (plan?: FullPlan) => {
     if (plan) {
+      // Keep the period the user already picked when this plan sells it, else YEARLY. Only
+      // purchasable prices are candidates, so a retired one is never preselected.
+      const purchasable = getPurchasablePrices(plan.prices);
       setPriceSelected(
-        plan?.prices.find(
-          (p) =>
-            p.billing_type === priceSelected?.billing_type ||
-            p.billing_type === "YEARLY",
-        ),
+        purchasable.find(
+          (p) => p.billing_type === priceSelected?.billing_type,
+        ) ?? purchasable.find((p) => p.billing_type === "YEARLY"),
       );
     }
     _setPlanSelected(plan);

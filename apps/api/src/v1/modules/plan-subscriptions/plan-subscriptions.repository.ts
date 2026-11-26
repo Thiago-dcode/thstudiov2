@@ -39,6 +39,7 @@ export class PlanSubscriptionsRepository extends BaseRepository {
     'plan_prices.id as pp_id',
     'plan_prices.stripe_id as pp_stripe_id',
     'plan_prices.paypal_id as pp_paypal_id',
+    'plan_prices.is_active as pp_is_active',
     // plan_prices non-colliding fields
     'plan_prices.plan_id',
     'plan_prices.price',
@@ -89,6 +90,7 @@ export class PlanSubscriptionsRepository extends BaseRepository {
         plan_id: result.plan_id,
         price: result.price,
         billing_type: result.billing_type,
+        is_active: result.pp_is_active,
         plan: {
           id: result.p_id,
           stripe_id: result.p_stripe_id,

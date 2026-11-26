@@ -177,7 +177,7 @@ describe('PlanSubscriptionsService logging', () => {
 
   it('AC-19: the initiate success line has ok/payment_method only, never redirect_url', async () => {
     const { service, lines, planPriceService, planSubscriptionsRepository } = build();
-    planPriceService.findOne.mockResolvedValue({ id: 4, price: 20, stripe_id: 'price_new', plan: { is_active: true, is_free: false } });
+    planPriceService.findOne.mockResolvedValue({ id: 4, price: 20, stripe_id: 'price_new', billing_type: 'MONTHLY', is_active: true, plan: { is_active: true, is_free: false } });
     planSubscriptionsRepository.findActiveSubscription.mockResolvedValue(freeSub);
     mockStripe.checkout.sessions.create.mockResolvedValue({ id: 'cs_3', url: CHECKOUT_URL });
     const result = await runWithTraceId('R', () =>

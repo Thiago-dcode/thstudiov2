@@ -1,6 +1,10 @@
 "use client";
 
-import { getMonthlyPrice } from "@repo/common-lib/utils/calculatePrice";
+import type { PurchasableBillingType } from "@repo/common-lib/constants/plan";
+import {
+  getPurchasablePrices,
+  getYearlySaving,
+} from "@repo/common-lib/utils/calculatePrice";
 import { CircleSelect } from "@repo/ui/components/custom/CircleSelect";
 import {
   Accordion,
@@ -16,14 +20,18 @@ import {
 } from "@repo/ui/components/shadcn/dialog";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { AssetComponent } from "@/lib/components/asset-component";
 import { PlanFeatures } from "@/modules/plans/components/plan.features";
+import { YearlySavingTag } from "@/modules/plans/components/yearly-saving-tag";
 import { UsePlanSubscription } from "../providers/plan-subscription.provider";
 
 export const ChangeSubscriptionDialog = () => {
   const t = useTranslations("changeSubscriptionDialog");
   const tBilling = useTranslations("benefitSubscriptionDialog.billingTypes");
+  const format = useFormatter();
+  const formatEur = (value: number) =>
+    format.number(value, { style: "currency", currency: "EUR" });
   const {
     planSelected,
     setPlanSelected,
@@ -91,6 +99,14 @@ export const ChangeSubscriptionDialog = () => {
       </Dialog>
     );
   }
+  // Only active MONTHLY/YEARLY rows can be bought; retired or legacy periods never show here.
+  const purchasablePrices = planSelected
+    ? getPurchasablePrices(planSelected.prices)
+    : [];
+  const yearlySaving = planSelected
+    ? getYearlySaving(planSelected.prices)
+    : null;
+
   return (
     <Dialog
       onOpenChange={(value) => {
@@ -154,7 +170,9 @@ export const ChangeSubscriptionDialog = () => {
                     {t("billingCycle")}
                   </h4>
                   <div className="flex flex-col items-start justify-start gap-2 w-full">
-                    {planSelected.prices.map((price) => {
+                    {purchasablePrices.map((price) => {
+                      const billingType =
+                        price.billing_type as PurchasableBillingType;
                       return (
                         <Button
                           onClick={() => {
@@ -163,27 +181,33 @@ export const ChangeSubscriptionDialog = () => {
                           key={price.billing_type}
                           variant={"ghost"}
                           className={cn(
-                            " border-2 p-3 w-full flex items-center justify-start",
+                            " border-2 p-3 w-full h-auto flex items-center justify-start",
                             {
                               "text-text border-text":
                                 priceSelected?.id === price.id,
                             },
                           )}
                         >
-                          <div className="flex items-center justify-start gap-2">
-                            {" "}
+                          <div className="flex w-full flex-wrap items-center justify-start gap-x-2 gap-y-1">
                             <CircleSelect
                               selected={priceSelected?.id === price.id}
                             />
-                            <p>
-                              {tBilling(
-                                price.billing_type as
-                                  | "MONTHLY"
-                                  | "QUARTERLY"
-                                  | "YEARLY"
-                                  | "LIFETIME",
-                              )}
-                            </p>
+                            <span>{tBilling(billingType)}</span>
+                            {billingType === "YEARLY" && (
+                              <YearlySavingTag prices={planSelected.prices} />
+                            )}
+                            <span className="text-sm font-normal text-text-muted tabular-nums">
+                              {billingType === "YEARLY"
+                                ? [
+                                    `${formatEur(price.price)}${t("perYear")}`,
+                                    ...(yearlySaving
+                                      ? [
+                                          `${formatEur(yearlySaving.monthlyEquivalent)}${t("perMonth")}`,
+                                        ]
+                                      : []),
+                                  ].join(" · ")
+                                : `${formatEur(price.price)}${t("perMonth")}`}
+                            </span>
                           </div>
                         </Button>
                       );
@@ -195,35 +219,32 @@ export const ChangeSubscriptionDialog = () => {
                     {/* Price Display */}
                     <div className="flex items-start justify-between">
                       <p className="font-bold">{t("total")}</p>
-                      <div className="flex flex-col items-end justify-start gap-2">
-                        <p className="text-base font-base text-text">
-                          <span className="text-sm text-text-muted">
-                            {priceSelected.billing_type !== "MONTHLY"
-                              ? "~"
-                              : ""}{" "}
-                          </span>
-                          €{getMonthlyPrice(priceSelected)?.toFixed(2)}
-                          <span className="text-sm text-text-muted">
-                            {t("perMonth")}
-                          </span>
-                        </p>
-                        {priceSelected.billing_type !== "MONTHLY" && (
-                          <p className="text-base text-text">
-                            €{priceSelected.price}
-                            <span className="text-sm text-text-muted ">
-                              {" "}
-                              {t("billed", {
-                                billingType: tBilling(
-                                  priceSelected.billing_type as
-                                    | "MONTHLY"
-                                    | "QUARTERLY"
-                                    | "YEARLY"
-                                    | "LIFETIME",
-                                ),
+                      <div className="flex flex-col items-end justify-start gap-2 tabular-nums">
+                        {priceSelected.billing_type === "YEARLY" ? (
+                          <>
+                            <p className="text-base font-base text-text">
+                              {t("billedYearly", {
+                                amount: formatEur(priceSelected.price),
                               })}
+                            </p>
+                            {yearlySaving && (
+                              <p className="text-sm text-text-muted">
+                                {formatEur(yearlySaving.monthlyEquivalent)}
+                                {t("perMonth")}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-base font-base text-text">
+                            {formatEur(priceSelected.price)}
+                            <span className="text-sm text-text-muted">
+                              {t("perMonth")}
                             </span>
                           </p>
                         )}
+                        <p className="text-xs text-text-muted">
+                          {t("vatIncluded")}
+                        </p>
                       </div>
                     </div>
 

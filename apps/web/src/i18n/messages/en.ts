@@ -469,7 +469,7 @@ const messages = {
         id: "is-free",
         question: "Is A11STUDIO free?",
         answer:
-          "Yes, and you don't need a card to start. The free plan includes <strong>2 portfolios, 3 collections, 2 services, 1 GB of storage and 20 AI credits a month</strong>: enough to publish a complete, professional portfolio. Paid plans, from €9 a month, raise those limits and add image compression. You only upgrade if you need more room.",
+          "Yes, and you don't need a card to start. The free plan includes <strong>3 portfolios, 3 collections, 3 services, 10 GB of storage and 20 AI credits a month</strong>: enough to publish a complete, professional portfolio. Paid plans start at €6 a month (€5 a month billed yearly), VAT included, and add more room, more AI credits and image compression. You only upgrade if you need more room.",
       },
       {
         id: "vs-social-media-website-builder",
@@ -1093,7 +1093,7 @@ const messages = {
         description:
           "The terms and conditions for using the A11STUDIO portfolio platform — accounts, subscription plans, content ownership, acceptable use and moderation.",
       },
-      updatedAt: "2026-10-14",
+      updatedAt: "2026-11-26",
       heading: "Terms of Service",
       intro:
         "These terms govern your use of the A11STUDIO platform. By creating an account or using our services, you agree to be bound by these terms.",
@@ -1113,9 +1113,9 @@ const messages = {
       },
       plans: {
         title: "3. Subscription Plans",
-        body: "A11STUDIO offers free and paid subscription plans. Each plan defines limits on storage, media uploads, portfolios, projects, clients, services, and AI credits.",
+        body: "A11STUDIO offers free and paid subscription plans. Each plan defines limits on storage, media uploads, portfolios, collections, services, and AI credits.",
         billing:
-          "Paid plans are billed through <strong>Stripe</strong> or <strong>PayPal</strong> on a recurring basis (monthly or annual).",
+          "Paid plans are billed through <strong>Stripe</strong> on a recurring basis (monthly or annual).",
         autoRenew:
           "Subscriptions auto-renew unless cancelled before the next billing date.",
         manage:
@@ -1169,7 +1169,7 @@ const messages = {
         storage:
           "<strong>Storage</strong> — maximum total media size and daily upload limits",
         content:
-          "<strong>Content</strong> — maximum number of portfolios, projects, clients, and services",
+          "<strong>Content</strong> — maximum number of portfolios, collections and services",
         aiCredits:
           "<strong>AI credits</strong> — limited credits per billing cycle for AI-assisted features (SEO generation, content suggestions), which reset periodically",
         compression:
@@ -1214,7 +1214,7 @@ const messages = {
         description:
           "How A11STUDIO collects, uses, stores and protects your personal data — what we collect, who we share it with, how long we keep it, and the rights you have.",
       },
-      updatedAt: "2026-10-14",
+      updatedAt: "2026-11-26",
       heading: "Privacy Policy",
       intro:
         "This policy describes how A11STUDIO collects, uses, stores, and protects your information when you use our platform. We are committed to transparency and to safeguarding your data.",
@@ -1230,9 +1230,7 @@ const messages = {
         location:
           "<strong>Location data</strong> — if you choose to add an address to your profile, we store the information necessary to display your location publicly",
         content:
-          "<strong>Content you create</strong> — media files, portfolios, services, projects, and any associated descriptions or metadata you provide through the platform",
-        business:
-          "<strong>Business data</strong> — if you use client and project management features, we store the relevant contact and project information you enter",
+          "<strong>Content you create</strong> — media files, portfolios, collections, services, and any associated descriptions or metadata you provide through the platform",
         messages:
           "<strong>Messages</strong> — when visitors contact an artist through the platform, we collect the information included in the contact form",
         security:
@@ -1268,7 +1266,7 @@ const messages = {
         title: "6. Data Sharing",
         body: "We do not sell your personal data. We share data only with the following third-party services as necessary to operate the platform:",
         payments:
-          "<strong>Stripe & PayPal</strong> — for payment processing and subscription management",
+          "<strong>Stripe</strong> — for payment processing and subscription management",
         ai: "<strong>OpenAI</strong> — for content generation and media moderation",
         email:
           "<strong>Resend</strong> — for transactional emails (verification, password recovery, notifications)",
@@ -1328,7 +1326,7 @@ const messages = {
         description:
           "How A11STUDIO uses cookies and similar technologies. Essential first-party cookies, plus optional analytics cookies that are only set if you accept them — no advertising cookies.",
       },
-      updatedAt: "2026-10-13",
+      updatedAt: "2026-11-26",
       heading: "Cookie Policy",
       intro:
         "This policy explains what cookies the A11STUDIO platform uses, why we use them, and how they affect your experience. We use cookies that are necessary for the platform to function, and analytics cookies only if you give your consent.",
@@ -1361,9 +1359,8 @@ const messages = {
       },
       thirdParty: {
         title: "4. Third-Party Cookies",
-        body: "When you interact with payment providers during checkout, <strong>Stripe</strong> and <strong>PayPal</strong> may set their own cookies on your device. These cookies are governed by the respective provider's cookie and privacy policies:",
+        body: "When you interact with our payment provider during checkout, <strong>Stripe</strong> may set its own cookies on your device. These cookies are governed by Stripe's cookie and privacy policies:",
         stripe: "Stripe Privacy Policy",
-        paypal: "PayPal Privacy Policy",
       },
       analytics: {
         title: "5. Analytics Cookies (Optional)",
@@ -1571,16 +1568,18 @@ const messages = {
     },
     price: {
       free: "Free",
-      from: "from",
       perMonth: "/month",
+      yearlyNote: "{monthly}/month billed yearly",
+      monthsFree: "{months, plural, one {# month free} other {# months free}}",
+      savePercent: "save {percent}%",
+      vatIncluded: "VAT included",
     },
     features: {
       unlimited: "Unlimited",
       ofMediaStorage: "of media storage",
-      projects: "Projects",
       portfolios: "Portfolios",
+      collections: "Collections",
       services: "Services",
-      clients: "Clients",
       mediaCompression: "Media compression",
       mediaCompressionTooltip:
         "Choose your preferred compression level when uploading photos. Balance between image quality and file size to optimize your storage and loading times.",
@@ -1600,7 +1599,9 @@ const messages = {
     billingCycle: "Billing Cycle",
     total: "Total",
     perMonth: "/month",
-    billed: "billed {billingType}",
+    perYear: "/year",
+    billedYearly: "{amount} billed yearly",
+    vatIncluded: "VAT included",
     paymentMethod: "Payment Method",
     completePayment: "Complete Payment",
     trustPaymentAlt: "Secure payment",
@@ -2125,10 +2126,8 @@ const messages = {
         noDataAvailable: "No data available",
         media: "Media",
         storage: "Storage",
-        clients: "Clients",
         portfolios: "Portfolios",
         collections: "Collections",
-        projects: "Projects",
         services: "Services",
         aiCredits: "AI Credits",
         planSuffix: "Plan",

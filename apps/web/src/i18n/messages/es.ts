@@ -472,7 +472,7 @@ const messages = {
         id: "is-free",
         question: "¿A11STUDIO es gratis?",
         answer:
-          "Sí, y no necesitas tarjeta para empezar. El plan gratuito incluye <strong>2 portafolios, 3 colecciones, 2 servicios, 1 GB de almacenamiento y 20 créditos de IA al mes</strong>: suficiente para publicar un portafolio profesional completo. Los planes de pago, desde 9 € al mes, amplían esos límites y añaden compresión de imágenes. Solo mejoras tu plan si necesitas más espacio.",
+          "Sí, y no necesitas tarjeta para empezar. El plan gratuito incluye <strong>3 portafolios, 3 colecciones, 3 servicios, 10 GB de almacenamiento y 20 créditos de IA al mes</strong>: suficiente para publicar un portafolio profesional completo. Los planes de pago empiezan en 6 € al mes (5 € al mes con facturación anual), IVA incluido, y añaden más espacio, más créditos de IA y compresión de imágenes. Solo mejoras tu plan si necesitas más espacio.",
       },
       {
         id: "vs-social-media-website-builder",
@@ -1099,7 +1099,7 @@ const messages = {
         description:
           "Términos y condiciones de uso de la plataforma de portafolios A11STUDIO — cuentas, planes de suscripción, propiedad del contenido, uso aceptable y moderación.",
       },
-      updatedAt: "2026-10-14",
+      updatedAt: "2026-11-26",
       heading: "Términos del servicio",
       intro:
         "Estos términos regulan el uso de la plataforma A11STUDIO. Al crear una cuenta o utilizar nuestros servicios, aceptas quedar vinculado por ellos.",
@@ -1119,9 +1119,9 @@ const messages = {
       },
       plans: {
         title: "3. Planes de suscripción",
-        body: "A11STUDIO ofrece planes gratuitos y de pago. Cada plan define límites de almacenamiento, subidas de archivos, portafolios, proyectos, clientes, servicios y créditos de IA.",
+        body: "A11STUDIO ofrece planes gratuitos y de pago. Cada plan define límites de almacenamiento, subidas de archivos, portafolios, colecciones, servicios y créditos de IA.",
         billing:
-          "Los planes de pago se facturan mediante <strong>Stripe</strong> o <strong>PayPal</strong> de forma recurrente (mensual o anual).",
+          "Los planes de pago se facturan mediante <strong>Stripe</strong> de forma recurrente (mensual o anual).",
         autoRenew:
           "Las suscripciones se renuevan automáticamente salvo que se cancelen antes de la siguiente fecha de facturación.",
         manage:
@@ -1175,7 +1175,7 @@ const messages = {
         storage:
           "<strong>Almacenamiento</strong> — tamaño total máximo de archivos y límites de subida diarios",
         content:
-          "<strong>Contenido</strong> — número máximo de portafolios, proyectos, clientes y servicios",
+          "<strong>Contenido</strong> — número máximo de portafolios, colecciones y servicios",
         aiCredits:
           "<strong>Créditos de IA</strong> — créditos limitados por ciclo de facturación para las funciones con IA (generación de SEO, sugerencias de contenido), que se reinician periódicamente",
         compression:
@@ -1220,7 +1220,7 @@ const messages = {
         description:
           "Cómo A11STUDIO recopila, usa, almacena y protege tus datos personales: qué recogemos, con quién lo compartimos, cuánto tiempo lo conservamos y qué derechos tienes.",
       },
-      updatedAt: "2026-10-14",
+      updatedAt: "2026-11-26",
       heading: "Política de privacidad",
       intro:
         "Esta política describe cómo A11STUDIO recopila, utiliza, almacena y protege tu información cuando usas nuestra plataforma. Nos comprometemos con la transparencia y con la protección de tus datos.",
@@ -1236,9 +1236,7 @@ const messages = {
         location:
           "<strong>Datos de ubicación</strong> — si decides añadir una dirección a tu perfil, guardamos la información necesaria para mostrar tu ubicación públicamente",
         content:
-          "<strong>Contenido que creas</strong> — archivos multimedia, portafolios, servicios, proyectos y cualquier descripción o metadato asociado que aportes en la plataforma",
-        business:
-          "<strong>Datos de negocio</strong> — si usas las funciones de gestión de clientes y proyectos, guardamos la información de contacto y de proyecto que introduzcas",
+          "<strong>Contenido que creas</strong> — archivos multimedia, portafolios, colecciones, servicios y cualquier descripción o metadato asociado que aportes en la plataforma",
         messages:
           "<strong>Mensajes</strong> — cuando un visitante contacta con un artista a través de la plataforma, recopilamos la información incluida en el formulario de contacto",
         security:
@@ -1275,7 +1273,7 @@ const messages = {
         title: "6. Cesión de datos",
         body: "No vendemos tus datos personales. Solo los compartimos con los siguientes servicios externos en la medida necesaria para operar la plataforma:",
         payments:
-          "<strong>Stripe y PayPal</strong> — para el procesamiento de pagos y la gestión de suscripciones",
+          "<strong>Stripe</strong> — para el procesamiento de pagos y la gestión de suscripciones",
         ai: "<strong>OpenAI</strong> — para la generación de contenido y la moderación de archivos",
         email:
           "<strong>Resend</strong> — para los correos transaccionales (verificación, recuperación de contraseña, notificaciones)",
@@ -1335,7 +1333,7 @@ const messages = {
         description:
           "Cómo usa A11STUDIO las cookies y tecnologías similares. Cookies esenciales propias, más cookies de analítica opcionales que solo se instalan si las aceptas: ninguna de publicidad.",
       },
-      updatedAt: "2026-10-13",
+      updatedAt: "2026-11-26",
       heading: "Política de cookies",
       intro:
         "Esta política explica qué cookies utiliza la plataforma A11STUDIO, por qué las usamos y cómo afectan a tu experiencia. Usamos las cookies necesarias para que la plataforma funcione y cookies de analítica solo si das tu consentimiento.",
@@ -1368,9 +1366,8 @@ const messages = {
       },
       thirdParty: {
         title: "4. Cookies de terceros",
-        body: "Cuando interactúas con los proveedores de pago durante el proceso de compra, <strong>Stripe</strong> y <strong>PayPal</strong> pueden instalar sus propias cookies en tu dispositivo. Se rigen por las políticas de cookies y privacidad de cada proveedor:",
+        body: "Cuando interactúas con nuestro proveedor de pago durante el proceso de compra, <strong>Stripe</strong> puede instalar sus propias cookies en tu dispositivo. Se rigen por las políticas de cookies y privacidad de Stripe:",
         stripe: "Política de privacidad de Stripe",
-        paypal: "Política de privacidad de PayPal",
       },
       analytics: {
         title: "5. Cookies de analítica (opcionales)",
@@ -1580,16 +1577,18 @@ const messages = {
     },
     price: {
       free: "Gratis",
-      from: "desde",
       perMonth: "/mes",
+      yearlyNote: "{monthly}/mes con facturación anual",
+      monthsFree: "{months, plural, one {# mes gratis} other {# meses gratis}}",
+      savePercent: "ahorra un {percent}%",
+      vatIncluded: "IVA incluido",
     },
     features: {
       unlimited: "Ilimitado",
       ofMediaStorage: "de almacenamiento de contenido",
-      projects: "Proyectos",
       portfolios: "Portafolios",
+      collections: "Colecciones",
       services: "Servicios",
-      clients: "Clientes",
       mediaCompression: "Compresión de contenido",
       mediaCompressionTooltip:
         "Elige el nivel de compresión preferido al subir fotos. Equilibra la calidad de imagen y el tamaño del archivo para optimizar tu almacenamiento y los tiempos de carga.",
@@ -1609,7 +1608,9 @@ const messages = {
     billingCycle: "Ciclo de facturación",
     total: "Total",
     perMonth: "/mes",
-    billed: "facturado {billingType}",
+    perYear: "/año",
+    billedYearly: "{amount} facturados al año",
+    vatIncluded: "IVA incluido",
     paymentMethod: "Método de pago",
     completePayment: "Completar pago",
     trustPaymentAlt: "pago seguro",
@@ -2141,10 +2142,8 @@ const messages = {
         noDataAvailable: "No hay datos disponibles",
         media: "Contenido",
         storage: "Almacenamiento",
-        clients: "Clientes",
         portfolios: "Portafolios",
         collections: "Colecciones",
-        projects: "Proyectos",
         services: "Servicios",
         aiCredits: "Créditos de IA",
         planSuffix: "Plan",

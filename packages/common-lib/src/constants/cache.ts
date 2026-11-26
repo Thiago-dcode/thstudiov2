@@ -1,9 +1,11 @@
 // ==================== CACHE KEYS ====================
 // Plans
-export const CACHE_KEY_PLANS = 'plans' as const;
-export const CACHE_KEY_FREE_PLAN = 'free-plan' as const;
-export const CACHE_KEY_ACTIVE_PLAN = (userId: number | string) => `active_plan_${userId}` as const;
-export const CACHE_KEY_ACTIVE_PLANS_BASE = 'active-plans-base' as const;
+// `v2`: plans gained `unique_identifier` and prices gained `is_active` (2026-11-26). Old-shape
+// entries would read as "no purchasable price", so a versioned prefix retires them all at once.
+export const CACHE_KEY_PLANS = 'plans_v2' as const;
+export const CACHE_KEY_FREE_PLAN = 'free-plan_v2' as const;
+export const CACHE_KEY_ACTIVE_PLAN = (userId: number | string) => `active_plan_v2_${userId}` as const;
+export const CACHE_KEY_ACTIVE_PLANS_BASE = 'active-plans-base_v2' as const;
 
 // Subscriptions
 export const CACHE_KEY_ACTIVE_SUBSCRIPTION = (userId: number | string) => `active_subscription_${userId}` as const;

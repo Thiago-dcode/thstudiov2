@@ -17,6 +17,7 @@ export class PlansRepository extends BaseRepository {
     'plans.id',
     'plans.base_price',
     'plans.name',
+    'plans.unique_identifier',
     'plans.short_description',
     'plans.description',
     'plans.is_free',
@@ -39,6 +40,7 @@ export class PlansRepository extends BaseRepository {
     'plan_prices.stripe_id as pp_stripe_id',
     'plan_prices.id as pp_id',
     'plan_prices.billing_type',
+    'plan_prices.is_active as pp_is_active',
     'plans.allow_media_compression',
   ];
 
@@ -66,6 +68,7 @@ export class PlansRepository extends BaseRepository {
 
         acc[curr.id] = {
           id: curr.id,
+          unique_identifier: curr.unique_identifier,
           name: curr.name,
           short_description: curr.short_description,
           description: curr.description,
@@ -85,6 +88,7 @@ export class PlansRepository extends BaseRepository {
                   plan_id: c.plan_id,
                   price: c.price,
                   stripe_id: c.pp_stripe_id,
+                  is_active: c.pp_is_active,
                 };
                 return p;
               },
@@ -135,8 +139,9 @@ export class PlansRepository extends BaseRepository {
     const result = await QueryBuilder.table('plans')
       .select(this.BASE_COLUMNS)
       .where('is_free', '=', true)
-      .where('is_active', '=', true)
+      .where('plans.is_active', '=', true)
       .join('id', 'plan_prices', 'plan_id')
+      .where('plan_prices.is_active', '=', true)
       .get<PlanWithPricesSchema[]>();
     return this.formatPlansWithPrices(result)[0];
   }
@@ -146,6 +151,7 @@ export class PlansRepository extends BaseRepository {
    * limit checks / workers. API subclass may override when a localized row is needed.
    */
   async findUserActivePlan(userId: number): Promise<Omit<FullPlan, 'translation'>> {
+    // Never filter on plan_prices.is_active: legacy subscribers sit on retired prices and keep their plan.
     const result = await this.query()
       .select(this.BASE_COLUMNS)
       .join('id', 'plan_prices', 'plan_id')
