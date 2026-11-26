@@ -9,6 +9,8 @@ export type LoginRequest = {
 };
 export type UserRegisterRequest = LoginRequest & {
   invitation_code?: string;
+  /** Cloudflare Turnstile token; the api verifies it with Siteverify. */
+  turnstile_token: string;
 };
 export type Verify2faRequest = {
   email: string;

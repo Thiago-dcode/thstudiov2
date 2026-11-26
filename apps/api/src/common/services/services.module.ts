@@ -22,6 +22,7 @@ import { LogRetentionTask } from './log-retention.task';
 import KeyvRedis from '@keyv/redis';
 import { Helpers } from './helpers.service';
 import { TempUploadService } from './temp-upload.service';
+import { TurnstileService } from './turnstile.service';
 import { AsyncLocalStorage } from 'async_hooks';
 import { requestStorage } from './request-storage';
 @Global()
@@ -34,6 +35,7 @@ import { requestStorage } from './request-storage';
     CompressService,
     Helpers,
     TempUploadService,
+    TurnstileService,
     AsyncLocalStorage,
     BullModule,
   ],
@@ -41,6 +43,7 @@ import { requestStorage } from './request-storage';
     RequestService,
     Helpers,
     TempUploadService,
+    TurnstileService,
     MailProcessor,
     LogRetentionTask,
     {

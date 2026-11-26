@@ -1,11 +1,16 @@
 "use client";
 
+import { TURNSTILE_ACTIONS } from "@repo/common-lib/constants/turnstile";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useRef } from "react";
+import { type ReactNode, useId, useRef, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics/track";
 import FormComponent from "@/lib/components/form-component";
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from "@/lib/components/turnstile-widget";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { registerServerAction } from "@/modules/auth/server-actions/register.action";
 import { PasswordField } from "./password-field";
@@ -13,17 +18,24 @@ import { PasswordField } from "./password-field";
 export const RegisterForm = ({
   children,
   initialEmail,
+  turnstileSiteKey,
 }: {
   children?: ReactNode;
   initialEmail?: string;
+  turnstileSiteKey: string;
 }) => {
   const t = useTranslations("auth.register");
   const router = useRouter();
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
+  const turnstileStatusId = useId();
   const { result, handleSubmit, errors, inputErrors, cleanErrors, isPending } =
     useHandleAction({
       action: registerServerAction,
       afterAction: async (result) => {
         if (!result.data) {
+          // A token is single-use: any failed submit needs a fresh one.
+          turnstileRef.current?.reset();
           return;
         }
         trackEvent("sign_up", { method: "email" });
@@ -72,9 +84,21 @@ export const RegisterForm = ({
         {inputErrors?.accept_terms && (
           <p className="text-xs! text-red-500">{inputErrors.accept_terms}</p>
         )}
+        <TurnstileWidget
+          ref={turnstileRef}
+          siteKey={turnstileSiteKey}
+          action={TURNSTILE_ACTIONS.SIGNUP}
+          onTokenChange={setTurnstileToken}
+          statusId={turnstileStatusId}
+        />
         {children}
-        {/* Submit Button */}
-        <FormComponent.SubmitButton isPending={isPending} className="mt-3">
+        {/* Submit Button: `disabled` replaces SubmitButton's own, so it keeps `isPending`. */}
+        <FormComponent.SubmitButton
+          isPending={isPending}
+          disabled={isPending || !turnstileToken}
+          aria-describedby={turnstileToken ? undefined : turnstileStatusId}
+          className="mt-3"
+        >
           {t("submit")}
         </FormComponent.SubmitButton>
       </FormComponent.Form>

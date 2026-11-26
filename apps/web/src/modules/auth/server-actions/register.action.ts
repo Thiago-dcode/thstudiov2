@@ -1,5 +1,7 @@
 "use server";
 
+import { API_ERRORS } from "@repo/common-lib/constants/api-errors";
+import { TURNSTILE_TOKEN_FIELD } from "@repo/common-lib/constants/turnstile";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { getTranslations } from "next-intl/server";
 import authService from "../auth.service";
@@ -53,13 +55,32 @@ export const registerServerAction = async (
       inputs: credentials,
     };
   }
-  const result = await authService.register(validatedData.data);
+  // The Turnstile token goes to the api only: never into `credentials`, which are echoed back as
+  // `inputs`. Without one the api would answer 403, so skip the call.
+  const turnstileToken = formData.get(TURNSTILE_TOKEN_FIELD);
+  if (typeof turnstileToken !== "string" || !turnstileToken.trim()) {
+    return {
+      data: null,
+      errors: [t("turnstile.failed")],
+      inputs: credentials,
+    };
+  }
+  const result = await authService.register({
+    ...validatedData.data,
+    turnstile_token: turnstileToken,
+  });
   if (result.error || result.data === null) {
+    const apiErrorCode = result.error?.api_error_code;
     const errors =
-      result.error &&
-      (result.error.status_code === 400 || result.error.status_code === 401)
-        ? result.error.errors
-        : [t("actions.genericError")];
+      apiErrorCode === API_ERRORS.TURNSTILE_FAILED
+        ? [t("turnstile.failed")]
+        : apiErrorCode === API_ERRORS.TURNSTILE_UNAVAILABLE
+          ? [t("turnstile.unavailable")]
+          : result.error &&
+              (result.error.status_code === 400 ||
+                result.error.status_code === 401)
+            ? result.error.errors
+            : [t("actions.genericError")];
     return {
       data: null,
       errors,

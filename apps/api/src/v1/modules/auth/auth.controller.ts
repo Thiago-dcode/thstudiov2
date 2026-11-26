@@ -12,6 +12,8 @@ import { CheckPasswordRecoveryAttemptRequest } from './requests/check-password-r
 import { RegisterRequest } from './requests/register.request';
 import { Oauth2InitiateRequest } from './requests/oauth2-initiate.request';
 import { Oauth2CallbackRequest } from './requests/oauth2-callback.request';
+import { RequireTurnstile } from 'src/common/decorators/require-turnstile.decorator';
+import { TURNSTILE_ACTIONS } from '@repo/common-lib/constants/turnstile';
 
 @Throttle({ medium: { limit: 5, ttl: 10000 } })
 @Controller('auth')
@@ -19,6 +21,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
   @Public()
+  @RequireTurnstile(TURNSTILE_ACTIONS.SIGNUP)
   @Post('register')
   async register(@Body() registerRequest: RegisterRequest) {
     return await this.authService.register(registerRequest);
