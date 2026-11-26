@@ -145,6 +145,13 @@ const config = (envPath?: string | undefined) => {
       apiToken: process.env.CLOUDFLARE_API_TOKEN || '',
       zoneId: process.env.CLOUDFLARE_ZONE_ID || '',
     },
+    // Turnstile bot check on sign-up. Plain values, not `requireEnv` getters: the worker and
+    // dbcli load this config and never need them. The api's `TurnstileService` validates them at
+    // boot. The secret is never logged.
+    turnstile: {
+      secretKey: process.env.TURNSTILE_SECRET_KEY?.trim() || '',
+      siteKey: process.env.TURNSTILE_SITE_KEY?.trim() || '',
+    },
   };
 };
 export { envFilePath, config };

@@ -700,6 +700,15 @@ const messages = {
     artistContact:
       "Tu nombre, email y mensaje se envían a este artista para que pueda responderte. Más información en nuestra <privacy>Política de privacidad</privacy>.",
   },
+  turnstile: {
+    label: "Comprobación de seguridad",
+    pending: "Haciendo una comprobación de seguridad rápida…",
+    failed: "No hemos podido verificarte. Inténtalo de nuevo.",
+    unavailable:
+      "Ahora mismo no podemos verificarte. Inténtalo de nuevo en unos instantes.",
+    loadError:
+      "La comprobación de seguridad no se ha podido cargar. Desactiva los bloqueadores de contenido o prueba con otro navegador y recarga la página.",
+  },
   report: {
     metadata: {
       title: "Denunciar contenido — A11STUDIO",

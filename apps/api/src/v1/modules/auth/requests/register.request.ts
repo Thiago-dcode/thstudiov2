@@ -9,6 +9,7 @@ import {
   IsOptional,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { TURNSTILE_TOKEN_MAX_LENGTH } from '@repo/common-lib/constants/turnstile';
 
 export class RegisterRequest {
   @IsEmail()
@@ -36,4 +37,11 @@ export class RegisterRequest {
   @IsString()
   @IsOptional()
   invitation_code?: string;
+
+  // Cloudflare Turnstile token, verified by `TurnstileGuard` (`@RequireTurnstile` on the route) in
+  // every environment before this DTO is validated, so a missing or invalid token is a 403 first.
+  // `AuthService.register` never reads it. The name must keep `token` so log redaction hides it.
+  @IsString()
+  @MaxLength(TURNSTILE_TOKEN_MAX_LENGTH)
+  turnstile_token: string;
 }

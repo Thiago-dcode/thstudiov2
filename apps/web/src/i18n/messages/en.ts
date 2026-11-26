@@ -695,6 +695,15 @@ const messages = {
     artistContact:
       "Your name, email and message are sent to this artist so they can reply to you. More in our <privacy>Privacy Policy</privacy>.",
   },
+  turnstile: {
+    label: "Security check",
+    pending: "Running a quick security check…",
+    failed: "Verification failed, please try again.",
+    unavailable:
+      "We couldn't verify you right now. Please try again in a moment.",
+    loadError:
+      "The security check couldn't load. Turn off content blockers or try another browser, then reload the page.",
+  },
   report: {
     metadata: {
       title: "Report content — A11STUDIO",

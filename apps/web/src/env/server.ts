@@ -1,5 +1,7 @@
 import "server-only";
 
+import { TURNSTILE_TEST_SITE_KEY } from "@repo/common-lib/constants/turnstile";
+
 /**
  * Server-only env, read from the running process (container env in production).
  *
@@ -24,6 +26,8 @@ export interface ServerEnv {
   LEGAL_REGISTRY?: string;
   /** 1 = show the cookie banner under `next dev`. Never loads GA; ignored outside development. */
   CONSENT_PREVIEW: number;
+  /** Cloudflare Turnstile site key (public). Read whenever set. See the getter. */
+  TURNSTILE_SITE_KEY: string;
 }
 
 const isBuildPhase = () => process.env.NEXT_PHASE === "phase-production-build";
@@ -89,6 +93,17 @@ export const serverEnv: ServerEnv = {
   },
   get CONSENT_PREVIEW() {
     return integer("CONSENT_PREVIEW", 0);
+  },
+  // Turnstile site key: public (it ends up in the widget), but read here at runtime and passed as
+  // a prop, deliberately not a `NEXT_PUBLIC_*` build-time value, so no build arg is needed. Unset
+  // outside production → Cloudflare's always-pass test key; unset in production throws (the deploy
+  // preflight and the api boot check stop that from shipping).
+  get TURNSTILE_SITE_KEY() {
+    const name = "TURNSTILE_SITE_KEY";
+    const value = optional(name);
+    if (value) return value;
+    if (process.env.NODE_ENV !== "production") return TURNSTILE_TEST_SITE_KEY;
+    return required(name);
   },
 };
 

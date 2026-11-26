@@ -70,7 +70,10 @@ export default async function RegisterPage({
     <AuthCard title={t("title")}>
       <Oauth2Strategy invitationLink={ref} invitationEmail={invitationEmail} />
       <AuthDivider />
-      <RegisterForm initialEmail={initialEmail}>
+      <RegisterForm
+        initialEmail={initialEmail}
+        turnstileSiteKey={serverEnv.TURNSTILE_SITE_KEY}
+      >
         {ref ? (
           <input hidden name="invitation_code" defaultValue={ref} />
         ) : null}

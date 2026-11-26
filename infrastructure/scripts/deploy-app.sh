@@ -105,6 +105,22 @@ if ! grep -qE '^DOCKER_IMAGE_OWNER=.+$' "$REPO_ROOT/.env"; then
   exit 1
 fi
 
+# Turnstile keys (sign-up bot check). The api refuses to boot in production with a blank or
+# Cloudflare test key, and recreating the api with one takes the whole site down (web waits on a
+# healthy api). So check the value compose will pass, here, before pulling or recreating anything,
+# while the old stack keeps running. The parsing lives in check-turnstile-env.sh (also runnable by
+# hand on the server); it prints PASS/ABORT per key, never a value.
+if [[ ! -r "$SCRIPT_DIR/check-turnstile-env.sh" ]]; then
+  error "check-turnstile-env.sh not found next to deploy-app.sh — aborting."
+  exit 1
+fi
+# shellcheck source=check-turnstile-env.sh
+source "$SCRIPT_DIR/check-turnstile-env.sh"
+if ! turnstile_env_check "$REPO_ROOT/.env" >&2; then
+  error "Turnstile keys in .env are missing, blank or Cloudflare test keys — aborting."
+  exit 1
+fi
+
 info "Target    : $TARGET (branch $BRANCH)"
 info "Repo root : $REPO_ROOT"
 info "Compose   : $COMPOSE_FILE"
