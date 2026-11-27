@@ -38,55 +38,79 @@ function ArtistsHeaderContactAction() {
   );
 }
 
-export const ArtistsHeader = () => {
-  const pathname = usePathname();
-  const params = useParams();
-  const username = params.username as string;
+/** Signed in: the way back to the atelier. Signed out: the quiet invite to make your own page. */
+function AtelierOrInvite({ className }: { className?: string }) {
   const { session } = useSession();
   // Despite the name, `true` means registration is open (see RegistrationCtaButton).
   const { isRegisterClose } = useAppStatus();
   const t = useTranslations("artists.header");
-  const tShare = useTranslations("artists");
   const tInvite = useTranslations("artists.invite");
 
+  return session ? (
+    <Link
+      href="/atelier"
+      className={cn(
+        "flex min-h-11 shrink-0 items-center text-xs font-medium tracking-wider text-text-muted/45 transition-colors hover:text-text-muted/90",
+        className,
+      )}
+    >
+      {t("atelier")}
+    </Link>
+  ) : (
+    // One step more legible than the atelier link: visible enough to be found, quiet enough to
+    // stay behind the artist's name and work.
+    <RegistrationCtaButton
+      variant="link"
+      size="sm"
+      invitePlacement="header"
+      label={isRegisterClose ? t("createYours") : tInvite("ctaWaitlist")}
+      className={cn(
+        "min-h-11 shrink-0 px-0 py-0 text-xs font-medium tracking-wider text-text-muted transition-colors hover:text-text",
+        className,
+      )}
+    />
+  );
+}
+
+export const ArtistsHeader = () => {
+  const pathname = usePathname();
+  const params = useParams();
+  const username = params.username as string;
+  const t = useTranslations("artists.header");
+  const tShare = useTranslations("artists");
+
+  const profileHref = `/artists/${username}`;
+  const sectionItems = [
+    { label: t("nav.portfolios"), href: `${profileHref}/portfolios` },
+    { label: t("nav.collections"), href: `${profileHref}/collections` },
+    { label: t("nav.services"), href: `${profileHref}/services` },
+    { label: t("nav.about"), href: `${profileHref}/about` },
+  ];
   const navItems = [
-    { label: `@${username}`, href: `/artists/${username}` },
-    { label: t("nav.portfolios"), href: `/artists/${username}/portfolios` },
-    { label: t("nav.collections"), href: `/artists/${username}/collections` },
-    { label: t("nav.services"), href: `/artists/${username}/services` },
-    { label: t("nav.about"), href: `/artists/${username}/about` },
+    { label: `@${username}`, href: profileHref },
+    ...sectionItems,
   ];
 
   const isActive = (href: string) =>
-    href === `/artists/${username}`
-      ? pathname === href
-      : pathname?.startsWith(href);
+    href === profileHref ? pathname === href : pathname?.startsWith(href);
 
   return (
     <SiteHeader variant="artist">
       <SiteHeader.Bar>
         <div className="flex items-center gap-3 tablet:gap-4 min-w-0">
           <SiteHeader.Logo />
-          {session ? (
-            <Link
-              href="/atelier"
-              className="text-xs tracking-wider text-text-muted/45 hover:text-text-muted/90 transition-colors font-medium shrink-0 border-l border-fg-2/25 pl-3 tablet:pl-4"
-            >
-              {t("atelier")}
-            </Link>
-          ) : (
-            // Same slot and divider as the atelier link, one step more legible: visible enough to
-            // be found, quiet enough to stay behind the artist's name and work.
-            <RegistrationCtaButton
-              variant="link"
-              size="sm"
-              invitePlacement="header"
-              label={
-                isRegisterClose ? t("createYours") : tInvite("ctaWaitlist")
-              }
-              className="min-h-11 shrink-0 border-l border-fg-2/25 py-0 pr-0 pl-3 text-xs font-medium tracking-wider text-text-muted transition-colors hover:text-text tablet:pl-4"
-            />
-          )}
+          {/* Mobile: the slot next to the logo is the way back to the artist's profile, always in
+              reach instead of buried in the drawer. Atelier / the invite move into the drawer. */}
+          <Link
+            href={profileHref}
+            aria-current={isActive(profileHref) ? "page" : undefined}
+            className="tablet:hidden flex min-h-11 min-w-0 items-center border-l border-fg-2/25 pl-3 text-sm font-medium tracking-wider text-text transition-opacity hover:opacity-70"
+          >
+            <span className="truncate">@{username}</span>
+          </Link>
+          <div className="hidden tablet:flex items-center">
+            <AtelierOrInvite className="border-l border-fg-2/25 pl-4" />
+          </div>
         </div>
 
         <SiteHeader.Actions>
@@ -124,10 +148,11 @@ export const ArtistsHeader = () => {
             </SiteHeader.MobileDrawerBar>
 
             <nav className="flex flex-col px-6 py-6 gap-1">
-              {navItems.map((item) => (
+              {sectionItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={isActive(item.href) ? "page" : undefined}
                   className={cn(
                     "text-sm tracking-wider font-medium py-3 transition-colors hover:text-text",
                     isActive(item.href) ? "text-text" : "text-text-muted",
@@ -145,6 +170,9 @@ export const ArtistsHeader = () => {
                 </button>
               </ArtistContactDialog>
             </nav>
+            <div className="mx-6 border-t border-fg-2 pt-4">
+              <AtelierOrInvite />
+            </div>
           </SiteHeader.MobileMenu>
         </SiteHeader.MobileControls>
       </SiteHeader.Bar>
