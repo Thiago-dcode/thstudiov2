@@ -424,7 +424,13 @@ export class SharpCompressService extends CompressService {
         //
         // No `{ animated: true }`: an animated source is deliberately flattened to its first
         // frame. This is what makes a GIF's thumbnail a static poster.
+        //
+        // `.rotate()` (no angle) bakes the EXIF Orientation into the pixels BEFORE the encode
+        // drops all metadata. Phones store portrait shots as landscape pixels + an Orientation
+        // tag; without this the tag is stripped and the photo is served sideways, and the
+        // shape/aspect ratio measured from this output comes out wrong too.
         let buffer = await sharp(source)
+          .rotate()
           .resize({
             width: maxEdgePx,
             height: maxEdgePx,
@@ -445,7 +451,10 @@ export class SharpCompressService extends CompressService {
           height = Math.floor(height * reduce);
           // From the ORIGINAL source, not the previous WebP: re-encoding a lossy output five
           // times stacks generational loss on top of the quality already being given up.
+          // `.rotate()` again: `width`/`height` were measured on the upright output, so the
+          // source must be upright too or the box is applied to the swapped dimensions.
           buffer = await sharp(source)
+            .rotate()
             .resize({ width, height, fit: 'inside', withoutEnlargement: true })
             .webp({ quality: currentQuality, smartSubsample: true })
             .toBuffer();

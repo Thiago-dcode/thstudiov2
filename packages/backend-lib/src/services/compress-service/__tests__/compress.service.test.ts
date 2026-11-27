@@ -489,4 +489,80 @@ describe('SharpCompressService.optimizeImageToWebp', () => {
     const metadata = await sharp(result.buffer).metadata();
     expect(metadata.width).toBe(1200);
   });
+
+  /**
+   * The regression: phones save portrait shots as landscape pixels plus EXIF Orientation=6
+   * ("rotate 90° clockwise to display"). The encode strips metadata, so unless the rotation is
+   * baked into the pixels first the photo is stored — and served — sideways.
+   */
+  describe('EXIF orientation', () => {
+    /** 400x200 landscape pixels: left half red, right half blue, tagged Orientation=6. */
+    const makeRotatedJpeg = async (width = 400, height = 200) => {
+      const half = Math.floor(width / 2);
+      const raw = Buffer.alloc(width * height * 3);
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 3;
+          raw[i] = x < half ? 255 : 0;
+          raw[i + 2] = x < half ? 0 : 255;
+        }
+      }
+      return sharp(raw, { raw: { width, height, channels: 3 } })
+        .jpeg({ quality: 95 })
+        .withMetadata({ orientation: 6 })
+        .toBuffer();
+    };
+
+    const pixelAt = async (buffer: Buffer, x: number, y: number) => {
+      const { data, info } = await sharp(buffer).raw().toBuffer({ resolveWithObject: true });
+      const i = (y * info.width + x) * info.channels;
+      return { r: data[i]!, b: data[i + 2]! };
+    };
+
+    it('stores the photo upright, as viewers display it', async () => {
+      const source = await makeRotatedJpeg();
+      expect((await sharp(source).metadata()).orientation).toBe(6);
+
+      const result = await compressService.optimizeImageToWebp(source, 500 * 1024, 90);
+
+      const metadata = await sharp(result.buffer).metadata();
+      expect(metadata.width).toBe(200);
+      expect(metadata.height).toBe(400);
+      // Turning 90° clockwise moves the left (red) half to the top.
+      const top = await pixelAt(result.buffer, 100, 20);
+      const bottom = await pixelAt(result.buffer, 100, 380);
+      expect(top.r).toBeGreaterThan(200);
+      expect(top.b).toBeLessThan(60);
+      expect(bottom.b).toBeGreaterThan(200);
+      expect(bottom.r).toBeLessThan(60);
+      // Metadata is still stripped: nothing left to rotate it a second time.
+      expect(metadata.orientation).toBeUndefined();
+      expect(metadata.exif).toBeUndefined();
+    });
+
+    it('stays upright through the size-reduction passes', async () => {
+      // Noise so the first encode overshoots the 50KB floor and the shrink loop runs.
+      const width = 1600;
+      const height = 800;
+      const raw = Buffer.alloc(width * height * 3);
+      for (let i = 0; i < raw.length; i++) raw[i] = Math.floor(Math.random() * 256);
+      const source = await sharp(raw, { raw: { width, height, channels: 3 } })
+        .jpeg({ quality: 95 })
+        .withMetadata({ orientation: 6 })
+        .toBuffer();
+
+      const firstPass = await sharp(source)
+        .rotate()
+        .webp({ quality: 90, smartSubsample: true })
+        .toBuffer();
+      expect(firstPass.length).toBeGreaterThan(50 * 1024);
+
+      const result = await compressService.optimizeImageToWebp(source, 50 * 1024, 90);
+
+      const metadata = await sharp(result.buffer).metadata();
+      expect(metadata.width!).toBeLessThan(height);
+      expect(metadata.height!).toBeGreaterThan(metadata.width!);
+      expect(metadata.height! / metadata.width!).toBeCloseTo(2, 1);
+    });
+  });
 });
