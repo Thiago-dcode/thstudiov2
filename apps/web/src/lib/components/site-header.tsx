@@ -44,12 +44,12 @@ export function useSiteHeader() {
 const menuButtonClassName =
   "tablet:hidden flex items-center justify-center size-10 text-text hover:opacity-80 transition-opacity";
 
-function MenuButton(props: React.ComponentProps<"button">) {
+function MenuButton({ className, ...props }: React.ComponentProps<"button">) {
   const t = useTranslations("siteHeader");
   return (
     <button
       type="button"
-      className={menuButtonClassName}
+      className={cn(menuButtonClassName, className)}
       aria-label={t("openNavigation")}
       {...props}
     >
@@ -197,21 +197,24 @@ function MobileControls({
 function MobileMenu({
   children,
   contentClassName,
+  triggerClassName,
 }: {
   children: ReactNode;
   contentClassName?: string;
+  /** The burger is phone-only by default; e.g. `tablet:flex` keeps it at every width. */
+  triggerClassName?: string;
 }) {
   const { drawerOpen, setDrawerOpen, isMounted } = useSiteHeader();
   const t = useTranslations("siteHeader");
 
   if (!isMounted) {
-    return <MenuButton />;
+    return <MenuButton className={triggerClassName} />;
   }
 
   return (
     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="right">
       <DrawerTrigger asChild>
-        <MenuButton />
+        <MenuButton className={triggerClassName} />
       </DrawerTrigger>
 
       <DrawerContent

@@ -1,10 +1,13 @@
-import { artistAboutPath } from "@repo/common-lib/utils/artist-path";
+import {
+  artistAboutPath,
+  artistPath,
+} from "@repo/common-lib/utils/artist-path";
 import { normalizeUsername } from "@repo/common-lib/utils/username";
 import {
   EditorialLabel,
   editorialHeadlineClass,
 } from "@repo/ui/components/custom/editorial";
-import { Mail, Pencil } from "lucide-react";
+import { ArrowRight, Mail, Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -177,7 +180,8 @@ export default async function AboutPage({ params, searchParams }: Props) {
                 </p>
               )}
 
-              <div className="pt-4 border-t border-border/40">
+              {/* After the story, the two next steps: a message, or the work itself. */}
+              <div className="flex flex-col items-start gap-1 pt-4 border-t border-border/40">
                 <ArtistContactDialog>
                   <button
                     type="button"
@@ -187,6 +191,13 @@ export default async function AboutPage({ params, searchParams }: Props) {
                     <span>{t("getInTouch")}</span>
                   </button>
                 </ArtistContactDialog>
+                <Link
+                  href={artistPath(username)}
+                  className="group inline-flex min-h-11 items-center gap-3 text-xs uppercase tracking-[0.24em] text-text transition-colors duration-300 hover:text-text-muted"
+                >
+                  <span>{t("goToProfile")}</span>
+                  <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 motion-reduce:transition-none" />
+                </Link>
               </div>
             </div>
           </div>

@@ -1807,10 +1807,12 @@ const messages = {
     },
     header: {
       atelier: "Atelier",
-      createYours: "Crie o seu",
       contact: "Contato",
       menu: "Menu",
+      signIn: "Entrar",
+      signUp: "Cadastre-se",
       nav: {
+        profile: "Perfil",
         portfolios: "Portfólios",
         collections: "Coleções",
         services: "Serviços",
@@ -1930,6 +1932,7 @@ const messages = {
       notShared: "Este artista ainda não compartilhou sua história.",
       heading: "Sobre",
       getInTouch: "Entrar em contato",
+      goToProfile: "Ir para o perfil",
     },
     media: {
       titleFallback: "Obra de {name}",

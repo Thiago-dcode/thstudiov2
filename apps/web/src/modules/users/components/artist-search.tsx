@@ -29,7 +29,7 @@ function initials(a: ArtistCard): string {
   return n.slice(0, 2).toUpperCase();
 }
 
-export function WebHeaderArtistSearch({ className }: { className?: string }) {
+export function ArtistSearch({ className }: { className?: string }) {
   const pathname = usePathname();
   const t = useTranslations("search.headerArtistSearch");
   const inputRef = useRef<HTMLInputElement>(null);
