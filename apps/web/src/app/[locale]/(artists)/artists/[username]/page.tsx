@@ -1,6 +1,5 @@
 import { normalizeUsername } from "@repo/common-lib/utils/username";
 import {
-  EDITORIAL_LABEL_CLASS,
   EditorialLabel,
   EditorialRule,
   editorialHeadlineClass,
@@ -199,7 +198,7 @@ const ArtistHomePage = async ({ params, searchParams }: Props) => {
           </p>
         )}
 
-        {profile.categories.length > 0 && (
+        {/* {profile.categories.length > 0 && (
           <ul
             className={`flex flex-wrap justify-center gap-x-2 gap-y-1 ${EDITORIAL_LABEL_CLASS}`}
           >
@@ -214,7 +213,7 @@ const ArtistHomePage = async ({ params, searchParams }: Props) => {
               </li>
             ))}
           </ul>
-        )}
+        )} */}
 
         {/* Email sits with the other contact icons. About lives in artist navigation. */}
         <nav
@@ -307,8 +306,12 @@ const ArtistHomePage = async ({ params, searchParams }: Props) => {
 
       {/* Highlighted Content Sections */}
       <div className="w-full pt-8 pb-24">
-        <Suspense fallback={<ArtistSectionsSkeleton />}>
-          <ArtistSections username={profile.username} displayName={heading} />
+        <Suspense fallback={<ArtistSectionsSkeleton sectionStyle="tab" />}>
+          <ArtistSections
+            username={profile.username}
+            displayName={heading}
+            sectionStyle="tab"
+          />
         </Suspense>
       </div>
     </div>
