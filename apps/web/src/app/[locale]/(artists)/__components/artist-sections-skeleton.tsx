@@ -1,4 +1,6 @@
 import { Skeleton } from "@repo/ui/components/shadcn/skeleton";
+import { cn } from "@repo/ui/lib/utils";
+import { SECTION_GRID_CLASS } from "./artist-sections.constants";
 
 const SectionHeaderSkeleton = () => (
   <div className="mb-6 flex items-center justify-between phone-lg:mb-8 tablet:mb-10">
@@ -27,7 +29,49 @@ const CardGridSkeleton = ({
   </div>
 );
 
-export const ArtistSectionsSkeleton = () => (
+const TAB_KEYS = ["t1", "t2", "t3"];
+const TAB_CARD_KEYS = ["c1", "c2", "c3", "c4", "c5"];
+
+/** Mirrors `ArtistSectionsTabsView`: a hairline tab bar, then the first tab's card grid. */
+const TabsSkeleton = () => (
+  <div
+    className="mx-auto w-full max-w-(--breakpoint-desktop-lg) px-4 phone-lg:px-6 tablet:px-10 laptop:px-12"
+    aria-hidden="true"
+  >
+    <div className="mb-10 flex gap-8 border-b border-border tablet:mb-14 tablet:gap-12">
+      {TAB_KEYS.map((key, index) => (
+        <div key={key} className="relative flex min-h-11 items-center py-4">
+          <Skeleton className="h-3 w-20" />
+          {index === 0 && (
+            <span className="absolute inset-x-0 -bottom-px h-px bg-border-em" />
+          )}
+        </div>
+      ))}
+    </div>
+    <div className={SECTION_GRID_CLASS}>
+      {TAB_CARD_KEYS.map((key, index) => (
+        <Skeleton
+          key={key}
+          // Match the grid's visible columns: 2 on phones, 3 tablet, 4 tablet-lg, 5 laptop.
+          className={cn(
+            "aspect-[1240/1667] w-full",
+            index >= 2 && "hidden tablet:block",
+            index >= 3 && "tablet:hidden tablet-lg:block",
+            index >= 4 && "tablet-lg:hidden laptop:block",
+          )}
+        />
+      ))}
+    </div>
+  </div>
+);
+
+export const ArtistSectionsSkeleton = ({
+  sectionStyle = "list",
+}: {
+  sectionStyle?: "tab" | "list";
+}) => (sectionStyle === "tab" ? <TabsSkeleton /> : <ListSkeleton />);
+
+const ListSkeleton = () => (
   <div
     className="mx-auto w-full max-w-(--breakpoint-desktop-lg) space-y-20 px-4 phone-lg:px-6 tablet:space-y-28 tablet:px-10 laptop:px-12"
     aria-hidden="true"
