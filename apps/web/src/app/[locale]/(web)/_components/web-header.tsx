@@ -1,4 +1,5 @@
 "use client";
+import { artistPath } from "@repo/common-lib/utils/artist-path";
 
 import { Button } from "@repo/ui/components/shadcn/button";
 import { ArrowRight } from "lucide-react";
@@ -45,7 +46,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
             <>
               {session?.username && (
                 <Link
-                  href={`/artists/${session.username}`}
+                  href={artistPath(session.username)}
                   className="text-sm tracking-wider font-medium transition-colors text-text-muted hover:text-text"
                 >
                   {t("accessProfile")}
@@ -89,7 +90,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                       size="lg"
                       className="w-full justify-between"
                     >
-                      <Link href={`/artists/${session.username}`}>
+                      <Link href={artistPath(session.username)}>
                         {t("accessProfile")}
                         <ArrowRight className="size-3.5" />
                       </Link>

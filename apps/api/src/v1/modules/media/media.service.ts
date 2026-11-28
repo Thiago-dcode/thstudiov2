@@ -35,6 +35,7 @@ import { LocationService } from '../locations/location.service';
 import { TempUploadService } from 'src/common/services/temp-upload.service';
 import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
 import type { ApiLogger } from 'src/common/services/request.service';
+import { artistMediaPath } from '@repo/common-lib/utils/artist-path';
 
 @Injectable()
 export class MediaService {
@@ -1081,7 +1082,7 @@ export class MediaService {
           seo_title: meta.seo_title,
           seo_description: meta.seo_description,
           thumbnail_path: meta.thumbnail,
-          canonical_path: `/artists/${meta.username}/media/${publicId}`,
+          canonical_path: artistMediaPath(meta.username, publicId),
           // Mirrors the sitemap (`INDEXABLE_MEDIA_PREDICATE`): atelier-only drafts, unprocessed
           // uploads and an incomplete artist's work stay out of the index even when someone has the
           // URL. A public media with no text of its own is `noindex, follow`: too thin to rank, but

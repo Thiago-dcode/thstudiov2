@@ -96,7 +96,7 @@ describe('WaitListTask.handleWaitListInvites', () => {
 
     const [[mailable, options]] = argsOf('sendAsync');
     expect(mailable).toEqual({
-      followUp: [{ email: 'a@test.com', showcaseUrl: 'https://a11studio.test/artists/thsworld' }, 'ES'],
+      followUp: [{ email: 'a@test.com', showcaseUrl: 'https://a11studio.test/thsworld' }, 'ES'],
     });
     expect(options).toEqual({ jobId: 'wait-list-follow-up-7' });
 

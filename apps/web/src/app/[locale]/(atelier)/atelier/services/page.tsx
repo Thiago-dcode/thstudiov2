@@ -43,8 +43,9 @@ export default async function ServicesPage() {
             id: service.id,
             slug: service.slug,
             title: service.title,
-            is_highlight: service.is_highlight,
             is_active: service.is_active,
+            created_at: service.created_at,
+            updated_at: service.updated_at,
             is_blocked: Boolean(service.blocked_at),
             media: (
               <ServiceCover

@@ -1,3 +1,4 @@
+import { artistPath } from "@repo/common-lib/utils/artist-path";
 import { isDirectoryOpen } from "@/lib/directory-visibility";
 import { localizedUrl } from "@/lib/seo/core";
 import { isIndexableEnv } from "@/lib/seo/indexability";
@@ -60,15 +61,15 @@ ${
 
 ## Artist profile structure
 
-Every artist lives at \`/artists/{username}\` with:
-- \`/artists/{username}/portfolios/{slug}\`: curated best-of work in one discipline or style
-- \`/artists/{username}/collections/{slug}\`: sets of work from one project, trip or series
-- \`/artists/{username}/services/{slug}\`: services the artist offers, with what is included and, when published, the price
-- \`/artists/{username}/media/{id}\`: a single artwork with its credits, location and description
+Every artist lives at \`/{username}\` with:
+- \`/{username}/portfolios/{slug}\`: curated best-of work in one discipline or style
+- \`/{username}/collections/{slug}\`: sets of work from one project, trip or series
+- \`/{username}/services/{slug}\`: services the artist offers, with what is included and, when published, the price
+- \`/{username}/media/{id}\`: a single artwork with its credits, location and description
 ${
   artists.length
     ? `\n## Artists\n\n${artists
-        .map((a) => `- [@${a.username}](${url(`/artists/${a.username}`)})`)
+        .map((a) => `- [@${a.username}](${url(artistPath(a.username))})`)
         .join("\n")}\n`
     : ""
 }

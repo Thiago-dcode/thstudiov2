@@ -1,6 +1,7 @@
 "use client";
 
 import type { MediaWithUser } from "@repo/common-lib/types/media";
+import { artistPath } from "@repo/common-lib/utils/artist-path";
 import { MediaTypeBadge } from "@repo/ui/components/custom/media-type-badge";
 import { cn } from "@repo/ui/lib/utils";
 import useEmblaCarousel from "embla-carousel-react";
@@ -74,7 +75,7 @@ export const MediaCarousel = ({ media }: { media: MediaWithUser[] }) => {
       </div>
       {activeUser?.username ? (
         <Link
-          href={`/artists/${encodeURIComponent(activeUser.username)}`}
+          href={artistPath(activeUser.username)}
           className="pl-1 w-fit text-sm text-text-muted transition-colors hover:text-text focus-visible:text-text focus-visible:outline-none"
         >
           @{activeUser.username}

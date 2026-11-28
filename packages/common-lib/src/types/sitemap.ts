@@ -36,7 +36,7 @@ export interface SitemapEntityItem {
 /**
  * A media detail URL, keyed by `username` + `public_id`. Separate from {@link SitemapEntityItem}
  * because media is addressed by `public_id`, not a slug — and it maps to the PRIMARY media URL
- * (`/artists/{username}/media/{public_id}`), which the nested portfolio/collection views
+ * (`/{username}/media/{public_id}`), which the nested portfolio/collection views
  * canonicalize to.
  */
 export interface SitemapMediaItem {

@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { landingCache } from "@/lib/config";
 import { isDirectoryOpen } from "@/lib/directory-visibility";
 import usersService from "@/modules/users/users.service";
-import { ArtistProfileCard } from "../../[search]/_components/artist-profile-card";
+import { ArtistProfileCard } from "../directory/artist-profile-card";
 import { NextSectionArrow } from "./next-section-arrow";
 import { reportSectionError } from "./section-error";
 import {

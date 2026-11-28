@@ -376,7 +376,7 @@ const messages = {
           {
             question: "Preciso de um site próprio ou saber design?",
             answer:
-              "Não. Seu portfólio fica em a11studio.com/artists/seu-usuario e você o monta enviando e organizando suas fotos, sem código, hospedagem ou templates.",
+              "Não. Seu portfólio fica em a11studio.com/seu-usuario e você o monta enviando e organizando suas fotos, sem código, hospedagem ou templates.",
           },
           {
             question: "Qual a diferença para postar no Instagram?",
@@ -1552,7 +1552,7 @@ const messages = {
     steps: {
       username: {
         title: "Escolha seu nome de usuário",
-        subtitle: "É o seu link público: a11studio.com/artists/seu-usuario",
+        subtitle: "É o seu link público: a11studio.com/seu-usuario",
       },
       profile: {
         title: "Complete seu perfil",
@@ -2006,6 +2006,7 @@ const messages = {
     user: {
       usernameAlphanumeric:
         "O nome de usuário deve ser alfanumérico e sem espaços",
+      usernameReserved: "Esse nome de usuário está reservado. Escolha outro.",
       passwordMustContainNumber: "A senha deve conter pelo menos um número",
       passwordNoSpaces: "A senha não pode conter espaços",
     },
@@ -2076,6 +2077,13 @@ const messages = {
         hint: "Arraste a alça para reordenar.",
         save: "Atualizar ordem",
         reset: "Redefinir",
+        autoOrder: "Ordenar automaticamente",
+        autoOrders: {
+          newest: "Mais recentes primeiro",
+          oldest: "Mais antigos primeiro",
+          recentlyUpdated: "Atualizados recentemente",
+          leastRecentlyUpdated: "Atualizados há mais tempo",
+        },
         savedToast: "Ordem atualizada",
         unsaved: "Você tem alterações de ordem não salvas",
         invalidOrder:
@@ -3114,6 +3122,7 @@ const messages = {
     unauthorized: "Não autorizado",
     titleAlreadyExists: "Você já tem um com este título. Tente outro.",
     usernameTaken: "Esse nome de usuário já está em uso. Tente outro.",
+    usernameReserved: "Esse nome de usuário está reservado. Escolha outro.",
     genericError: "Algo deu errado. Tente novamente mais tarde.",
     formDataRequired: "Os dados do formulário são obrigatórios",
     passwordRecoveryCooldown:

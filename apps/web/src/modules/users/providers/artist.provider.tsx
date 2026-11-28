@@ -1,10 +1,15 @@
 "use client";
 
-import type { PublicCompactUser } from "@repo/common-lib/types/user";
-import { createContext, type ReactNode, useContext } from "react";
+import type {
+  ArtistPublicSections,
+  PublicCompactUser,
+} from "@repo/common-lib/types/user";
+import { createContext, type ReactNode, useContext, useMemo } from "react";
 
 type ArtistContextType = {
   artist: PublicCompactUser | null;
+  /** What the artist's section pages list; `null` when the profile didn't load. */
+  sections: ArtistPublicSections | null;
 };
 
 const ArtistContext = createContext<ArtistContextType | null>(null);
@@ -18,17 +23,22 @@ export const useArtist = () => {
 };
 
 /**
- * The artist whose pages are being viewed, for client components such as the contact dialog. The
- * data comes from the server (the artist layout) on purpose: it used to be read through a server
- * action on mount, and that action's response was a revalidated full RSC re-render of the page,
- * which inserted the whole head metadata block a second time.
+ * The artist whose pages are being viewed, for client components such as the header and the
+ * contact dialog. The data comes from the server (the artist layout) on purpose: it used to be
+ * read through a server action on mount, and that action's response was a revalidated full RSC
+ * re-render of the page, which inserted the whole head metadata block a second time.
  */
 export const ArtistProvider = ({
   artist,
+  sections,
   children,
 }: {
   artist: PublicCompactUser | null;
+  sections: ArtistPublicSections | null;
   children: ReactNode;
-}) => (
-  <ArtistContext.Provider value={{ artist }}>{children}</ArtistContext.Provider>
-);
+}) => {
+  const value = useMemo(() => ({ artist, sections }), [artist, sections]);
+  return (
+    <ArtistContext.Provider value={value}>{children}</ArtistContext.Provider>
+  );
+};

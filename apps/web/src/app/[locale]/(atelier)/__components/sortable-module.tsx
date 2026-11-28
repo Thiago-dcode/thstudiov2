@@ -21,9 +21,15 @@ import { CSS } from "@dnd-kit/utilities";
 import { MAX_SORT_MODULE_ITEMS } from "@repo/common-lib/constants/sort-module";
 import type { SortModuleItem } from "@repo/common-lib/types/sort-module";
 import { Button } from "@repo/ui/components/shadcn/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@repo/ui/components/shadcn/dropdown-menu";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
-import { GripVertical } from "lucide-react";
+import { ArrowDownUp, ChevronDown, GripVertical } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useId, useMemo, useState } from "react";
 
@@ -42,6 +48,15 @@ type SortableModuleProps<T> = {
   /** List layout (e.g. a grid). */
   className?: string;
   itemClassName?: string;
+  /**
+   * One-click orderings shown in an "Auto-order" menu. Each returns ids in the new order; applying
+   * one only changes the local order, so the artist still reviews it and presses "Update order".
+   */
+  autoOrders?: {
+    key: string;
+    label: string;
+    order: (items: T[]) => number[];
+  }[];
 };
 
 const ICON_BUTTON = "h-11 w-11 p-0";
@@ -120,6 +135,7 @@ export function SortableModule<T>({
   isSaving,
   className,
   itemClassName,
+  autoOrders,
 }: SortableModuleProps<T>) {
   const t = useTranslations("atelier.common.sortable");
   const dndId = useId();
@@ -195,6 +211,17 @@ export function SortableModule<T>({
     setLocalIds(arrayMove(orderedIds, from, to));
   };
 
+  const applyAutoOrder = (order: (items: T[]) => number[]) => {
+    const visible = orderedIds.map((id) => itemsById.get(id) as T);
+    const next = order(visible);
+    // Apply only a true permutation of the cards on screen: a duplicated or missing id would hide a card.
+    const isPermutation =
+      next.length === orderedIds.length &&
+      new Set(next).size === next.length &&
+      next.every((id) => itemsById.has(id));
+    if (isPermutation) setLocalIds(next);
+  };
+
   const handleSave = () =>
     onSave(orderedIds.map((module_id, position) => ({ module_id, position })));
 
@@ -203,6 +230,41 @@ export function SortableModule<T>({
       {reorderable ? (
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-sm text-text-muted">{t("hint")}</p>
+          {autoOrders?.length ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="group h-8"
+                  disabled={isSaving}
+                >
+                  <ArrowDownUp aria-hidden="true" />
+                  {t("autoOrder")}
+                  <ChevronDown
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+                  />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                sideOffset={6}
+                className="min-w-48"
+              >
+                {autoOrders.map(({ key, label, order }) => (
+                  <DropdownMenuItem
+                    key={key}
+                    className="text-xs"
+                    onSelect={() => applyAutoOrder(order)}
+                  >
+                    {label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
           {isDirty ? (
             <div className="flex flex-wrap items-center gap-2">
               <Button

@@ -1,4 +1,5 @@
 "use client";
+import { artistPath } from "@repo/common-lib/utils/artist-path";
 
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
@@ -72,7 +73,7 @@ export const TopNav = ({ username }: { username?: string }) => {
           // Internal URL, so it must use the i18n Link (a plain <a> would drop the /es|/pt prefix
           // and force a full reload). Still opens in a new tab so the atelier stays put.
           <Link
-            href={`/artists/${username}`}
+            href={artistPath(username)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors"

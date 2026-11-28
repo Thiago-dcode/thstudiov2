@@ -1,3 +1,4 @@
+import { artistPath } from "@repo/common-lib/utils/artist-path";
 import { getTranslations } from "next-intl/server";
 import { localizedUrl } from "@/lib/seo/core";
 import { getArtistProfile } from "@/modules/users/get-artist-share-ready";
@@ -23,7 +24,7 @@ export async function ShareYourPortfolio({ username }: { username: string }) {
 
   // The canonical (English, unprefixed) URL: a bio link should not pin visitors to one language —
   // the site's language detection handles that on arrival.
-  const url = localizedUrl("en", `/artists/${profile.username}`);
+  const url = localizedUrl("en", artistPath(profile.username));
   // The bio link is tagged so visits from artists' own bios get their own source in GA instead of
   // blending into "instagram / social". The snippet stays clean: it is a backlink, and the referring
   // site already identifies it.

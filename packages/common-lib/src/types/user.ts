@@ -57,6 +57,18 @@ export type ProfileAddress = {
   country_code?: string | null;
 };
 
+/** What the artist's public section pages list, so nav never links to an empty page. */
+export type ArtistPublicSections = {
+  /** Active, unblocked portfolios: the `/{u}/portfolios` list. */
+  portfoliosActiveCount: number;
+  /** Active, unblocked collections with at least one visible media: the `/{u}/collections` list. */
+  collectionsActiveCount: number;
+  /** Active, unblocked services: the `/{u}/services` list. */
+  servicesActiveCount: number;
+  /** An about_page row exists: `/{u}/about` renders the story, not its empty state. */
+  has_about_page: boolean;
+};
+
 // Public-facing profile: excludes email/banned/banned_reason, never meant to leave the account owner's view.
 export type UserProfile = Pick<UserSchema,
   | 'id' | 'name' | 'surname' | 'username'
@@ -64,7 +76,7 @@ export type UserProfile = Pick<UserSchema,
   | 'is_active' | 'short_biography' | 'biography' | 'profession' | 'is_featured'
   | 'phone_number' | 'facebook_link' | 'website_link' | 'instagram_link' | 'youtube_link'
   | 'seo_title' | 'seo_description' | 'seo_generated_at'
-> & {
+> & ArtistPublicSections & {
   address: ProfileAddress | null;
   categories: Omit<CategoryBase,'is_featured'>[];
   /**

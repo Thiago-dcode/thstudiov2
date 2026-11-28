@@ -5,6 +5,7 @@ import {
   USER_AUTH_COOKIE_NAME,
 } from "@repo/common-lib/constants/cookies";
 import { REDIRECT_TO_QUERY_PARAM } from "@repo/common-lib/constants/redirect-to";
+import { isArtistRouteSegment } from "@repo/common-lib/utils/username";
 import type { NextRequest } from "next/server";
 import { isIndexableEnv } from "@/lib/seo/indexability";
 import { isDisciplineLandingKey } from "@/modules/landings/discipline-landings";
@@ -60,11 +61,25 @@ const STATIC_PATHS: ReadonlySet<string> = new Set([
   "/legal/notice",
 ]);
 
-// Usernames are stored lowercase: an uppercase one is a 308 to the canonical form, which keeps
-// today's cookies by not matching here. Later segments (slugs, media ids) only need to be free of
-// dots, so file-like paths never qualify.
-const ARTIST_PATH = /^\/artists\/[a-z0-9_-]+(?:\/[^/.]+)*$/;
 const DISCIPLINE_PATH = /^\/for\/([^/.]+)$/;
+/** Segments after the username (slugs, media ids): non-empty and dot-free, so file-like paths never qualify. */
+const ARTIST_SUB_SEGMENT = /^[^/.]+$/;
+
+/**
+ * Artist pages live at the root (`/{username}/…`). The first segment must be lowercase (usernames
+ * are stored lowercase: an uppercase one is a 308 to the canonical form, which keeps today's cookies
+ * by not matching here) and pass `isArtistRouteSegment`. The reserved-username map is what keeps
+ * `/auth/*`, `/get-started`, `/atelier`, `/support` and every other first-level route out of this
+ * set, so a route missing from it would be cached anonymously: fail closed on anything unexpected.
+ */
+const isArtistPath = (pathname: string): boolean => {
+  const [empty, username, ...rest] = pathname.split("/");
+  if (empty !== "" || username === undefined) return false;
+  if (username !== username.toLowerCase() || !isArtistRouteSegment(username)) {
+    return false;
+  }
+  return rest.every((segment) => ARTIST_SUB_SEGMENT.test(segment));
+};
 
 /**
  * Whether `pathname` is one of the public pages whose anonymous render is identical for every
@@ -75,7 +90,7 @@ const DISCIPLINE_PATH = /^\/for\/([^/.]+)$/;
 export const isEdgeCacheablePath = (pathname: string): boolean => {
   const unprefixed = pathname.replace(LOCALE_PREFIX, "") || "/";
   if (STATIC_PATHS.has(unprefixed)) return true;
-  if (ARTIST_PATH.test(unprefixed)) return true;
+  if (isArtistPath(unprefixed)) return true;
   const discipline = DISCIPLINE_PATH.exec(unprefixed)?.[1];
   return discipline !== undefined && isDisciplineLandingKey(discipline);
 };

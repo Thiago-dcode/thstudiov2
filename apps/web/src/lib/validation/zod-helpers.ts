@@ -11,6 +11,10 @@ import {
   WEBSITE_URL_REGEX,
   YOUTUBE_URL_REGEX,
 } from "@repo/common-lib/constants/validation";
+import {
+  isReservedUsername,
+  normalizeUsername,
+} from "@repo/common-lib/utils/username";
 import type { ZodError } from "zod";
 import * as z from "zod";
 
@@ -173,3 +177,21 @@ export const personNameField = (
     .min(1, t("validation.required", { field: fieldLabel }))
     .max(maxLength, tooLongMessage(t, fieldLabel))
     .regex(/^[^\d]*$/, t("validation.invalid", { field: fieldLabel }));
+
+/**
+ * Username: 3 to `max` alphanumeric characters, not a reserved word (`atelier`, `youtube`: it would
+ * collide with a route or impersonate a brand; see `RESERVED_USERNAMES`), normalized to lowercase.
+ * The API enforces the same reservation (`USERNAME_RESERVED`); checking it here shows the message
+ * inline before any request.
+ */
+export const usernameField = (t: Translator, { max }: { max: number }) =>
+  z
+    .string()
+    .min(3, minLengthMessage(t, t("fields.username"), 3))
+    .max(max, maxLengthMessage(t, t("fields.username"), max))
+    .regex(/^[a-zA-Z0-9]+$/, t("validation.user.usernameAlphanumeric"))
+    .refine(
+      (name) => !isReservedUsername(name),
+      t("validation.user.usernameReserved"),
+    )
+    .transform(normalizeUsername);

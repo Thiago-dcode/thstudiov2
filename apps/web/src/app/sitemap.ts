@@ -1,4 +1,11 @@
 import type { SitemapMediaItem } from "@repo/common-lib/types/sitemap";
+import {
+  artistCollectionPath,
+  artistMediaPath,
+  artistPath,
+  artistPortfolioPath,
+  artistServicePath,
+} from "@repo/common-lib/utils/artist-path";
 import type { MetadataRoute } from "next";
 import { SUPPORTED_LOCALES } from "@/i18n/routing";
 import { DIRECTORY_PATHS, isDirectoryOpen } from "@/lib/directory-visibility";
@@ -152,14 +159,14 @@ export default async function sitemap(props: {
     case "artists": {
       const rows = await getSitemapArtists(desc.page, perPage);
       return rows.flatMap((r) =>
-        entries(`/artists/${r.username}`, r.updated_at, r.images),
+        entries(artistPath(r.username), r.updated_at, r.images),
       );
     }
     case "portfolios": {
       const rows = await getSitemapPortfolios(desc.page, perPage);
       return rows.flatMap((r) =>
         entries(
-          `/artists/${r.username}/portfolios/${r.slug}`,
+          artistPortfolioPath(r.username, r.slug),
           r.updated_at,
           r.images,
         ),
@@ -169,7 +176,7 @@ export default async function sitemap(props: {
       const rows = await getSitemapCollections(desc.page, perPage);
       return rows.flatMap((r) =>
         entries(
-          `/artists/${r.username}/collections/${r.slug}`,
+          artistCollectionPath(r.username, r.slug),
           r.updated_at,
           r.images,
         ),
@@ -178,11 +185,7 @@ export default async function sitemap(props: {
     case "services": {
       const rows = await getSitemapServices(desc.page, perPage);
       return rows.flatMap((r) =>
-        entries(
-          `/artists/${r.username}/services/${r.slug}`,
-          r.updated_at,
-          r.images,
-        ),
+        entries(artistServicePath(r.username, r.slug), r.updated_at, r.images),
       );
     }
     case "media": {
@@ -191,7 +194,7 @@ export default async function sitemap(props: {
       // to — so the sitemap only ever advertises the canonical form.
       return rows.flatMap((r) =>
         entries(
-          `/artists/${r.username}/media/${r.public_id}`,
+          artistMediaPath(r.username, r.public_id),
           r.updated_at,
           r.images,
           mediaVideos(r),

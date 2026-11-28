@@ -11,6 +11,7 @@ import { UserRepository } from "../users/users.repository";
 import { CollectionRepository } from "../collections/collection.repository";
 import { PublicViewerService } from "src/common/services/public-viewer.service";
 import { PUBLIC_ENTITY_FILTERS, isHiddenFromPublic } from "src/common/utils/public-entity";
+import { artistCollectionPath } from "@repo/common-lib/utils/artist-path";
 
 @Injectable()
 export class UserCollectionService {
@@ -70,7 +71,7 @@ export class UserCollectionService {
           seo_title: meta.seo_title,
           seo_description: meta.seo_description,
           cover_path: meta.cover,
-          canonical_path: `/artists/${user.username}/collections/${slug}`,
+          canonical_path: artistCollectionPath(user.username, slug),
           noindex: !meta.is_public,
         };
       },

@@ -23,16 +23,22 @@ const PRIVATE_PATHS = [
 ];
 
 /**
- * Every locale form of the private paths. Robots rules are prefix matches, so `/atelier` never
- * matched `/es/atelier`. The prefixes are spelled out per locale rather than as one `*` wildcard
- * rule (`/<any>/atelier`), which would also block any artist whose username starts with "atelier"
- * (`/artists/atelier-x`).
+ * Every locale form of the private paths, each as an exact rule (`/atelier$`), a query rule
+ * (`/atelier?`: patterns match path plus query, so `$` alone let `/atelier?x=1` through) and a
+ * subtree rule (`/atelier/`). Robots rules are prefix matches, so a bare `/atelier` would also block every artist
+ * whose username starts with it (`/atelierana`, now that artist pages live at the root), and it never
+ * matched `/es/atelier`. The prefixes are spelled out per locale rather than as one `*` wildcard rule
+ * for the same reason. `$` is honoured by Google and Bing; crawlers that ignore it still get the
+ * subtree rule, and every private page also emits `noindex`.
  */
 const privateDisallows = (): string[] => [
-  ...PRIVATE_PATHS,
-  ...SUPPORTED_LOCALES.map((l) => localePrefix(l))
-    .filter(Boolean)
-    .flatMap((prefix) => PRIVATE_PATHS.map((p) => `${prefix}${p}`)),
+  ...SUPPORTED_LOCALES.map((l) => localePrefix(l)).flatMap((prefix) =>
+    PRIVATE_PATHS.flatMap((p) => [
+      `${prefix}${p}$`,
+      `${prefix}${p}?`,
+      `${prefix}${p}/`,
+    ]),
+  ),
   "/api/",
 ];
 
@@ -72,8 +78,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        // Keep authed/private/utility areas out of the index (public content lives under /artists,
-        // etc). `Disallow` only stops crawling — Google can still index a disallowed URL it finds
+        // Keep authed/private/utility areas out of the index (public content lives at
+        // /{username}, etc). `Disallow` only stops crawling — Google can still index a disallowed URL it finds
         // linked — so every route listed here ALSO emits `robots: noindex` in its own metadata.
         //
         // `/auth` is deliberately NOT listed: the public FAQ links to /auth/register, so blocking the

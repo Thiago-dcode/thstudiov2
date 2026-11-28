@@ -1,5 +1,6 @@
 import { PLATFORM_CURRENCY_SYMBOL } from "@repo/common-lib/constants/limits";
 import type { Service } from "@repo/common-lib/types/service";
+import { artistServicePath } from "@repo/common-lib/utils/artist-path";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
@@ -21,7 +22,7 @@ function serviceHref(
   if (isAtelier) {
     return `/atelier/services/edit/${service.slug}`;
   }
-  return `/artists/${username}/services/${service.slug}`;
+  return artistServicePath(username, service.slug);
 }
 
 type ServiceCardThumbnailProps = {

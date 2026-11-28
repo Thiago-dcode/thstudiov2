@@ -24,6 +24,7 @@ import type { ModuleStatus, ModuleStatusInput } from '@repo/common-lib/types/mod
 import { PublicCompactUser } from '@repo/common-lib/types/user';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
+import { listedEntitySql } from 'src/common/utils/public-entity';
 import { MediaPortfolio } from '@repo/common-lib/types/media';
 import { CategoryBase } from '@repo/common-lib/types/category';
 import { PortfolioLayout } from '@repo/common-lib/types/layout';
@@ -84,6 +85,13 @@ export class PortfolioRepository extends BaseRepository {
    */
   static readonly PUBLIC_PORTFOLIO_PREDICATE = `p.blocked_at IS NULL AND p.is_active = true AND p.is_indexable = true
     AND ${artistShareReadySql('p.user_id')}`;
+
+  /**
+   * What `/{u}/portfolios` lists (alias `p`): active and not blocked, the visitor list filters.
+   * Counts the artist nav's section; not the SEO `PUBLIC_PORTFOLIO_PREDICATE` (no indexable or
+   * share-ready requirement).
+   */
+  static readonly LISTED_PORTFOLIO_PREDICATE = listedEntitySql('p');
 
   private readonly COLUMNS: PortfolioWithArtistSchemaColumns[] = [
     'portfolios.id',

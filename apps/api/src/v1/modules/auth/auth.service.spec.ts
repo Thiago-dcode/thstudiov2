@@ -346,6 +346,47 @@ describe('AuthService', () => {
     });
   });
 
+  describe('finishCreateUserAccount: reserved usernames (AC-13)', () => {
+    // Private on purpose: no public caller passes an explicit `username` today (the register DTO
+    // strips it), so the guard is exercised directly.
+    const finish = (username: string, options: Record<string, unknown> = {}) =>
+      (service as unknown as {
+        finishCreateUserAccount: (input: Record<string, unknown>, options?: Record<string, unknown>) => Promise<unknown>;
+      }).finishCreateUserAccount({ email: 'ana@example.com', email_validated: false, username }, options);
+
+    it.each(['Atelier', 'youtube', '  FOR '])(
+      'AC-13: an explicit reserved username %p throws USERNAME_RESERVED before the user row is created',
+      async (username) => {
+        await expect(finish(username, { invitationLink })).rejects.toMatchObject({
+          API_ERROR_CODE: 'USERNAME_RESERVED',
+          status: 400,
+        });
+        expect(userRepository.create).not.toHaveBeenCalled();
+        expect(userRepository.generateUniqueUsername).not.toHaveBeenCalled();
+      },
+    );
+
+    it('AC-13: the claimed invitation use is released on that failure', async () => {
+      await expect(finish('Atelier', { invitationLink })).rejects.toMatchObject({ API_ERROR_CODE: 'USERNAME_RESERVED' });
+
+      expect(invitationLinkService.releaseUse).toHaveBeenCalledWith(invitationLink.id);
+    });
+
+    it('AC-13: a client-caused reserved name is not a critical alert', async () => {
+      await expect(finish('Atelier', { invitationLink })).rejects.toBeDefined();
+
+      expect(logService.critical).not.toHaveBeenCalled();
+    });
+
+    it('AC-13: an unreserved explicit username still creates the account', async () => {
+      await expect(finish('thsworld')).resolves.toBeDefined();
+
+      expect(userRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ username: 'thsworld', username_auto_generated: false }),
+      );
+    });
+  });
+
   describe('refreshToken', () => {
     const device = { id: 21, disabled: false, blocked_at: null };
     beforeEach(() => {

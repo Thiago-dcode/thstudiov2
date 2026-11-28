@@ -61,7 +61,7 @@ export function ReportForm({ initialUrl }: { initialUrl?: string }) {
           name="reported_url"
           id="report-url"
           type="url"
-          placeholder="https://a11studio.com/artists/…"
+          placeholder="https://a11studio.com/…"
           required
           defaultValue={initialUrl}
           error={inputErrors?.reported_url}

@@ -233,21 +233,22 @@ describe('EdgeCacheProcessor', () => {
       expect(sentPrefixes(purgePrefixes).sort()).toEqual(
         ['from-payload', 'new-name', 'old-name', 'older']
           .flatMap((name) => [
-            `a11studio.com/artists/${name}`,
-            `a11studio.com/es/artists/${name}`,
-            `a11studio.com/pt/artists/${name}`,
+            `a11studio.com/${name}`,
+            `a11studio.com/es/${name}`,
+            `a11studio.com/pt/${name}`,
           ])
           .sort(),
       );
     });
 
     it('purges both names of a rename', async () => {
-      const { processor, purgePrefixes } = build({ current: 'new', reserved: ['old'] });
+      // `new` itself is a reserved username (dropped), so the fixture uses `newname`.
+      const { processor, purgePrefixes } = build({ current: 'newname', reserved: ['old'] });
 
-      await processor.process(job({ usernames: ['old', 'new'] }));
+      await processor.process(job({ usernames: ['old', 'newname'] }));
 
       expect(sentPrefixes(purgePrefixes)).toEqual(
-        expect.arrayContaining(['a11studio.com/es/artists/old', 'a11studio.com/pt/artists/new']),
+        expect.arrayContaining(['a11studio.com/es/old', 'a11studio.com/pt/newname']),
       );
       expect(sentPrefixes(purgePrefixes)).toHaveLength(6);
     });
@@ -258,9 +259,9 @@ describe('EdgeCacheProcessor', () => {
       await processor.process(job({ usernames: ['gone'] }));
 
       expect(sentPrefixes(purgePrefixes)).toEqual([
-        'a11studio.com/artists/gone',
-        'a11studio.com/es/artists/gone',
-        'a11studio.com/pt/artists/gone',
+        'a11studio.com/gone',
+        'a11studio.com/es/gone',
+        'a11studio.com/pt/gone',
       ]);
     });
 

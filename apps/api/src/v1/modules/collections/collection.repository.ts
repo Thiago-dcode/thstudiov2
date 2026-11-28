@@ -32,6 +32,7 @@ import { artistShareReadySql } from '@repo/common-lib/utils/artist-share-ready';
 import { sitemapImagePathSql } from '@repo/common-lib/utils/sitemap-image-sql';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
+import { listedEntitySql } from 'src/common/utils/public-entity';
 
 export type CollectionReadOptions = {
   /** Drop collections of banned, deactivated and pending-deletion accounts (visitor lists). */
@@ -46,6 +47,19 @@ export class CollectionRepository extends BaseRepository {
    */
   static readonly PUBLIC_COLLECTION_PREDICATE = `c.blocked_at IS NULL AND c.is_active = true AND c.is_indexable = true
     AND ${artistShareReadySql('c.user_id')}`;
+
+  /**
+   * What `/{u}/collections` lists (alias `c`): active, not blocked, and with at least one visible
+   * media, because `applyFilters` puts `whereMediaVisible` in `WHERE` over a LEFT JOIN, which drops
+   * a collection without one. Counts the artist nav's section; not the SEO
+   * `PUBLIC_COLLECTION_PREDICATE`. Must change together with `whereMediaVisible`.
+   */
+  static readonly LISTED_COLLECTION_PREDICATE = `${listedEntitySql('c')} AND EXISTS (
+    SELECT 1 FROM ${TABLES_ENUM.COLLECTION_MEDIA} lc_cm
+    INNER JOIN ${TABLES_ENUM.MEDIA} lc_m ON lc_m.id = lc_cm.media_id
+    WHERE lc_cm.collection_id = c.id AND lc_m.thumbnail IS NOT NULL
+      AND lc_m.blocked_at IS NULL AND lc_m.is_active = true
+  )`;
 
   private readonly BASE_COLUMNS: CollectionSchemaColumns[] = [
     'collections.id',
@@ -488,6 +502,8 @@ export class CollectionRepository extends BaseRepository {
    * `includeInactive` is only for the owner's editor: a save replaces the whole media list
    * (`attachMedia` removes what it isn't given), so an editor loaded without inactive media would
    * silently drop them from the collection on the next save.
+   *
+   * Must change together with `LISTED_COLLECTION_PREDICATE` (the nav's collection count).
    */
   private whereMediaVisible(
     query: QueryBuilder,

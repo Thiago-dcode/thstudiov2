@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable, NotFoundException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { DbUniqueViolationException } from '@repo/database/exceptions';
 import { randomInt } from 'crypto';
-import { normalizeUsername } from '@repo/common-lib/utils/username';
+import { isReservedUsername, normalizeUsername } from '@repo/common-lib/utils/username';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { CreateUserImageUploadUrlRequest } from './requests/create-user-image-upload-url.request';
 import { NewUserEvent } from './events/new-user.event';
@@ -309,6 +309,8 @@ export class UserService {
       let suffix = '';
       for (let i = 0; i < SUFFIX_LENGTH; i++) suffix += ALPHABET[randomInt(ALPHABET.length)];
       const candidate = `${base}${suffix}`;
+      // A reserved name (`RESERVED_USERNAMES`) counts as taken.
+      if (isReservedUsername(candidate)) continue;
 
       const [taken, reserved] = await Promise.all([
         this.userRepository.usernameExists(candidate),
@@ -628,6 +630,10 @@ export class UserService {
       userUpdateData.username && userUpdateData.username !== previousUsername,
     );
     if (usernameChanged) {
+      // Before the limit and taken checks: a reserved name neither burns a change nor answers
+      // "limit reached", and is refused even when it is in this user's own history.
+      if (isReservedUsername(userUpdateData.username)) throw ApiException.usernameReserved();
+
       const periodExpired = user.next_username_reset && new Date() >= user.next_username_reset;
       const effectiveCount = periodExpired ? 0 : user.username_reset_count;
 
@@ -1141,7 +1147,7 @@ export class UserService {
 
   @OnEvent(NEW_USER_EVENT)
   async handleNewUserEvent(event: NewUserEvent) {
-    // A visit to `/artists/{name}` before anyone owned it cached "does not exist" for a week, which
+    // A visit to `/{name}` before anyone owned it cached "does not exist" for a week, which
     // would 404 the new owner's page. Logged, not thrown: onboarding below must still run.
     const fields = { operation: 'new-user' };
     await this.helpers

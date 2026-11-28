@@ -12,6 +12,7 @@ import {
   BaseUserWithSecrets,
   ProfileAddress,
   UserAccountStatus,
+  ArtistPublicSections,
 } from '@repo/common-lib/types/user';
 import {
   UserCoreRoleRow,
@@ -41,6 +42,18 @@ import {
   visibleAccountSql,
   PUBLIC_PROFILE_ROLE_NAMES,
 } from '@repo/common-lib/utils/artist-share-ready';
+import { PortfolioRepository } from '../portfolios/portfolio.repository';
+import { CollectionRepository } from '../collections/collection.repository';
+import { ServiceRepository } from '../services/service.repository';
+
+/** A driver count (`3`, `'3'`, null) as a finite integer, `0` when missing. */
+const toCount = (value: unknown): number => {
+  const n = Number(value ?? 0);
+  return Number.isFinite(n) ? n : 0;
+};
+
+/** A driver boolean (`true`, `'t'`, null) as a boolean; `'f'` and missing are false. */
+const toFlag = (value: unknown): boolean => value === true || value === 't' || value === 'true';
 
 @Injectable()
 export class UserRepository extends BaseRepository {
@@ -293,7 +306,7 @@ export class UserRepository extends BaseRepository {
 
     if (!result || result.length === 0) return null;
 
-    return this.withShareReady(this.formatUserProfile(result));
+    return this.withPublicSurface(this.formatUserProfile(result));
   }
 
   async getUserProfileById(id: number): Promise<UserProfile | null> {
@@ -321,29 +334,37 @@ export class UserRepository extends BaseRepository {
 
     if (!result || result.length === 0) return null;
 
-    return this.withShareReady(this.formatUserProfile(result));
+    return this.withPublicSurface(this.formatUserProfile(result));
   }
 
   /**
-   * Resolve `is_share_ready` for a formatted profile: the identity fields come from the row we
-   * already have, the portfolio half needs one EXISTS check against the same predicate the sitemap
-   * uses, so a profile can never be share-ready while being excluded from discovery.
+   * Resolve what a formatted profile needs beyond its own row, in one statement: `is_share_ready`
+   * (the identity fields come from the row we already have, the portfolio half is an EXISTS against
+   * the same predicate the sitemap uses, so a profile can never be share-ready while excluded from
+   * discovery) and the section counts the artist nav shows (`LISTED_*_PREDICATE`: what each public
+   * section page lists, not the SEO predicates).
    */
-  private async withShareReady(
-    profile: Omit<UserProfile, 'is_share_ready'>,
+  private async withPublicSurface(
+    profile: Omit<UserProfile, 'is_share_ready' | keyof ArtistPublicSections>,
   ): Promise<UserProfile> {
     const result = await Query.raw(
-      `SELECT EXISTS(
-         SELECT 1 FROM ${TABLES_ENUM.PORTFOLIOS} pf
-         WHERE pf.user_id = $1 AND pf.blocked_at IS NULL
-           AND pf.is_active = true AND pf.is_indexable = true
-       ) AS has_public_portfolio`,
+      `SELECT
+         EXISTS(
+           SELECT 1 FROM ${TABLES_ENUM.PORTFOLIOS} pf
+           WHERE pf.user_id = $1 AND pf.blocked_at IS NULL
+             AND pf.is_active = true AND pf.is_indexable = true
+         ) AS has_public_portfolio,
+         (SELECT COUNT(*)::int FROM ${TABLES_ENUM.PORTFOLIOS} p
+           WHERE p.user_id = $1 AND ${PortfolioRepository.LISTED_PORTFOLIO_PREDICATE}) AS portfolios_active_count,
+         (SELECT COUNT(*)::int FROM ${TABLES_ENUM.COLLECTIONS} c
+           WHERE c.user_id = $1 AND ${CollectionRepository.LISTED_COLLECTION_PREDICATE}) AS collections_active_count,
+         (SELECT COUNT(*)::int FROM ${TABLES_ENUM.SERVICES} s
+           WHERE s.user_id = $1 AND ${ServiceRepository.LISTED_SERVICE_PREDICATE}) AS services_active_count,
+         EXISTS(SELECT 1 FROM ${TABLES_ENUM.ABOUT_PAGE} ap WHERE ap.user_id = $1) AS has_about_page`,
       [profile.id],
     );
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
-    const hasPublicPortfolio = Boolean(
-      (Array.isArray(rows) ? rows : [])[0]?.has_public_portfolio,
-    );
+    const row = (Array.isArray(rows) ? rows : [])[0] ?? {};
 
     return {
       ...profile,
@@ -352,8 +373,12 @@ export class UserRepository extends BaseRepository {
         profession: profile.profession,
         city: profile.address?.city,
         state: profile.address?.state,
-        has_public_portfolio: hasPublicPortfolio,
+        has_public_portfolio: Boolean(row.has_public_portfolio),
       }),
+      portfoliosActiveCount: toCount(row.portfolios_active_count),
+      collectionsActiveCount: toCount(row.collections_active_count),
+      servicesActiveCount: toCount(row.services_active_count),
+      has_about_page: toFlag(row.has_about_page),
     };
   }
 
@@ -385,7 +410,7 @@ export class UserRepository extends BaseRepository {
   }
 
   /**
-   * Roles whose profiles are published under `/artists/*`. `findAllArtists` (the public directory)
+   * Roles whose profiles are published under `/{username}`. `findAllArtists` (the public directory)
    * filters on nothing but `banned`/`is_active`, so an ADMIN profile is already browsable and
    * linkable — restricting the sitemap to ARTIST alone would omit a page the site links to.
    */
@@ -819,8 +844,10 @@ export class UserRepository extends BaseRepository {
     };
   }
 
-  /** `is_share_ready` is resolved separately (needs a portfolio lookup) — see `withShareReady`. */
-  private formatUserProfile(rows: UserProfileRow[]): Omit<UserProfile, 'is_share_ready'> {
+  /** `is_share_ready` and the section counts are resolved separately — see `withPublicSurface`. */
+  private formatUserProfile(
+    rows: UserProfileRow[],
+  ): Omit<UserProfile, 'is_share_ready' | keyof ArtistPublicSections> {
     const first = rows[0];
 
     const address: ProfileAddress | null = first.a_id != null

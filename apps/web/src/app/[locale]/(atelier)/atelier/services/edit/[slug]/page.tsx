@@ -1,3 +1,4 @@
+import { artistServicePath } from "@repo/common-lib/utils/artist-path";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import {
@@ -36,7 +37,7 @@ export default async function ServiceEdit({ params }: Props) {
 
   const service = serviceResponse.data;
   const publicHref = userAuth.username
-    ? `/artists/${userAuth.username}/services/${service.slug}`
+    ? artistServicePath(userAuth.username, service.slug)
     : undefined;
   return (
     <AdminPageContainer>

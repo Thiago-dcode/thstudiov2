@@ -1,3 +1,4 @@
+import { artistPath } from "@repo/common-lib/utils/artist-path";
 import { ShareButton } from "@repo/ui/components/custom/share-button";
 import {
   Breadcrumb,
@@ -39,7 +40,7 @@ export const ArtistBreadcrumb = async ({
   ]);
   const allItems: BreadcrumbEntry[] = [
     {
-      url: `/artists/${username}`,
+      url: artistPath(username),
       title: `@${username}`,
       isActive: items.length === 0,
     },

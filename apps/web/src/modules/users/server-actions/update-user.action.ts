@@ -104,6 +104,14 @@ export const updateUserAction = async (
       inputs: rawData,
     };
   }
+  if (result.error?.api_error_code === API_ERRORS.USERNAME_RESERVED) {
+    return {
+      errors: [],
+      inputErrors: { username: t("actions.usernameReserved") },
+      data: null,
+      inputs: rawData,
+    };
+  }
   if (result.error) {
     return {
       errors: await getFriendlyApiErrors(result),

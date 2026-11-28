@@ -1,7 +1,11 @@
 import "server-only";
 import type { ApiResponse } from "@repo/common-lib/types/response";
-import { normalizeUsername } from "@repo/common-lib/utils/username";
-import { permanentRedirect } from "next/navigation";
+import { artistPath } from "@repo/common-lib/utils/artist-path";
+import {
+  isArtistRouteSegment,
+  normalizeUsername,
+} from "@repo/common-lib/utils/username";
+import { notFound, permanentRedirect } from "next/navigation";
 import { serverEnv } from "@/env/server";
 import {
   localePrefix,
@@ -45,7 +49,11 @@ export const localizedUrl = (locale: string, path: string): string =>
 /**
  * 308s an artist URL to the artist's current one, keeping `subPath` (everything after the username):
  *
- * - A username that isn't lowercase (`/artists/THSWORLD/...`) goes to the lowercase URL. Usernames
+ * - A first segment that can't be an artist (`/for`, `/legal`, `/youtube`, `/ab`, `/x.y`: see
+ *   `isArtistRouteSegment`) is a 404 straight away. Artist pages own the root dynamic segment, so
+ *   every unknown single-segment URL lands here; this check runs before any API call, so reserved
+ *   words and scanner junk cost no request and seed no `username_exists_*` cache key.
+ * - A username that isn't lowercase (`/THSWORLD/...`) goes to the lowercase URL. Usernames
  *   are case-insensitive, so every casing rendered the same page with a 200 and relied on the
  *   canonical alone to consolidate.
  * - A username its owner changed in the last `USERNAME_RESERVATION_DAYS` goes to the new one, so old
@@ -66,13 +74,14 @@ export const redirectToCurrentUsername = async (
   subPath = "",
   searchParams?: Promise<PageSearchParams>,
 ): Promise<void> => {
+  if (!isArtistRouteSegment(username)) notFound();
   const prefix = localePrefix(resolveLocale(locale));
   // The query string goes along: links in bios and campaigns carry `utm_*`/`igsh`, and dropping them
   // on the hop would lose the attribution of exactly the old links this redirect keeps alive.
   const target = async (name: string) =>
-    `${prefix}/artists/${name}${subPath}${toQueryString(await searchParams)}`;
+    `${prefix}${artistPath(name)}${subPath}${toQueryString(await searchParams)}`;
   const canonical = normalizeUsername(username);
-  // Resolve the final name first, so `/artists/OLDNAME` is one hop rather than two.
+  // Resolve the final name first, so `/OLDNAME` is one hop rather than two.
   let current = canonical;
   // `false`, not falsy: an API error must fall through to the page's own handling, never redirect.
   const exists = await usersService.usernameExists(canonical);
@@ -82,6 +91,41 @@ export const redirectToCurrentUsername = async (
   }
   if (current !== username) {
     permanentRedirect(await target(current));
+  }
+};
+
+/**
+ * Legacy `/artists/{username}/…` URLs (artist pages lived there before they moved to the root): a
+ * 308 to `/{username}/…`, keeping the locale prefix, the rest of the path and the query string.
+ * A segment that can't be an artist (`/artists/about`, `/artists/YouTube`) is a 404, never a hop
+ * to the static route of the same name.
+ *
+ * No API call: an old username lands on `/{old}`, whose `redirectToCurrentUsername` takes it to
+ * the new one (two hops, accepted). Next sends the 308 with `no-store`.
+ */
+export const redirectLegacyArtistPath = async (
+  locale: string,
+  username: string,
+  rest: string[] = [],
+  searchParams?: Promise<PageSearchParams>,
+): Promise<never> => {
+  if (!isArtistRouteSegment(username)) notFound();
+  const subPath = rest.map((s) => `/${encodePathSegment(s)}`).join("");
+  permanentRedirect(
+    `${localePrefix(resolveLocale(locale))}${artistPath(normalizeUsername(username))}${subPath}${toQueryString(await searchParams)}`,
+  );
+};
+
+/**
+ * One path segment, encoded exactly once. Next hands catch-all segments over still percent-encoded
+ * (`a%20b`), so encoding them again would give `a%2520b`: decode first, then encode. A malformed
+ * escape (`%E0`) can't be decoded and is kept as it came.
+ */
+const encodePathSegment = (segment: string): string => {
+  try {
+    return encodeURIComponent(decodeURIComponent(segment));
+  } catch {
+    return segment;
   }
 };
 

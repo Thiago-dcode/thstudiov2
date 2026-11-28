@@ -7,6 +7,15 @@ import type {
 import type { FullPortfolio } from "@repo/common-lib/types/portfolio";
 import type { FullService, Service } from "@repo/common-lib/types/service";
 import type { UserProfile } from "@repo/common-lib/types/user";
+import {
+  artistAboutPath,
+  artistCollectionPath,
+  artistListPath,
+  artistMediaPath,
+  artistPath,
+  artistPortfolioPath,
+  artistServicePath,
+} from "@repo/common-lib/utils/artist-path";
 import { collapseWhitespace } from "@repo/common-lib/utils/seo-text";
 import { serverEnv } from "@/env/server";
 import { ORGANIZATION_SAME_AS } from "@/lib/config";
@@ -16,7 +25,7 @@ import { localizedUrl, resolveLocale, SITE_NAME } from "@/lib/seo/core";
  * Schema.org builders. Every node is part of ONE connected graph:
  *
  * - Stable `@id`s identify the *entities* — the brand (`/#organization`), the site (`/#website`) and
- *   each artist (`/artists/{u}#person`). They are locale-independent: the artist is the same person
+ *   each artist (`/{u}#person`). They are locale-independent: the artist is the same person
  *   on `/es` and `/pt`. Every page references them instead of repeating an anonymous copy, so engines
  *   can tell the Person credited on fifty artworks is one entity (the profile's).
  * - `url`s identify the *pages* and are always the current locale's URL — the same string as that
@@ -33,7 +42,7 @@ type Node = Record<string, unknown>;
 const ORGANIZATION_ID = () => `${serverEnv.APP_URL}/#organization`;
 const WEBSITE_ID = () => `${serverEnv.APP_URL}/#website`;
 const personId = (username: string) =>
-  `${localizedUrl("en", `/artists/${username}`)}#person`;
+  `${localizedUrl("en", artistPath(username))}#person`;
 
 /** BCP 47 tag per app locale, for `inLanguage`. */
 const IN_LANGUAGE = { en: "en", es: "es", pt: "pt" } as const;
@@ -83,7 +92,7 @@ const personRef = (artist: ArtistRef, locale: string): Node => ({
   "@type": "Person",
   "@id": personId(artist.username),
   name: artist.name || `@${artist.username}`,
-  url: localizedUrl(locale, `/artists/${artist.username}`),
+  url: localizedUrl(locale, artistPath(artist.username)),
 });
 
 const pageBase = (locale: string, path: string): Node => ({
@@ -107,7 +116,7 @@ const breadcrumb = (locale: string, crumbs: Crumb[]): Node => ({
 
 const artistCrumb = (artist: ArtistRef): Crumb => ({
   name: artist.name || `@${artist.username}`,
-  path: `/artists/${artist.username}`,
+  path: artistPath(artist.username),
 });
 
 type ImageLike = Pick<
@@ -140,7 +149,7 @@ const galleryImage = (
     name: m.title || m.seo_title,
     caption: m.seo_alt,
     url: m.public_id
-      ? localizedUrl(locale, `/artists/${artist.username}/media/${m.public_id}`)
+      ? localizedUrl(locale, artistMediaPath(artist.username, m.public_id))
       : undefined,
     creator: { "@id": personId(artist.username) },
   };
@@ -381,7 +390,7 @@ export function buildProfileJsonLd(
     username: profile.username,
     name: artistDisplayName(profile),
   };
-  const path = `/artists/${profile.username}`;
+  const path = artistPath(profile.username);
   const addr = profile.address;
   const address =
     addr && (addr.city || addr.state || addr.country_code)
@@ -467,7 +476,7 @@ export function buildArtistAboutJsonLd(
     crumb: string;
   },
 ) {
-  const path = `/artists/${artist.username}/about`;
+  const path = artistAboutPath(artist.username);
   return graph([
     {
       "@type": "ProfilePage",
@@ -549,7 +558,7 @@ export function buildMediaJsonLd(
     ? { username: media.user.username, name: artistDisplayName(media.user) }
     : { username: options.username };
   const trail = options.trail ?? [];
-  const path = `/artists/${artist.username}/media/${media.public_id}`;
+  const path = artistMediaPath(artist.username, media.public_id);
   const isVideo = media.media_type === "VIDEO";
   // Required on VideoObject; an untitled video used to omit it and Google dropped the node.
   const name =
@@ -625,7 +634,7 @@ export function buildPortfolioJsonLd(
   listName: string,
   localizedSeoDescription?: string | null,
 ) {
-  const path = `/artists/${artist.username}/portfolios/${portfolio.slug}`;
+  const path = artistPortfolioPath(artist.username, portfolio.slug);
   const cover = portfolio.thumbnail;
   return graph([
     {
@@ -651,7 +660,7 @@ export function buildPortfolioJsonLd(
     },
     breadcrumb(locale, [
       artistCrumb(artist),
-      { name: listName, path: `/artists/${artist.username}/portfolios` },
+      { name: listName, path: artistListPath(artist.username, "portfolios") },
       { name: portfolio.title, path },
     ]),
   ]);
@@ -665,7 +674,7 @@ export function buildCollectionJsonLd(
   listName: string,
   localizedSeoDescription?: string | null,
 ) {
-  const path = `/artists/${artist.username}/collections/${collection.slug}`;
+  const path = artistCollectionPath(artist.username, collection.slug);
   return graph([
     {
       "@type": "CollectionPage",
@@ -687,7 +696,7 @@ export function buildCollectionJsonLd(
     },
     breadcrumb(locale, [
       artistCrumb(artist),
-      { name: listName, path: `/artists/${artist.username}/collections` },
+      { name: listName, path: artistListPath(artist.username, "collections") },
       { name: collection.title, path },
     ]),
   ]);
@@ -710,7 +719,7 @@ export function buildServiceJsonLd(
   locale: string,
   listName: string,
 ) {
-  const path = `/artists/${artist.username}/services/${service.slug}`;
+  const path = artistServicePath(artist.username, service.slug);
   const keywords = [
     ...new Set(
       [
@@ -756,7 +765,7 @@ export function buildServiceJsonLd(
     },
     breadcrumb(locale, [
       artistCrumb(artist),
-      { name: listName, path: `/artists/${artist.username}/services` },
+      { name: listName, path: artistListPath(artist.username, "services") },
       { name: service.title, path },
     ]),
   ]);

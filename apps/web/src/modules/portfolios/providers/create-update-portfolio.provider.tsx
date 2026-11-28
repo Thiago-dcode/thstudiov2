@@ -1,6 +1,5 @@
 "use client";
 
-import { MAX_HIGHLIGHT_PORTFOLIOS } from "@repo/common-lib/constants/highlights";
 import {
   MAX_DISCIPLINES_PORTFOLIO,
   MAX_PORTFOLIO_ITEMS,
@@ -45,7 +44,6 @@ import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { createOrUpdatePortfolioAction } from "../server-actions/create-update-portfolio.action";
-import { getPortfolioHighlightCountAction } from "../server-actions/get-highlight-count.action";
 
 function categoryIdsEqual(a: CategoryBase[], b: CategoryBase[]) {
   const idsA = a
@@ -160,10 +158,6 @@ type PortfolioContextType = {
   setCategorySelected: (category: CategoryBase) => void;
   removeCategorySelected: (category: CategoryBase) => void;
   setLayout: (layout: PortfolioLayoutInput) => void;
-  highlightCount: number;
-  highlightLimit: number;
-  isLoadingHighlightCount: boolean;
-  fetchHighlightCount: (options?: { force?: boolean }) => Promise<void>;
 };
 
 // ============================================================================
@@ -261,45 +255,6 @@ export const PortfolioProvider = ({
     setPortfolioInput((prev) => ({ ...prev, layout }));
   }, []);
 
-  const highlightCountMemo = useRef<ActionReturn<
-    number | null,
-    undefined
-  > | null>(null);
-  const forceHighlightFetchRef = useRef(false);
-  const highlightLimit = MAX_HIGHLIGHT_PORTFOLIOS;
-
-  const {
-    handleAction: handleHighlightCountAction,
-    result: highlightCountResult,
-    isPending: isLoadingHighlightCount,
-    cleanResult: cleanHighlightResult,
-  } = useHandleAction({
-    action: async () => {
-      if (highlightCountMemo.current && !forceHighlightFetchRef.current) {
-        return highlightCountMemo.current;
-      }
-      forceHighlightFetchRef.current = false;
-      return await getPortfolioHighlightCountAction();
-    },
-    afterAction: async (data) => {
-      highlightCountMemo.current = data;
-    },
-  });
-
-  const fetchHighlightCount = useCallback(
-    async (options?: { force?: boolean }) => {
-      if (options?.force) {
-        highlightCountMemo.current = null;
-        forceHighlightFetchRef.current = true;
-        cleanHighlightResult();
-      }
-      await handleHighlightCountAction();
-    },
-    [handleHighlightCountAction, cleanHighlightResult],
-  );
-
-  const highlightCount = highlightCountResult?.data ?? 0;
-
   const {
     result: portfolioResult,
     handleAction,
@@ -358,7 +313,6 @@ export const PortfolioProvider = ({
           toast.error(error);
         }
       } else if (result.data) {
-        await fetchHighlightCount({ force: true });
         if (currentPortfolio) {
           // Update: keep the just-saved values on screen and revalidate the
           // server-rendered `defaultPortfolio` instead of clearing to a draft.
@@ -577,10 +531,6 @@ export const PortfolioProvider = ({
     setCategorySelected,
     removeCategorySelected,
     setLayout,
-    highlightCount,
-    highlightLimit,
-    isLoadingHighlightCount,
-    fetchHighlightCount,
   };
 
   return (

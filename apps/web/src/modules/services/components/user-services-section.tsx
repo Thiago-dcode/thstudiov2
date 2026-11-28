@@ -1,3 +1,4 @@
+import { artistServicePath } from "@repo/common-lib/utils/artist-path";
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
@@ -29,7 +30,7 @@ export const UserServicesSection = async ({
       {services.map((service) => (
         <Link
           key={service.id}
-          href={`/artists/${username}/services/${service.slug}`}
+          href={artistServicePath(username, service.slug)}
           className="group flex flex-col overflow-hidden border border-border/40 transition-colors duration-300 hover:border-border"
         >
           <div className="relative aspect-3/2 w-full overflow-hidden bg-fg">
