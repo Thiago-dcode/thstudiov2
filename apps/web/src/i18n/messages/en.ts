@@ -372,7 +372,7 @@ const messages = {
           {
             question: "Do I need my own website or design skills?",
             answer:
-              "No. Your portfolio lives at a11studio.com/artists/your-username and you build it by uploading and arranging photos — no code, hosting or templates.",
+              "No. Your portfolio lives at a11studio.com/your-username and you build it by uploading and arranging photos — no code, hosting or templates.",
           },
           {
             question: "How is it different from posting on Instagram?",
@@ -1543,7 +1543,7 @@ const messages = {
     steps: {
       username: {
         title: "Choose your username",
-        subtitle: "It's your public link: a11studio.com/artists/your-username",
+        subtitle: "It's your public link: a11studio.com/your-username",
       },
       profile: {
         title: "Complete Your Profile",
@@ -1995,6 +1995,7 @@ const messages = {
     },
     user: {
       usernameAlphanumeric: "Username must be alphanumeric with no spaces",
+      usernameReserved: "That username is reserved. Choose another.",
       passwordMustContainNumber: "Password must contain at least one number",
       passwordNoSpaces: "Password cannot contain spaces",
     },
@@ -2065,6 +2066,13 @@ const messages = {
         hint: "Drag the handle to reorder.",
         save: "Update order",
         reset: "Reset",
+        autoOrder: "Auto-order",
+        autoOrders: {
+          newest: "Newest first",
+          oldest: "Oldest first",
+          recentlyUpdated: "Recently updated",
+          leastRecentlyUpdated: "Least recently updated",
+        },
         savedToast: "Order updated",
         unsaved: "You have unsaved order changes",
         invalidOrder:
@@ -3094,6 +3102,7 @@ const messages = {
     unauthorized: "Unauthorized",
     titleAlreadyExists: "You already have one with this title. Try another.",
     usernameTaken: "That username is already taken. Try another.",
+    usernameReserved: "That username is reserved. Choose another.",
     genericError: "Something went wrong. Please try again later.",
     formDataRequired: "Form data is required",
     passwordRecoveryCooldown:

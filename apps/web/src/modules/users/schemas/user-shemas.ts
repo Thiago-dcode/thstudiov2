@@ -1,4 +1,3 @@
-import { normalizeUsername } from "@repo/common-lib/utils/username";
 import * as z from "zod";
 import {
   emailField,
@@ -11,6 +10,7 @@ import {
   requiredString,
   type Translator,
   tooLongMessage,
+  usernameField,
   websiteUrlField,
   youtubeUrlField,
 } from "@/lib/validation/zod-helpers";
@@ -28,12 +28,7 @@ export const createUserSchema = (t: Translator) =>
   z.object({
     name: personNameField(t, 80, t("fields.name")).nullable().optional(),
     surname: personNameField(t, 100, t("fields.surname")).nullable().optional(),
-    username: z
-      .string()
-      .min(3, minLengthMessage(t, t("fields.username"), 3))
-      .max(50, maxLengthMessage(t, t("fields.username"), 50))
-      .regex(/^[a-zA-Z0-9]+$/, t("validation.user.usernameAlphanumeric"))
-      .transform(normalizeUsername),
+    username: usernameField(t, { max: 50 }),
     password: z
       .string()
       .min(8, minLengthMessage(t, t("fields.password"), 8))
@@ -73,13 +68,7 @@ export const updateUserSchema = (t: Translator) =>
         .string()
         .max(100, tooLongMessage(t, t("fields.profession")))
         .optional(),
-      username: z
-        .string()
-        .min(3, minLengthMessage(t, t("fields.username"), 3))
-        .max(20, maxLengthMessage(t, t("fields.username"), 20))
-        .regex(/^[a-zA-Z0-9]+$/, t("validation.user.usernameAlphanumeric"))
-        .transform(normalizeUsername)
-        .optional(),
+      username: usernameField(t, { max: 20 }).optional(),
       password: z
         .string()
         .min(8, minLengthMessage(t, t("fields.password"), 8))

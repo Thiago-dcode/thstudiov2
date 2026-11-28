@@ -1,6 +1,7 @@
 "use client";
 
 import type { ArtistCard } from "@repo/common-lib/types/user";
+import { artistPath } from "@repo/common-lib/utils/artist-path";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { cn } from "@repo/ui/lib/utils";
 import { Loader2, Search } from "lucide-react";
@@ -121,7 +122,7 @@ export function WebHeaderArtistSearch({ className }: { className?: string }) {
             {artists.map((artist) => (
               <li key={artist.id}>
                 <Link
-                  href={`/artists/${encodeURIComponent(artist.username)}`}
+                  href={artistPath(artist.username)}
                   onClick={close}
                   className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-fg/50"
                 >

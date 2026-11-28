@@ -1,3 +1,4 @@
+import { artistCollectionPath } from "@repo/common-lib/utils/artist-path";
 import NextImage from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -34,7 +35,7 @@ const screenshotSrc = (image: string) => `/landing/first-minutes/${image}`;
  * A real published collection, linked wherever a step's copy has `<link>…</link>`. Prod data: if
  * it's renamed or unpublished this link 404s (it also 404s on local and dev), so update it then.
  */
-const EXAMPLE_PATH = "/artists/thsworld/collections/lanzarote-2026";
+const EXAMPLE_PATH = artistCollectionPath("thsworld", "lanzarote-2026");
 
 /** Turns `<link>label</link>` in a step description into a link to {@link EXAMPLE_PATH}. */
 function StepDescription({ text }: { text: string }) {

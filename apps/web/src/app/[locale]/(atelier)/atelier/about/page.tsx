@@ -1,3 +1,4 @@
+import { artistAboutPath } from "@repo/common-lib/utils/artist-path";
 import { BookUser } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -21,9 +22,7 @@ export default async function AboutPage() {
 
   const aboutPageResponse = await usersService.getAboutPage(userAuth.username);
   const aboutPage = aboutPageResponse.data;
-  const publicHref = aboutPage
-    ? `/artists/${userAuth.username}/about`
-    : undefined;
+  const publicHref = aboutPage ? artistAboutPath(userAuth.username) : undefined;
 
   return (
     <AdminPageContainer>

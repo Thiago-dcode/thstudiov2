@@ -10,7 +10,7 @@ import { getSitemapCounts } from "@/lib/seo/sitemap-source";
  * header artist search stays: its results link straight to artist pages, never to the directory.
  * It opens on its own once the count is reached — no deploy needed.
  */
-export const DIRECTORY_MIN_PUBLIC_ARTISTS = 10;
+export const DIRECTORY_MIN_PUBLIC_ARTISTS = 40;
 
 /** The directory's own URLs (locale-agnostic). */
 export const DIRECTORY_PATHS: ReadonlySet<string> = new Set([

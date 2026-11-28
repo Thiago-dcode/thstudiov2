@@ -1,4 +1,8 @@
 import {
+  artistPath,
+  artistPortfolioPath,
+} from "@repo/common-lib/utils/artist-path";
+import {
   buildPortfolioItemsFromFullPortfolio,
   extractMediaFromPortfolioItems,
 } from "@repo/common-lib/utils/portfolio";
@@ -51,7 +55,7 @@ export async function FeaturedPortfolioSection({
 
   const username = portfolio.artist.username;
   const portfolioHref = portfolio.slug
-    ? `/artists/${encodeURIComponent(username)}/portfolios/${encodeURIComponent(portfolio.slug)}`
+    ? artistPortfolioPath(username, portfolio.slug)
     : null;
   const layoutKey = portfolio.layout
     ? LAYOUT_KEYS[portfolio.layout.name]
@@ -88,7 +92,7 @@ export async function FeaturedPortfolioSection({
               <p className="text-sm! text-text-muted">
                 {t("by")}{" "}
                 <Link
-                  href={`/artists/${encodeURIComponent(username)}`}
+                  href={artistPath(username)}
                   className="text-text underline decoration-border-em underline-offset-4 transition-colors hover:decoration-text"
                 >
                   @{username}

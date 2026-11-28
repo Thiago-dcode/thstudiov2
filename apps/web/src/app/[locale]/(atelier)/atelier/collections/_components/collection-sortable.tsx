@@ -1,6 +1,5 @@
 "use client";
 
-import { MAX_HIGHLIGHT_COLLECTIONS } from "@repo/common-lib/constants/highlights";
 import { sortCollectionsAction } from "@/modules/collections/server-actions/sort-collections.action";
 import { AtelierModuleSortable } from "../../../__components/atelier-module-sortable";
 import {
@@ -19,12 +18,10 @@ export function CollectionSortable({
     <AtelierModuleSortable
       items={items}
       sortAction={sortCollectionsAction}
-      highlightLimit={MAX_HIGHLIGHT_COLLECTIONS}
-      renderCard={(item, { controls, highlightLimitReached }) => (
+      renderCard={(item, { controls }) => (
         <CollectionAtelierCard
           item={item}
           username={username}
-          highlightLimitReached={highlightLimitReached}
           controls={controls}
         />
       )}

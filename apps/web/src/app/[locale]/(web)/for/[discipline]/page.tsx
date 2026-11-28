@@ -1,5 +1,6 @@
 import type { FullPlan } from "@repo/common-lib/types/plan";
 import type { Portfolio } from "@repo/common-lib/types/portfolio";
+import { artistPortfolioPath } from "@repo/common-lib/utils/artist-path";
 import {
   EDITORIAL_COLUMN_CLASS,
   EDITORIAL_LABEL_CLASS,
@@ -405,7 +406,10 @@ function ExamplesGrid({ portfolios }: { portfolios: Portfolio[] }) {
           className="w-full min-w-0 phone-lg:w-[calc(50%-1rem)] laptop:w-[calc(33.333%-1.334rem)]"
         >
           <Link
-            href={`/artists/${encodeURIComponent(portfolio.artist.username)}/portfolios/${encodeURIComponent(portfolio.slug)}`}
+            href={artistPortfolioPath(
+              portfolio.artist.username,
+              portfolio.slug,
+            )}
             className="block w-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             <PortfolioCard.Item portfolio={portfolio} className="h-full" />

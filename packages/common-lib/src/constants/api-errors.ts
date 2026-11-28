@@ -28,6 +28,8 @@ export const API_ERRORS = {
 
   // USERS - a username someone else holds (live or reserved for their redirects)
   USERNAME_TAKEN: 'USERNAME_TAKEN',
+  // USERS - a name in `RESERVED_USERNAMES` (routes, brands, future pages); nobody may hold it
+  USERNAME_RESERVED: 'USERNAME_RESERVED',
 
   // REGISTRATION - invitation and wait-list gate (`resolveInvitationCodeBeforeRegister`)
   REGISTRATION_CLOSED: 'REGISTRATION_CLOSED',

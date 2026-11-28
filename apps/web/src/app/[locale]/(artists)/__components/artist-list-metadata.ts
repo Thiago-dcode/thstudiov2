@@ -1,3 +1,4 @@
+import { artistListPath } from "@repo/common-lib/utils/artist-path";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -9,7 +10,7 @@ import { getArtistProfileResponse } from "@/modules/users/get-artist-share-ready
 export type ArtistListKind = "portfolios" | "collections" | "services";
 
 /**
- * Metadata for an artist's list page (`/artists/{u}/portfolios|collections|services`).
+ * Metadata for an artist's list page (`/{u}/portfolios|collections|services`).
  *
  * - Title and description name the artist AND their profession and locality — the old description
  *   was one boilerplate sentence repeated for every artist on the platform.
@@ -45,7 +46,7 @@ export async function buildArtistListMetadata({
     profile.address?.city?.trim() || profile.address?.state?.trim();
 
   return buildStaticPageMetadata({
-    path: `/artists/${profile.username}/${kind}`,
+    path: artistListPath(profile.username, kind),
     title: t("listTitle", { name }),
     description:
       profession && location

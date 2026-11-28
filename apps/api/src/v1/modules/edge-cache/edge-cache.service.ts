@@ -4,6 +4,8 @@ import { UnrecoverableError } from 'bullmq';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import { EDGE_PURGE_LOCALE_PREFIXES } from '@repo/common-lib/constants/edge-cache';
+import { artistPath } from '@repo/common-lib/utils/artist-path';
+import { isReservedUsername, USERNAME_ROUTE_PATTERN } from '@repo/common-lib/utils/username';
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import { canonicalProductionOrigin } from 'src/common/utils/canonical-origin';
 import { ArtistPublicPagesChangedEvent } from './events/artist-public-pages-changed.event';
@@ -13,8 +15,12 @@ import type { ApiLogger } from 'src/common/services/request.service';
 /** Cloudflare's per-request cap on purge-by-prefix. */
 export const MAX_PREFIXES_PER_REQUEST = 100;
 
-/** The only usernames ever sent: what the web's edge-cache allowlist accepts. */
-const USERNAME_PATTERN = /^[a-z0-9_-]+$/;
+/**
+ * The only usernames ever sent: what the web's edge-cache allowlist accepts (a lowercase,
+ * username-shaped, non-reserved first segment). Names are lowercased before this check.
+ */
+const isPurgeableUsername = (name: string): boolean =>
+  name === name.toLowerCase() && USERNAME_ROUTE_PATTERN.test(name) && !isReservedUsername(name);
 
 const PURGE_TIMEOUT_MS = 10_000;
 
@@ -67,10 +73,11 @@ export class EdgeCacheService {
   }
 
   /**
-   * One prefix per name and locale (`a11studio.com[/es|/pt]/artists/{name}`): no scheme, no query
-   * and no trailing slash, so it covers the profile, every sub-page and every query-string variant.
-   * It also covers `/artists/{name}*` (`ana` purges `anabel`), which only costs a cache miss.
-   * Names are lowercased and deduplicated; one that is not a valid username is dropped, never sent.
+   * One prefix per name and locale (`a11studio.com[/es|/pt]/{name}`): no scheme, no query and no
+   * trailing slash, so it covers the profile, every sub-page and every query-string variant.
+   * It also covers `/{name}*` (`ana` purges `anabel`, and `leg` would also purge `/legal*`), which
+   * only costs a cache miss. Names are lowercased and deduplicated; one that is not a valid or is
+   * a reserved username is dropped (counted in `dropped`), never sent.
    */
   buildPrefixes(
     host: string,
@@ -80,11 +87,11 @@ export class EdgeCacheService {
     let dropped = 0;
     for (const raw of names) {
       const name = typeof raw === 'string' ? raw.trim().toLowerCase() : '';
-      if (USERNAME_PATTERN.test(name)) valid.add(name);
+      if (isPurgeableUsername(name)) valid.add(name);
       else dropped++;
     }
     const prefixes = [...valid].flatMap((name) =>
-      EDGE_PURGE_LOCALE_PREFIXES.map((locale) => `${host}${locale}/artists/${name}`),
+      EDGE_PURGE_LOCALE_PREFIXES.map((locale) => `${host}${locale}${artistPath(name)}`),
     );
     const chunks: string[][] = [];
     for (let i = 0; i < prefixes.length; i += MAX_PREFIXES_PER_REQUEST) {

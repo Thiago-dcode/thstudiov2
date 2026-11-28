@@ -44,8 +44,9 @@ export default async function Atelier() {
             id: portfolio.id,
             slug: portfolio.slug,
             title: portfolio.title,
-            is_highlight: portfolio.is_highlight,
             is_active: portfolio.is_active,
+            created_at: portfolio.created_at,
+            updated_at: portfolio.updated_at,
             is_blocked: Boolean(portfolio.blocked_at),
             media: (
               <PortfolioCard.Image

@@ -26,6 +26,7 @@ import { SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/c
 import { artistShareReadySql } from '@repo/common-lib/utils/artist-share-ready';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
+import { listedEntitySql } from 'src/common/utils/public-entity';
 
 @Injectable()
 export class ServiceRepository extends BaseRepository {
@@ -35,6 +36,13 @@ export class ServiceRepository extends BaseRepository {
    */
   static readonly PUBLIC_SERVICE_PREDICATE = `s.blocked_at IS NULL AND s.is_active = true AND s.is_indexable = true
     AND ${artistShareReadySql('s.user_id')}`;
+
+  /**
+   * What `/{u}/services` lists (alias `s`): active and not blocked, the visitor list filters.
+   * Counts the artist nav's section; not the SEO `PUBLIC_SERVICE_PREDICATE` (no indexable or
+   * share-ready requirement).
+   */
+  static readonly LISTED_SERVICE_PREDICATE = listedEntitySql('s');
 
   private readonly COLUMNS: ServiceSchemaColumns[] = [
     'services.id',

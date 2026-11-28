@@ -110,12 +110,49 @@ describe('EdgeCacheService', () => {
     });
   });
 
+  describe('buildPrefixes: root artist URLs and reserved names (AC-23)', () => {
+    it('AC-23: user ana purges the three root prefixes and no /artists/ prefix', () => {
+      const { chunks } = service.buildPrefixes('a11studio.com', ['ana']);
+
+      expect(chunks.flat()).toEqual(['a11studio.com/ana', 'a11studio.com/es/ana', 'a11studio.com/pt/ana']);
+      expect(chunks.flat().some((p) => p.includes('/artists'))).toBe(false);
+    });
+
+    it('AC-23: a reserved name (any casing) is dropped, counted in dropped and never sent', () => {
+      const { chunks, names, dropped } = service.buildPrefixes('a11studio.com', [
+        'atelier', 'Atelier', 'youtube', 'for', 'ana',
+      ]);
+
+      expect(chunks.flat()).toEqual(['a11studio.com/ana', 'a11studio.com/es/ana', 'a11studio.com/pt/ana']);
+      expect(names).toBe(1);
+      expect(dropped).toBe(4);
+    });
+
+    it('AC-23: an invalid name (too short, dotted, path-like) is dropped as well', () => {
+      const { chunks, dropped } = service.buildPrefixes('a11studio.com', ['ab', 'a.b', 'ana/x', '', 42, null]);
+
+      expect(chunks).toEqual([]);
+      expect(dropped).toBe(6);
+    });
+
+    it('AC-23: every reserved name in the map is dropped', () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { RESERVED_USERNAMES } = require('@repo/common-lib/constants/reserved-usernames');
+      const reserved = Object.keys(RESERVED_USERNAMES);
+      const { chunks, names, dropped } = service.buildPrefixes('a11studio.com', reserved);
+
+      expect(chunks).toEqual([]);
+      expect(names).toBe(0);
+      expect(dropped).toBe(reserved.length);
+    });
+  });
+
   describe('buildPrefixes', () => {
     it('purges every locale with no scheme, no query and no trailing slash', () => {
       const { chunks, names, dropped } = service.buildPrefixes('a11studio.com', ['ana']);
 
       expect(chunks).toEqual([
-        ['a11studio.com/artists/ana', 'a11studio.com/es/artists/ana', 'a11studio.com/pt/artists/ana'],
+        ['a11studio.com/ana', 'a11studio.com/es/ana', 'a11studio.com/pt/ana'],
       ]);
       expect(names).toBe(1);
       expect(dropped).toBe(0);
@@ -129,12 +166,12 @@ describe('EdgeCacheService', () => {
 
       expect(names).toBe(2);
       expect(chunks.flat()).toEqual([
-        'a11studio.com/artists/ana',
-        'a11studio.com/es/artists/ana',
-        'a11studio.com/pt/artists/ana',
-        'a11studio.com/artists/bob_1-x',
-        'a11studio.com/es/artists/bob_1-x',
-        'a11studio.com/pt/artists/bob_1-x',
+        'a11studio.com/ana',
+        'a11studio.com/es/ana',
+        'a11studio.com/pt/ana',
+        'a11studio.com/bob_1-x',
+        'a11studio.com/es/bob_1-x',
+        'a11studio.com/pt/bob_1-x',
       ]);
     });
 
@@ -170,7 +207,7 @@ describe('EdgeCacheService', () => {
 
   describe('purgePrefixes', () => {
     const target: EdgePurgeTarget = { host: 'a11studio.com', zoneId: ZONE, token: TOKEN };
-    const prefixes = ['a11studio.com/artists/ana'];
+    const prefixes = ['a11studio.com/ana'];
 
     it('POSTs the prefixes to the zone purge endpoint with the bearer token', async () => {
       fetchMock.mockResolvedValue(jsonResponse(200, { success: true, errors: [] }));

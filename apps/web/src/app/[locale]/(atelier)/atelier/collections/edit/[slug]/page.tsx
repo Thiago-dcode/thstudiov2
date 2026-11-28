@@ -1,3 +1,4 @@
+import { artistCollectionPath } from "@repo/common-lib/utils/artist-path";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import {
@@ -36,7 +37,7 @@ export default async function CollectionEdit({ params }: Props) {
 
   const collection = collectionResponse.data;
   const publicHref = userAuth.username
-    ? `/artists/${userAuth.username}/collections/${collection.slug}`
+    ? artistCollectionPath(userAuth.username, collection.slug)
     : undefined;
 
   return (

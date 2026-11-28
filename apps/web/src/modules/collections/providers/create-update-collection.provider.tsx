@@ -1,6 +1,5 @@
 "use client";
 
-import { MAX_HIGHLIGHT_COLLECTIONS } from "@repo/common-lib/constants/highlights";
 import { MAX_COLLECTION_ITEMS } from "@repo/common-lib/constants/limits";
 import type {
   CollectionInput,
@@ -9,7 +8,6 @@ import type {
   FullCollectionMedia,
 } from "@repo/common-lib/types/collection";
 import type { Media } from "@repo/common-lib/types/media";
-import type { ActionReturn } from "@repo/common-lib/types/response";
 import { toast } from "@repo/ui/sonner";
 import { useTranslations } from "next-intl";
 import {
@@ -20,14 +18,12 @@ import {
   useCallback,
   useContext,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { toastErrorThrottled } from "@/lib/utils/throttled-toast";
 import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdateCollectionAction } from "../server-actions/create-update-collection.action";
-import { getCollectionHighlightCountAction } from "../server-actions/get-highlight-count.action";
 
 /** Builds the single-source-of-truth input from an existing collection (edit) or an empty draft (create). */
 function buildCollectionInput(
@@ -75,12 +71,8 @@ type CollectionContextType = {
   clear: () => void;
   currentCollection: FullCollection | undefined;
   setCollection: (collection: FullCollection) => void;
-  highlightCount: number;
-  highlightLimit: number;
   mediaItemLimit: number;
   isMediaLimitReached: boolean;
-  isLoadingHighlightCount: boolean;
-  fetchHighlightCount: (options?: { force?: boolean }) => Promise<void>;
 };
 
 const CollectionContext = createContext<CollectionContextType | null>(null);
@@ -119,45 +111,6 @@ export const CollectionProvider = ({
     [user],
   );
 
-  const highlightCountMemo = useRef<ActionReturn<
-    number | null,
-    undefined
-  > | null>(null);
-  const forceHighlightFetchRef = useRef(false);
-  const highlightLimit = MAX_HIGHLIGHT_COLLECTIONS;
-
-  const {
-    handleAction: handleHighlightCountAction,
-    result: highlightCountResult,
-    isPending: isLoadingHighlightCount,
-    cleanResult: cleanHighlightResult,
-  } = useHandleAction({
-    action: async () => {
-      if (highlightCountMemo.current && !forceHighlightFetchRef.current) {
-        return highlightCountMemo.current;
-      }
-      forceHighlightFetchRef.current = false;
-      return await getCollectionHighlightCountAction();
-    },
-    afterAction: async (data) => {
-      highlightCountMemo.current = data;
-    },
-  });
-
-  const fetchHighlightCount = useCallback(
-    async (options?: { force?: boolean }) => {
-      if (options?.force) {
-        highlightCountMemo.current = null;
-        forceHighlightFetchRef.current = true;
-        cleanHighlightResult();
-      }
-      await handleHighlightCountAction();
-    },
-    [handleHighlightCountAction, cleanHighlightResult],
-  );
-
-  const highlightCount = highlightCountResult?.data ?? 0;
-
   const {
     handleAction,
     isPending,
@@ -189,7 +142,6 @@ export const CollectionProvider = ({
           toast.error(error);
         }
       } else if (result.data) {
-        await fetchHighlightCount({ force: true });
         clear();
         toast.success(
           currentCollection ? t("toastUpdated") : t("toastCreated"),
@@ -315,12 +267,8 @@ export const CollectionProvider = ({
     clear,
     currentCollection,
     setCollection,
-    highlightCount,
-    highlightLimit,
     mediaItemLimit: MAX_COLLECTION_ITEMS,
     isMediaLimitReached,
-    isLoadingHighlightCount,
-    fetchHighlightCount,
   };
 
   return (

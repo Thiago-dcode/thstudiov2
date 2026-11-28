@@ -88,7 +88,10 @@ export type EntitySeoMetadata = {
     seo_title: string | null;
     seo_description: string | null;
     og_image: string | null;
-    /** Locale-agnostic path (no locale prefix); the web builds canonical + hreflang from it. */
+    /**
+     * Locale-agnostic path (no locale prefix), e.g. `/{username}/media/{public_id}`; the web builds
+     * canonical + hreflang from it.
+     */
     canonical_path: string;
     /**
      * `true` = `noindex, nofollow` (not public). `'follow'` = `noindex, follow`: reachable, but too

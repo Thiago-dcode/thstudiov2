@@ -8,7 +8,6 @@ import {
 import type { Portfolio } from "@repo/common-lib/types/portfolio";
 import type { FullService } from "@repo/common-lib/types/service";
 import { FileInput } from "@repo/ui/components/custom/file-input";
-import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
 import {
   Combobox,
@@ -66,11 +65,6 @@ export const CreateOrUpdateService = ({
     setTerms,
     selectedPortfolioId,
     setSelectedPortfolioId,
-    isHighlighted,
-    setIsHighlighted,
-    highlightLimit,
-    highlightToggleDisabled,
-    isLoadingHighlightCount,
   } = useCreateUpdateService();
 
   const { setShrinked } = useMainNav();
@@ -151,7 +145,7 @@ export const CreateOrUpdateService = ({
                 <p className="text-xs text-text-muted">
                   {t("permalinkLabel")}{" "}
                   <span className="font-mono">
-                    /artists/{user.username}/services/{currentService.slug}
+                    /{user.username}/services/{currentService.slug}
                   </span>{" "}
                   — {t("permalinkFrozenNote")}
                 </p>
@@ -266,45 +260,6 @@ export const CreateOrUpdateService = ({
                   </Label>
                 </div>
               </div>
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="service-is-highlight"
-                  checked={isHighlighted}
-                  onCheckedChange={(checked) => {
-                    deleteInputErrorProperty("is_highlight");
-                    const value = checked === true;
-                    serviceInput.current.is_highlight = value;
-                    setIsHighlighted(value);
-                    notifyFormChange();
-                  }}
-                  disabled={
-                    isPending ||
-                    isLoadingHighlightCount ||
-                    highlightToggleDisabled
-                  }
-                />
-                <Label
-                  htmlFor="service-is-highlight"
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  {t("showOnProfile")}
-                </Label>
-                <InfoTooltip
-                  content={
-                    <p className="text-sm">
-                      {t("showOnProfileInfo", { limit: highlightLimit })}
-                    </p>
-                  }
-                />
-              </div>
-              {!isLoadingHighlightCount && highlightToggleDisabled && (
-                <p className="text-xs text-text-muted">
-                  {t("highlightLimitReached", { limit: highlightLimit })}
-                </p>
-              )}
             </div>
           </div>
 

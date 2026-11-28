@@ -37,6 +37,7 @@ import { TwoFAMail } from './mails/twofa-mail';
 import { Verify2faRequest } from './requests/verify-2fa.request';
 import { compareAsc } from 'date-fns/compareAsc';
 import { compare, hash } from '@repo/common-lib/utils/hash';
+import { isReservedUsername } from '@repo/common-lib/utils/username';
 import { PasswordRecoveryRequest } from './requests/password-recovery.request';
 import { PasswordRecoveryAttemptsService } from './password-recovery-attempts/password-recovery-attempts.service';
 import { PasswordRecoveryMail } from './mails/password-recovery-mail';
@@ -696,6 +697,8 @@ export class AuthService {
     try {
       const clientRole = await this.roleService.getByName(role);
       step = 'username';
+      // Inside the try so the claimed invitation use is released below.
+      if (username && isReservedUsername(username)) throw ApiException.usernameReserved();
       // Only a name that survives the username folding counts: `Иван` or a blank name would give
       // a meaningless `user…`, so the role prefix is used and the Name step may still replace it.
       const namePrefix = [overrides.name, overrides.surname].find((part) => UserService.usernameBase(part));
@@ -788,6 +791,11 @@ export class AuthService {
     if (step === 'role') {
       this.logService.critical('Account creation failed unexpectedly', { ...failure, ...fields });
       return new InternalServerErrorException('Something went wrong creating your account');
+    }
+    // The caller asked for a reserved name: the client's fault, and the exception filter already
+    // writes its 4xx `warn`. Not an admin alert.
+    if (error instanceof ApiException && error.API_ERROR_CODE === API_ERRORS.USERNAME_RESERVED) {
+      return error;
     }
     // A known failure (e.g. no free username after the retries): already shaped for the client.
     if (error instanceof HttpException && error.getStatus() < 500) {

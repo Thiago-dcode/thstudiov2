@@ -30,7 +30,7 @@ All in `apps/web/src/lib/seo/`:
 2. **One public-visibility predicate per entity**, shared by the sitemap and the page's noindex decision, so a URL is listed if and only if it is indexable. Add or change a predicate in both at once.
 3. **Missing or hidden content returns a real 404** (`notFound()`), never a 200 shell. **Never put `loading.tsx` above public routes**: streaming a fallback makes soft 404s. (`atelier/` is private, so it may have one.)
 4. **Directory gate**: `/artists` and `/portfolios` stay hidden (404 and no entry points: nav, sitemap, links) until `isDirectoryOpen()` (`lib/directory-visibility.ts`) says so.
-5. **URL changes need redirects.** A renamed username or slug 301s from the old URL (`redirectToCurrentUsername`); never orphan an indexed URL.
+5. **URL changes need redirects.** A renamed username or slug 301s from the old URL (`redirectToCurrentUsername`); never orphan an indexed URL. Artist pages live at the root (`/{username}`), so a new top-level route must be reserved in `RESERVED_USERNAMES` (common-lib) first; `redirectToCurrentUsername` 404s any segment that fails `isArtistRouteSegment` before calling the API.
 6. **Product scope is photographers.** Don't add other-discipline landing pages until there are enough real artists.
 7. Signed-out public HTML is cached at the edge; per-user content must not render into it (it is purged on change).
 

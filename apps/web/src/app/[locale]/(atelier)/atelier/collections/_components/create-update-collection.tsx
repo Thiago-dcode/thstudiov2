@@ -9,7 +9,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { FullCollection } from "@repo/common-lib/types/collection";
-import { isHighlightToggleDisabled } from "@repo/common-lib/utils/highlights";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
 import { Label } from "@repo/ui/components/shadcn/label";
@@ -88,33 +87,15 @@ export const CreateOrUpdateCollection = ({
     mediaSelected,
     handlePushMediaSelected,
     handleRemoveMediaSelected,
-    highlightCount,
-    highlightLimit,
     mediaItemLimit,
     isMediaLimitReached,
-    isLoadingHighlightCount,
-    fetchHighlightCount,
   } = useCollection();
 
   const { setShrinked } = useMainNav();
 
-  const isCurrentlyHighlighted = collectionInput.is_highlight ?? false;
-  const originallyHighlighted =
-    (currentCollection ?? defaultCollection)?.is_highlight ?? false;
-  const highlightToggleDisabled = isHighlightToggleDisabled(
-    highlightCount,
-    highlightLimit,
-    isCurrentlyHighlighted,
-    originallyHighlighted,
-  );
-
   const readOnly = Boolean(
     (currentCollection ?? defaultCollection)?.blocked_at,
   );
-
-  useEffect(() => {
-    void fetchHighlightCount();
-  }, [fetchHighlightCount]);
 
   useEffect(() => {
     if (defaultCollection && currentCollection?.id !== defaultCollection.id) {
@@ -233,7 +214,7 @@ export const CreateOrUpdateCollection = ({
               <p className="text-xs text-text-muted">
                 {t("form.permalinkLabel")}{" "}
                 <span className="font-mono">
-                  /artists/{user.username}/collections/{defaultCollection.slug}
+                  /{user.username}/collections/{defaultCollection.slug}
                 </span>{" "}
                 — {t("form.permalinkFrozenNote")}
               </p>
@@ -254,42 +235,6 @@ export const CreateOrUpdateCollection = ({
             placeholder={t("form.descriptionPlaceholder")}
             disabled={isPending}
           />
-
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="collection-is-highlight"
-                checked={collectionInput.is_highlight ?? false}
-                onCheckedChange={(checked) => {
-                  deleteInputErrorProperty("is_highlight");
-                  handleSetFormData("is_highlight", checked === true);
-                }}
-                disabled={
-                  isPending ||
-                  isLoadingHighlightCount ||
-                  highlightToggleDisabled
-                }
-              />
-              <Label
-                htmlFor="collection-is-highlight"
-                className="text-sm font-normal cursor-pointer"
-              >
-                {t("form.showOnProfile")}
-              </Label>
-              <InfoTooltip
-                content={
-                  <p className="text-sm">
-                    {t("form.showOnProfileInfo", { limit: highlightLimit })}
-                  </p>
-                }
-              />
-            </div>
-            {!isLoadingHighlightCount && highlightToggleDisabled && (
-              <p className="text-xs text-text-muted">
-                {t("form.highlightLimitReached", { limit: highlightLimit })}
-              </p>
-            )}
-          </div>
 
           <div className="flex items-center gap-2">
             <Checkbox

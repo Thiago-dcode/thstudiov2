@@ -5,6 +5,11 @@ import {
   MAX_HIGHLIGHT_PORTFOLIOS,
   MAX_HIGHLIGHT_SERVICES,
 } from "@repo/common-lib/constants/highlights";
+import {
+  artistCollectionPath,
+  artistListPath,
+  artistPortfolioPath,
+} from "@repo/common-lib/utils/artist-path";
 import { EDITORIAL_LINK_CLASS } from "@repo/ui/components/custom/editorial";
 import {
   Tabs,
@@ -51,7 +56,7 @@ export const ArtistSectionsTabsView = ({
       label: t("portfolios"),
       viewAll: hasMoreThan(sections.portfolios, MAX_HIGHLIGHT_PORTFOLIOS)
         ? {
-            href: `/artists/${username}/portfolios`,
+            href: artistListPath(username, "portfolios"),
             ariaLabel: t("viewAllPortfolios"),
           }
         : undefined,
@@ -60,7 +65,7 @@ export const ArtistSectionsTabsView = ({
           {portfolios.map((portfolio) => (
             <Link
               key={portfolio.id}
-              href={`/artists/${username}/portfolios/${portfolio.slug}`}
+              href={artistPortfolioPath(username, portfolio.slug)}
               className="block w-full min-w-0"
             >
               <PortfolioCard.Item portfolio={portfolio} />
@@ -76,7 +81,7 @@ export const ArtistSectionsTabsView = ({
       label: t("collections"),
       viewAll: hasMoreThan(sections.collections, MAX_HIGHLIGHT_COLLECTIONS)
         ? {
-            href: `/artists/${username}/collections`,
+            href: artistListPath(username, "collections"),
             ariaLabel: t("viewAllCollections"),
           }
         : undefined,
@@ -85,7 +90,7 @@ export const ArtistSectionsTabsView = ({
           {collections.map((collection) => (
             <Link
               key={collection.id}
-              href={`/artists/${username}/collections/${collection.slug}`}
+              href={artistCollectionPath(username, collection.slug)}
               className="block w-full min-w-0"
             >
               <CollectionCard collection={collection} />
@@ -101,7 +106,7 @@ export const ArtistSectionsTabsView = ({
       label: t("services"),
       viewAll: hasMoreThan(sections.services, MAX_HIGHLIGHT_SERVICES)
         ? {
-            href: `/artists/${username}/services`,
+            href: artistListPath(username, "services"),
             ariaLabel: t("viewAllServices"),
           }
         : undefined,

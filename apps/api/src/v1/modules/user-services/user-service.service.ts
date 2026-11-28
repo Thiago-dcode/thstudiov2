@@ -10,6 +10,7 @@ import { UserRepository } from "../users/users.repository";
 import { ServiceRepository } from "../services/service.repository";
 import { PublicViewerService } from "src/common/services/public-viewer.service";
 import { PUBLIC_ENTITY_FILTERS, isHiddenFromPublic } from "src/common/utils/public-entity";
+import { artistServicePath } from "@repo/common-lib/utils/artist-path";
 
 /** Nest cache-manager TTL (ms). */
 const CACHE_TTL = 1000 * 60 * 60 * 24;
@@ -60,7 +61,7 @@ export class UserServiceService {
           seo_description: meta.seo_description,
           thumbnail_path: meta.thumbnail,
           // The stored username, not the requested one: a case variant must not mint its own canonical.
-          canonical_path: `/artists/${user.username}/services/${slug}`,
+          canonical_path: artistServicePath(user.username, slug),
           noindex: !meta.is_public,
         };
       },

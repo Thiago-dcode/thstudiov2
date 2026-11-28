@@ -1,3 +1,4 @@
+import { artistPath } from "@repo/common-lib/utils/artist-path";
 import { getBenefitMonths } from "@repo/common-lib/utils/wait-list";
 import {
   EDITORIAL_PROSE_LINK_CLASS,
@@ -17,7 +18,7 @@ import waitListService from "@/modules/wait-list/wait-list.service";
 export const dynamic = "force-dynamic";
 
 /** Same example artist page the wait-list emails link to. */
-const WAIT_LIST_SHOWCASE_PATH = "/artists/thsworld";
+const WAIT_LIST_SHOWCASE_PATH = artistPath("thsworld");
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("waitListValidate");

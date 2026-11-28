@@ -1,4 +1,5 @@
 import type { MediaWithUser } from "@repo/common-lib/types/media";
+import { artistMediaPath } from "@repo/common-lib/utils/artist-path";
 import { resolveMediaPageText } from "@repo/common-lib/utils/media-page-text";
 import { getLocale, getTranslations } from "next-intl/server";
 import {
@@ -43,9 +44,9 @@ export const MediaPageComponent = async ({
   const allBreadcrumbs: BreadcrumbEntry[] = [
     ...breadcrumbs,
     {
-      // The real route is /artists/{username}/media/{id} — the username-less form 404s. Harmless
+      // The real route is /{username}/media/{id} — the username-less form 404s. Harmless
       // today because `isActive` renders it as a span, but it is the href the moment that changes.
-      url: `/artists/${user.username}/media/${media.public_id}`,
+      url: artistMediaPath(user.username, media.public_id),
       title,
       isActive: true,
     },

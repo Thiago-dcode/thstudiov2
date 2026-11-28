@@ -222,3 +222,47 @@ describe('UserService.usernameBase', () => {
     await expect(service.generateUniqueUsername('Иван')).resolves.toMatch(/^user[a-z0-9]{8}$/);
   });
 });
+
+describe('UserService.generateUniqueUsername: reserved names', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  // Alphabet is a-z then 0-9, so the suffix `1studios` is these indexes. With base `a1` the first
+  // candidate is `a1` + `1studios` = `a11studios`, a reserved brand name.
+  const ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const indexes = (text: string) => [...text].map((ch) => ALPHABET.indexOf(ch));
+
+  const scriptRandomInt = (...suffixes: string[]) => {
+    const queue = suffixes.flatMap(indexes);
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return jest.spyOn(require('crypto'), 'randomInt').mockImplementation(() => queue.shift() ?? 0);
+  };
+
+  it('AC-13: skips a reserved first candidate and returns the second', async () => {
+    scriptRandomInt('1studios', 'zzzzzzzz');
+    const { service, userRepository, usernameHistoryRepository } = build();
+
+    const username = await service.generateUniqueUsername('a1');
+
+    expect(username).toBe('a1zzzzzzzz');
+    // A reserved candidate counts as taken without a DB read, so only the second was looked up.
+    expect(userRepository.usernameExists).toHaveBeenCalledTimes(1);
+    expect(userRepository.usernameExists).toHaveBeenCalledWith('a1zzzzzzzz');
+    expect(usernameHistoryRepository.isReservedForOtherUser).toHaveBeenCalledTimes(1);
+    expect(userRepository.usernameExists).not.toHaveBeenCalledWith('a11studios');
+  });
+
+  it('AC-13: never returns a reserved name even if every attempt but the last is reserved', async () => {
+    scriptRandomInt('1studios', '1studios', '1studios', '1studios', 'aaaaaaaa');
+    const { service } = build();
+
+    await expect(service.generateUniqueUsername('a1')).resolves.toBe('a1aaaaaaaa');
+  });
+
+  it('AC-13: gives up with a conflict when every attempt is reserved', async () => {
+    scriptRandomInt('1studios', '1studios', '1studios', '1studios', '1studios');
+    const { service, userRepository } = build();
+
+    await expect(service.generateUniqueUsername('a1')).rejects.toThrow('Could not generate a unique username');
+    expect(userRepository.usernameExists).not.toHaveBeenCalled();
+  });
+});

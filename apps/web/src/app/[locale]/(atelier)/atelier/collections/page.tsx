@@ -44,8 +44,9 @@ export default async function CollectionListPage() {
             id: collection.id,
             slug: collection.slug,
             title: collection.title,
-            is_highlight: collection.is_highlight,
             is_active: collection.is_active,
+            created_at: collection.created_at,
+            updated_at: collection.updated_at,
             is_blocked: Boolean(collection.blocked_at),
             media: (
               <CollectionCover

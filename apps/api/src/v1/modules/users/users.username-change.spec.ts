@@ -23,6 +23,7 @@ import { addDays, addMonths, subDays } from 'date-fns';
 import { CACHE_KEY_USERNAME_EXISTS } from '@repo/common-lib/constants/cache';
 import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import { MAX_USERNAME_RESET, USERNAME_RESERVATION_DAYS } from '@repo/common-lib/constants/limits';
+import { API_ERRORS } from '@repo/common-lib/constants/api-errors';
 import { UserService } from './users.service';
 
 const baseUser = {
@@ -192,6 +193,86 @@ describe('UserService.update — username changes', () => {
 
     expect(usernameHistoryRepository.reserve).not.toHaveBeenCalled();
     expect(usernameHistoryRepository.isReservedForOtherUser).not.toHaveBeenCalled();
+  });
+});
+
+describe('UserService.update — reserved usernames', () => {
+  const reservedRename = (overrides: Parameters<typeof build>[0] = {}) => build(overrides);
+
+  it.each(['Atelier', 'atelier', 'ATELIER', '  YouTube ', 'for', 'constructor', 'a11studio'])(
+    'AC-12: renaming to %p answers 400 USERNAME_RESERVED and writes nothing',
+    async (name) => {
+      const { rename, userRepository, usernameHistoryRepository, helpers, eventEmitter } = reservedRename();
+
+      await expect(rename(name)).rejects.toMatchObject({
+        API_ERROR_CODE: API_ERRORS.USERNAME_RESERVED,
+        message: 'Username is reserved',
+      });
+      await expect(rename(name)).rejects.toMatchObject({ status: 400 });
+      expect(userRepository.updateById).not.toHaveBeenCalled();
+      expect(usernameHistoryRepository.reserve).not.toHaveBeenCalled();
+      expect(usernameHistoryRepository.release).not.toHaveBeenCalled();
+      expect(helpers.deleteManyCached).not.toHaveBeenCalled();
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    },
+  );
+
+  it('AC-12: the reserved check runs before the taken and history checks (no DB read at all)', async () => {
+    const { rename, userRepository, usernameHistoryRepository } = reservedRename();
+
+    await expect(rename('Atelier')).rejects.toMatchObject({ API_ERROR_CODE: API_ERRORS.USERNAME_RESERVED });
+
+    expect(userRepository.usernameExists).not.toHaveBeenCalled();
+    expect(usernameHistoryRepository.isReservedForOtherUser).not.toHaveBeenCalled();
+  });
+
+  it('AC-12: a reserved name in the user own history is still refused (no renaming back into a reserved word)', async () => {
+    const { rename, userRepository, usernameHistoryRepository } = reservedRename();
+    // The history says this user held it before and nobody else reserved it: `taken` would pass.
+    usernameHistoryRepository.isReservedForOtherUser.mockResolvedValue(false);
+    userRepository.usernameExists.mockResolvedValue(false);
+
+    await expect(rename('atelier')).rejects.toMatchObject({ API_ERROR_CODE: API_ERRORS.USERNAME_RESERVED });
+    expect(userRepository.updateById).not.toHaveBeenCalled();
+    expect(usernameHistoryRepository.release).not.toHaveBeenCalled();
+  });
+
+  it('AC-12: a reserved attempt does not burn a monthly change and is not answered with "limit reached"', async () => {
+    const { rename, userRepository } = reservedRename({
+      username_reset_count: MAX_USERNAME_RESET,
+      next_username_reset: addDays(new Date(), 10),
+    });
+
+    const error = await rename('Atelier').catch((e: unknown) => e);
+
+    expect(error).toMatchObject({ API_ERROR_CODE: API_ERRORS.USERNAME_RESERVED });
+    expect((error as Error).message).not.toMatch(/limit reached/i);
+    expect(userRepository.updateById).not.toHaveBeenCalled();
+  });
+
+  it('AC-12: the counters are untouched (no update call carries username_reset_count or next_username_reset)', async () => {
+    const { rename, userRepository } = reservedRename({ username_reset_count: 1, next_username_reset: addDays(new Date(), 5) });
+
+    await expect(rename('youtube')).rejects.toBeDefined();
+
+    expect(userRepository.updateById).not.toHaveBeenCalled();
+  });
+
+  it('AC-12: an unreserved name still renames normally', async () => {
+    const { rename, userRepository } = reservedRename();
+
+    await rename('tostring');
+
+    expect(userRepository.updateById).toHaveBeenCalledWith(5, expect.objectContaining({ username: 'tostring' }));
+  });
+
+  it('AC-12: a profile edit that keeps the username is not blocked even if the current name is reserved', async () => {
+    // Only a CHANGE is checked, so an edit that leaves the (grandfathered) name alone must not 400.
+    const { service, userRepository } = build({ username: 'atelier' });
+
+    await service.update(5, { name: 'Ana Maria' } as never);
+
+    expect(userRepository.updateById).toHaveBeenCalled();
   });
 });
 

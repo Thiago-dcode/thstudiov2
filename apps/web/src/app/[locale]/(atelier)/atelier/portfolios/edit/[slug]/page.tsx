@@ -1,3 +1,4 @@
+import { artistPortfolioPath } from "@repo/common-lib/utils/artist-path";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import {
@@ -36,7 +37,7 @@ export default async function PortfolioDetail({ params }: Props) {
 
   const portfolio = portfolioResponse.data;
   const publicHref = userAuth.username
-    ? `/artists/${userAuth.username}/portfolios/${portfolio.slug}`
+    ? artistPortfolioPath(userAuth.username, portfolio.slug)
     : undefined;
 
   return (

@@ -1,3 +1,4 @@
+import { artistPortfolioPath } from "@repo/common-lib/utils/artist-path";
 import { Link } from "@/i18n/navigation";
 import portfolioService from "../portfolio.service";
 import { PortfolioCard } from "./portfolio-card";
@@ -34,7 +35,7 @@ export const UserPortfoliosSection = async ({
       {response.data.map((portfolio) => (
         <Link
           key={portfolio.id}
-          href={`/artists/${username}/portfolios/${portfolio.slug}`}
+          href={artistPortfolioPath(username, portfolio.slug)}
           className="block w-full min-w-0"
         >
           <PortfolioCard.Item portfolio={portfolio} />

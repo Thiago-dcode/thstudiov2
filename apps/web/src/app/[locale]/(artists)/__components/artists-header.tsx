@@ -1,4 +1,9 @@
 "use client";
+import {
+  artistAboutPath,
+  artistListPath,
+  artistPath,
+} from "@repo/common-lib/utils/artist-path";
 
 import { ShareButton } from "@repo/ui/components/custom/share-button";
 import { cn } from "@repo/ui/lib/utils";
@@ -9,6 +14,7 @@ import { RegistrationCtaButton } from "@/lib/components/registration-cta-button"
 import { SiteHeader, useSiteHeader } from "@/lib/components/site-header";
 import { useAppStatus } from "@/lib/providers/app-status.provider";
 import { useSession } from "@/lib/providers/session.provider";
+import { useArtist } from "@/modules/users/providers/artist.provider";
 import { ArtistContactDialog } from "./artist-contact.dialog";
 
 function ArtistsHeaderContactAction() {
@@ -75,17 +81,38 @@ function AtelierOrInvite({ className }: { className?: string }) {
 export const ArtistsHeader = () => {
   const pathname = usePathname();
   const params = useParams();
-  const username = params.username as string;
+  // `sections` is null when the profile didn't load: no section links at all.
+  const { artist, sections } = useArtist();
+  // The URL segment is the fallback for a segment with no profile (e.g. a 404 under this layout).
+  const username = artist?.username ?? (params.username as string);
   const t = useTranslations("artists.header");
   const tShare = useTranslations("artists");
 
-  const profileHref = `/artists/${username}`;
+  const profileHref = artistPath(username);
+  // Only sections with something to show: a hidden link disappears, it is never greyed out.
+  // Derived from server-provided data alone (not the session or `isMounted`), so SSR and hydration agree.
   const sectionItems = [
-    { label: t("nav.portfolios"), href: `${profileHref}/portfolios` },
-    { label: t("nav.collections"), href: `${profileHref}/collections` },
-    { label: t("nav.services"), href: `${profileHref}/services` },
-    { label: t("nav.about"), href: `${profileHref}/about` },
-  ];
+    {
+      label: t("nav.portfolios"),
+      href: artistListPath(username, "portfolios"),
+      visible: (sections?.portfoliosActiveCount ?? 0) > 0,
+    },
+    {
+      label: t("nav.collections"),
+      href: artistListPath(username, "collections"),
+      visible: (sections?.collectionsActiveCount ?? 0) > 0,
+    },
+    {
+      label: t("nav.services"),
+      href: artistListPath(username, "services"),
+      visible: (sections?.servicesActiveCount ?? 0) > 0,
+    },
+    {
+      label: t("nav.about"),
+      href: artistAboutPath(username),
+      visible: sections?.has_about_page === true,
+    },
+  ].filter((item) => item.visible);
   const navItems = [
     { label: `@${username}`, href: profileHref },
     ...sectionItems,

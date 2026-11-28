@@ -169,7 +169,7 @@ describe('edge purge acceptance (service + processor together)', () => {
       expect(Object.keys(body)).toEqual(['prefixes']);
       expect([...body.prefixes].sort()).toEqual(
         ['newname', 'oldname', 'ok_1-x']
-          .flatMap((n) => [`a11studio.com/artists/${n}`, `a11studio.com/es/artists/${n}`, `a11studio.com/pt/artists/${n}`])
+          .flatMap((n) => [`a11studio.com/${n}`, `a11studio.com/es/${n}`, `a11studio.com/pt/${n}`])
           .sort(),
       );
       for (const prefix of body.prefixes) {

@@ -383,7 +383,7 @@ export class MediaRepository extends BaseRepository {
 
   /**
    * Public media for the sitemap, keyed by the PRIMARY media URL
-   * (`/artists/{username}/media/{public_id}`) — the URL the nested portfolio/collection views
+   * (`/{username}/media/{public_id}`) — the URL the nested portfolio/collection views
    * canonicalize to, so only the canonical form is ever submitted.
    */
   async getSitemapMedia(limit: number, offset: number): Promise<SitemapMediaRow[]> {

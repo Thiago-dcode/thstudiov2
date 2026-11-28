@@ -12,3 +12,4 @@ export * from './username';
 export * from './user-limits';
 export * from './media';
 export * from './ai-credits';
+export * from './artist-path';

@@ -4,6 +4,7 @@ import { MAX_CATEGORIES_MEDIA } from "@repo/common-lib/constants/limits";
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import type { LocationInput } from "@repo/common-lib/types/location";
 import type { Media, UpdateMediaInput } from "@repo/common-lib/types/media";
+import { artistMediaPath } from "@repo/common-lib/utils/artist-path";
 import { bytesToMB } from "@repo/common-lib/utils/bytes";
 import { MediaHelper } from "@repo/common-lib/utils/media";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
@@ -353,7 +354,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
   }, [savedMedia.seo_generated_at]);
 
   const mediaPublicPath = savedMedia.public_id
-    ? `/artists/${username}/media/${savedMedia.public_id}`
+    ? artistMediaPath(username, savedMedia.public_id)
     : null;
   const mediaPublicUrl = useMemo(() => {
     if (!mediaPublicPath || !username) return null;

@@ -69,6 +69,11 @@ export class ApiException extends HttpException {
     return new ApiException(API_ERRORS.USERNAME_TAKEN, message, HttpStatus.CONFLICT);
   }
 
+  /** The username is in `RESERVED_USERNAMES` (a route, brand or future page): nobody may hold it. */
+  static usernameReserved(message = 'Username is reserved') {
+    return new ApiException(API_ERRORS.USERNAME_RESERVED, message, HttpStatus.BAD_REQUEST);
+  }
+
   /** The user already owns another item of the same kind with this title. Scoped per user, never global. */
   static titleAlreadyExists(message: string) {
     return new ApiException(API_ERRORS.TITLE_ALREADY_EXISTS, message, HttpStatus.CONFLICT);

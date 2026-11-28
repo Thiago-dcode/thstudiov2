@@ -1,9 +1,6 @@
 "use client";
 
-import { MAX_HIGHLIGHT_SERVICES } from "@repo/common-lib/constants/highlights";
-import type { ActionReturn } from "@repo/common-lib/types/response";
 import type { FullService, Service } from "@repo/common-lib/types/service";
-import { isHighlightToggleDisabled } from "@repo/common-lib/utils/highlights";
 import { toast } from "@repo/ui/sonner";
 import { useTranslations } from "next-intl";
 import {
@@ -12,7 +9,6 @@ import {
   type ReactNode,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -20,14 +16,13 @@ import {
 import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdateServiceAction } from "../server-actions/create-update-service.action";
-import { getServiceHighlightCountAction } from "../server-actions/get-highlight-count.action";
 
 type ServiceActionInput = Parameters<typeof createOrUpdateServiceAction>[0];
 
 /**
  * Single source of truth for the ref-backed (uncontrolled) service form fields.
  * Kept in one ref so inputs stay uncontrolled and don't re-render on each keystroke.
- * Reactive lists (features/terms/portfolio/highlight) remain in React state.
+ * Reactive lists (features/terms/portfolio) remain in React state.
  */
 export type ServiceInput = {
   title: string;
@@ -37,7 +32,6 @@ export type ServiceInput = {
   show_price: boolean;
   is_highlight: boolean;
   thumbnail: File | undefined;
-  originallyHighlighted: boolean;
 };
 
 const createEmptyServiceInput = (): ServiceInput => ({
@@ -48,7 +42,6 @@ const createEmptyServiceInput = (): ServiceInput => ({
   show_price: false,
   is_highlight: false,
   thumbnail: undefined,
-  originallyHighlighted: false,
 });
 
 type CreateUpdateServiceContextType = {
@@ -77,13 +70,6 @@ type CreateUpdateServiceContextType = {
   setTerms: (value: string[]) => void;
   selectedPortfolioId: number | undefined;
   setSelectedPortfolioId: (value: number | undefined) => void;
-  isHighlighted: boolean;
-  setIsHighlighted: (value: boolean) => void;
-  highlightCount: number;
-  highlightLimit: number;
-  highlightToggleDisabled: boolean;
-  isLoadingHighlightCount: boolean;
-  fetchHighlightCount: (options?: { force?: boolean }) => Promise<void>;
 };
 
 const CreateUpdateServiceContext =
@@ -112,51 +98,11 @@ export function CreateUpdateServiceProvider({
   const [currentService, setCurrentService] = useState<FullService | undefined>(
     undefined,
   );
-  const highlightLimit = MAX_HIGHLIGHT_SERVICES;
   const isUpdate = !!currentService;
   const readOnly = Boolean(currentService?.blocked_at);
 
-  const highlightCountMemo = useRef<ActionReturn<
-    number | null,
-    undefined
-  > | null>(null);
-  const forceHighlightFetchRef = useRef(false);
-
-  const {
-    handleAction: handleHighlightCountAction,
-    result: highlightCountResult,
-    isPending: isLoadingHighlightCount,
-    cleanResult: cleanHighlightResult,
-  } = useHandleAction({
-    action: async () => {
-      if (highlightCountMemo.current && !forceHighlightFetchRef.current) {
-        return highlightCountMemo.current;
-      }
-      forceHighlightFetchRef.current = false;
-      return await getServiceHighlightCountAction();
-    },
-    afterAction: async (data) => {
-      highlightCountMemo.current = data;
-    },
-  });
-
-  const fetchHighlightCount = useCallback(
-    async (options?: { force?: boolean }) => {
-      if (options?.force) {
-        highlightCountMemo.current = null;
-        forceHighlightFetchRef.current = true;
-        cleanHighlightResult();
-      }
-      await handleHighlightCountAction();
-    },
-    [handleHighlightCountAction, cleanHighlightResult],
-  );
-
-  const highlightCount = highlightCountResult?.data ?? 0;
-
   const serviceInput = useRef<ServiceInput>(createEmptyServiceInput());
 
-  const [isHighlighted, setIsHighlighted] = useState(false);
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<
     number | undefined
   >(undefined);
@@ -202,7 +148,6 @@ export function CreateUpdateServiceProvider({
           toast.error(error);
         }
       } else if (result.data) {
-        await fetchHighlightCount({ force: true });
         toast.success(isUpdate ? t("toastUpdated") : t("toastCreated"));
       }
     },
@@ -275,7 +220,6 @@ export function CreateUpdateServiceProvider({
     currentService,
     features,
     formRevision,
-    isHighlighted,
     normalizeStringList,
     selectedPortfolioId,
     terms,
@@ -309,13 +253,6 @@ export function CreateUpdateServiceProvider({
     terms,
   ]);
 
-  const highlightToggleDisabled = isHighlightToggleDisabled(
-    highlightCount,
-    highlightLimit,
-    isHighlighted,
-    serviceInput.current.originallyHighlighted,
-  );
-
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -340,9 +277,7 @@ export function CreateUpdateServiceProvider({
         show_price: service.show_price,
         is_highlight: service.is_highlight,
         thumbnail: undefined,
-        originallyHighlighted: service.is_highlight,
       };
-      setIsHighlighted(service.is_highlight);
       setSelectedPortfolioId(service.portfolio_id ?? undefined);
       setFeatures(
         service.features?.length ? service.features.map((f) => f.title) : [""],
@@ -366,17 +301,12 @@ export function CreateUpdateServiceProvider({
   const clear = useCallback(() => {
     setCurrentService(undefined);
     serviceInput.current = createEmptyServiceInput();
-    setIsHighlighted(false);
     setSelectedPortfolioId(undefined);
     setFeatures([""]);
     setTerms([""]);
     reset();
     notifyFormChange();
   }, [notifyFormChange, reset]);
-
-  useEffect(() => {
-    void fetchHighlightCount();
-  }, [fetchHighlightCount]);
 
   const contextValue = useMemo(
     (): CreateUpdateServiceContextType => ({
@@ -403,13 +333,6 @@ export function CreateUpdateServiceProvider({
       setTerms,
       selectedPortfolioId,
       setSelectedPortfolioId,
-      isHighlighted,
-      setIsHighlighted,
-      highlightCount,
-      highlightLimit,
-      highlightToggleDisabled,
-      isLoadingHighlightCount,
-      fetchHighlightCount,
     }),
     [
       user,
@@ -431,11 +354,6 @@ export function CreateUpdateServiceProvider({
       features,
       terms,
       selectedPortfolioId,
-      isHighlighted,
-      highlightCount,
-      highlightToggleDisabled,
-      isLoadingHighlightCount,
-      fetchHighlightCount,
     ],
   );
 

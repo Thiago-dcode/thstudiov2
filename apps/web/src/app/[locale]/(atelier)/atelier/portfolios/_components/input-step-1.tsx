@@ -4,7 +4,6 @@ import {
   MAX_DISCIPLINES_PORTFOLIO,
   MAX_IMAGE_UPLOAD_BYTES,
 } from "@repo/common-lib/constants/limits";
-import { isHighlightToggleDisabled } from "@repo/common-lib/utils/highlights";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
@@ -118,21 +117,9 @@ const FirstStepInputs = () => {
     isPending,
     setCategorySelected,
     removeCategorySelected,
-    highlightCount,
-    highlightLimit,
-    isLoadingHighlightCount,
   } = usePortfolio();
 
   const categoriesSelected = portfolioInput.categories;
-
-  const isCurrentlyHighlighted = portfolioInput.is_highlight ?? false;
-  const originallyHighlighted = currentPortfolio?.is_highlight ?? false;
-  const highlightToggleDisabled = isHighlightToggleDisabled(
-    highlightCount,
-    highlightLimit,
-    isCurrentlyHighlighted,
-    originallyHighlighted,
-  );
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     deleteInputErrorProperty("title");
@@ -187,7 +174,7 @@ const FirstStepInputs = () => {
               <p className="text-xs text-text-muted">
                 {t("permalinkLabel")}{" "}
                 <span className="font-mono">
-                  /artists/{user.username}/portfolios/{currentPortfolio.slug}
+                  /{user.username}/portfolios/{currentPortfolio.slug}
                 </span>{" "}
                 — {t("permalinkFrozenNote")}
               </p>
@@ -244,42 +231,6 @@ const FirstStepInputs = () => {
         </div>
 
         <div className="flex flex-wrap items-start gap-x-8 gap-y-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="portfolio-is-highlight"
-                checked={portfolioInput.is_highlight ?? false}
-                onCheckedChange={(checked) => {
-                  deleteInputErrorProperty("is_highlight");
-                  handleSetFormData("is_highlight", checked === true);
-                }}
-                disabled={
-                  isPending ||
-                  isLoadingHighlightCount ||
-                  highlightToggleDisabled
-                }
-              />
-              <Label
-                htmlFor="portfolio-is-highlight"
-                className="text-sm font-normal cursor-pointer"
-              >
-                {t("showOnProfile")}
-              </Label>
-              <InfoTooltip
-                content={
-                  <p className="text-sm">
-                    {t("showOnProfileInfo", { limit: highlightLimit })}
-                  </p>
-                }
-              />
-            </div>
-            {!isLoadingHighlightCount && highlightToggleDisabled && (
-              <p className="text-xs text-text-muted">
-                {t("highlightLimitReached", { limit: highlightLimit })}
-              </p>
-            )}
-          </div>
-
           <div className="flex items-center gap-2">
             <Checkbox
               id="portfolio-is-active"
