@@ -21,12 +21,23 @@ export const ArtistSections = async ({
   const isEmpty = Object.values(sections).every((res) => !res.data?.length);
   if (isEmpty) return <ArtistSectionsEmpty displayName={displayName} />;
 
-  const View =
-    sectionStyle === "tab" ? ArtistSectionsTabsView : ArtistSectionsListView;
-
   return (
     <div className="mx-auto w-full max-w-(--breakpoint-desktop-lg) px-4 phone-lg:px-6 tablet:px-10 laptop:px-12">
-      <View sections={sections} username={username} />
+      {sectionStyle === "tab" ? (
+        <>
+          {/* Phones keep the list's accordion; the tabs take over from 640px up. */}
+          <ArtistSectionsListView
+            sections={sections}
+            username={username}
+            mobileOnly
+          />
+          <div className="hidden phone-lg:block">
+            <ArtistSectionsTabsView sections={sections} username={username} />
+          </div>
+        </>
+      ) : (
+        <ArtistSectionsListView sections={sections} username={username} />
+      )}
     </div>
   );
 };
