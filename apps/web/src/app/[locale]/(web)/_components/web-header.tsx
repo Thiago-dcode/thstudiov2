@@ -8,7 +8,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import { SiteHeader, useSiteHeader } from "@/lib/components/site-header";
 import type { UserAuth } from "@/modules/auth/auth.types";
-import { WebHeaderArtistSearch } from "./web-header-artist-search";
+import { ArtistSearch } from "@/modules/users/components/artist-search";
 
 interface WebHeaderProps {
   session: UserAuth | null;
@@ -39,7 +39,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
       <SiteHeader.Bar className="gap-3 tablet:gap-4">
         <SiteHeader.Logo />
 
-        <WebHeaderArtistSearch className="min-w-0 flex-1 max-w-lg" />
+        <ArtistSearch className="min-w-0 flex-1 max-w-lg" />
 
         <SiteHeader.Actions>
           {isAuthenticated ? (

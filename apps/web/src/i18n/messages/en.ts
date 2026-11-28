@@ -1797,10 +1797,12 @@ const messages = {
     },
     header: {
       atelier: "Atelier",
-      createYours: "Create yours",
       contact: "Contact",
       menu: "Menu",
+      signIn: "Sign in",
+      signUp: "Sign up",
       nav: {
+        profile: "Profile",
         portfolios: "Portfolios",
         collections: "Collections",
         services: "Services",
@@ -1918,6 +1920,7 @@ const messages = {
       notShared: "This artist hasn't shared their story yet.",
       heading: "About",
       getInTouch: "Get in touch",
+      goToProfile: "Go to profile",
     },
     media: {
       titleFallback: "Artwork by {name}",
