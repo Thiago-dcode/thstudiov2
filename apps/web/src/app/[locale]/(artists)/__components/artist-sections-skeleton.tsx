@@ -38,9 +38,12 @@ const TabsSkeleton = () => (
     className="mx-auto w-full max-w-(--breakpoint-desktop-lg) px-4 phone-lg:px-6 tablet:px-10 laptop:px-12"
     aria-hidden="true"
   >
-    <div className="mb-10 flex gap-8 border-b border-border tablet:mb-14 tablet:gap-12">
+    <div className="mb-10 flex gap-4 border-b border-border phone-lg:gap-8 tablet:mb-14 tablet:gap-12">
       {TAB_KEYS.map((key, index) => (
-        <div key={key} className="relative flex min-h-11 items-center py-4">
+        <div
+          key={key}
+          className="relative flex min-h-11 flex-1 items-center justify-center py-4 phone-lg:flex-none"
+        >
           <Skeleton className="h-3 w-20" />
           {index === 0 && (
             <span className="absolute inset-x-0 -bottom-px h-px bg-border-em" />

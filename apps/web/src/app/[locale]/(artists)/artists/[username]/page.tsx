@@ -1,6 +1,5 @@
 import { normalizeUsername } from "@repo/common-lib/utils/username";
 import {
-  EDITORIAL_LABEL_CLASS,
   EditorialLabel,
   EditorialRule,
   editorialHeadlineClass,
@@ -308,7 +307,11 @@ const ArtistHomePage = async ({ params, searchParams }: Props) => {
       {/* Highlighted Content Sections */}
       <div className="w-full pt-8 pb-24">
         <Suspense fallback={<ArtistSectionsSkeleton sectionStyle="tab" />}>
-          <ArtistSections username={profile.username} displayName={heading} sectionStyle="tab" />
+          <ArtistSections
+            username={profile.username}
+            displayName={heading}
+            sectionStyle="tab"
+          />
         </Suspense>
       </div>
     </div>

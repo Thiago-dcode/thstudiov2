@@ -109,12 +109,14 @@ export const ArtistSectionsTabsView = ({
     <Tabs defaultValue={tabs[0].value} className="w-full">
       {/* Editorial tab bar: a hairline with quiet uppercase labels; the active one gets an ink rule. */}
       <div className="mb-10 border-b border-border tablet:mb-14">
-        <TabsList className="-mb-px flex h-auto w-full justify-start gap-8 overflow-x-auto bg-transparent p-0 tablet:gap-12">
+        {/* Phones: the tabs share the bar's width with tighter tracking, so the labels fit at 375px
+            without a scroll container. From 640px up they sit left with the full editorial tracking. */}
+        <TabsList className="flex h-auto w-full justify-start gap-4 bg-transparent p-0 phone-lg:gap-8 tablet:gap-12">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.value}
               value={tab.value}
-              className="relative min-h-11 shrink-0 cursor-pointer bg-transparent px-0 py-4 text-xs font-medium uppercase tracking-[0.24em] text-text-muted shadow-none transition-colors duration-300 hover:text-text focus-visible:ring-offset-0 data-[state=active]:bg-transparent data-[state=active]:text-text data-[state=active]:shadow-none data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:bottom-0 data-[state=active]:after:h-px data-[state=active]:after:bg-text"
+              className="relative min-h-11 min-w-0 flex-1 cursor-pointer bg-transparent px-0 py-4 text-xs font-medium uppercase tracking-[0.14em] phone-lg:flex-none phone-lg:tracking-[0.24em] text-text-muted shadow-none transition-colors duration-300 hover:text-text focus-visible:ring-offset-0 data-[state=active]:bg-transparent data-[state=active]:text-text data-[state=active]:shadow-none data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-px data-[state=active]:after:bg-text"
             >
               {tab.label}
             </TabsTrigger>
